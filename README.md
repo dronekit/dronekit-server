@@ -4,7 +4,7 @@ Copyright 2013 Kevin Hester
 
 Released under a GPL 3.0 license (see LICENSE.txt)
 
-This project is the source code of droneshare.com - I am releasibg in hopes of collaborating with other developers.  Pull requests are eagerly accepted, if you have questions building or running this application please send me an email.
+This project is the source code of [droneshare.com](http://www.droneshare.com).  I'm making this release in hopes of collaborating with other developers.  Pull requests are eagerly accepted, if you have questions building or running this application please send me an email.
 
 If you are interested in making Droneish webservices (either as a hobby or as a commerical endeavor) please contact me.  I might be able to help.
 
@@ -24,7 +24,7 @@ FIXME - document the REST API (for now this is best seen by just looking at the 
 
 ```sh
 $ apt-get install sbt
-$ cd nestor
+$ cd droneshare
 $ git submodule init
 $ git submodule update
 $ sbt
