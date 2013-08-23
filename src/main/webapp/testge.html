@@ -1,0 +1,47 @@
+<html>
+<head>
+  <title>Sample</title>
+  <script type="text/javascript" src="https://www.google.com/jsapi"> </script>
+  <script type="text/javascript">
+    var ge;
+    google.load("earth", "1");
+
+    function isOSSupported() {
+        return (navigator.appVersion.indexOf("Win")!=-1) || (navigator.appVersion.indexOf("Mac")!=-1);
+    }
+    
+    function initGE() {
+      google.earth.createInstance('map3d', initCB, failureCB);
+    }
+
+    function initCB(instance) {
+      ge = instance;
+      ge.getWindow().setVisibility(true);
+      
+      // Allow controls
+      ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
+      
+      // Zoom to our tracklog
+      var link = ge.createLink('');
+      var href = 'http://192.168.0.4:8080/api/tlog/51282ee5b484ecfd26cef90c.kmz'
+      link.setHref(href);
+
+      var networkLink = ge.createNetworkLink('');
+      networkLink.set(link, true, true); // Sets the link, refreshVisibility, and flyToView
+
+      ge.getFeatures().appendChild(networkLink);
+    }
+
+    function failureCB(errorCode) {
+    	// alert("failure");
+    }
+
+    google.setOnLoadCallback(initGE);
+  </script>
+
+</head>
+<body>
+  <p>Kevin was here</p>
+  <div id="map3d" style="height: 400px; width: 600px;"></div>
+</body>
+</html>

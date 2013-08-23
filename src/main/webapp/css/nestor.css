@@ -1,0 +1,13 @@
+
+
+#gmaps img { 
+  max-width: none;
+}
+
+#gmaps label { 
+  width: auto; display:inline; 
+}
+
+.hidden {
+  display: none;
+}

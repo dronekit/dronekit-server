@@ -1,0 +1,3 @@
+[submodule "arduleader"]
+	path = arduleader
+	url = https://github.com/geeksville/arduleader

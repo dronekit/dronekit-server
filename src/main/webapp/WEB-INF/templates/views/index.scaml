@@ -1,0 +1,29 @@
+/ Copyright 2013 Kevin Hester
+%script
+  $(function() { $('#homeNav').addClass("active"); }); // FIXME, find a way to do this with css
+
+-# Main hero unit for a primary marketing message or call to action
+.hero-unit
+  %h1 
+    Droneshare
+    %small (Beta)
+  %h2
+    A site for sharing drone tracklogs.
+  %p 
+    %a.btn.btn-primary.btn-large(href="/about.html") Learn more &raquo;
+
+.row
+  .span4
+    %h2 View
+    %p See flights uploaded by others.
+    .row
+      .span2 
+        %a.btn(href="/recent") Recent &raquo;  
+      .span2
+        %a.btn(href="/browse") Sample &raquo;
+    
+  .span4
+    %h2 Share
+    %p Upload your tracklogs and share with others.
+    %p 
+      %a.btn(href="/upload.html") Try it &raquo;

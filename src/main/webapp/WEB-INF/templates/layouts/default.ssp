@@ -1,0 +1,137 @@
+<%@ var body: String = "Custom Layout" %>
+<!-- Copyright 2013 Kevin Hester -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Droneshare</title>
+        <meta name="description" content="A repository for drone hobbyists">
+
+        <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+        <!--[if lt IE 9]>
+            <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+            <![endif]-->
+
+        <!-- Le styles -->
+        <link href="/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+        <style>
+            body {
+            padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+            }
+        </style>
+        <link href="/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="/css/nestor.css" rel="stylesheet">
+
+<!-- FIXME - provide these ->
+    <!-- Fav and touch icons -->
+    <!-- <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png"> -->
+    <link rel="shortcut icon" href="/images/icon.png">
+    
+    <!-- Icon to show on facebook etc... -->
+    <meta property="og:image" content="http://www.droneshare.com/images/fbthumb.png"/>
+    <meta property="og:description" content="Drone control and monitoring"/>
+    <meta property="og:title" content="Droneshare"/>
+    <meta property="og:site_name" content="Droneshare"/>
+    
+    <meta property="fb:app_id" content="301251750005529"/>
+    </head>
+
+    <body>
+    
+    <!-- Load early so we can use it in views -->
+    <script src="/javascript/jquery.js"></script>
+        
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" id="homeNav" href="/index.html">Droneshare</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li id="viewNav"><a href="/browse">View</a></li>
+              <li id="uploadNav"><a href="/upload.html">Upload</a></li>
+              <li id="aboutNav"><a href="/about.html">About</a></li>
+                            
+              <!-- No need for dropdown for now
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">Action</a></li>
+                  <li><a href="#">Another action</a></li>
+                  <li><a href="#">Something else here</a></li>
+                  <li class="divider"></li>
+                  <li class="nav-header">Nav header</li>
+                  <li><a href="#">Separated link</a></li>
+                  <li><a href="#">One more separated link</a></li>
+                </ul>
+              </li>
+              -->
+            </ul>
+            <!-- Disable sign-in for now
+            <form class="navbar-form pull-right">
+              <input class="span2" type="text" placeholder="Email">
+              <input class="span2" type="password" placeholder="Password">
+              <button type="submit" class="btn">Sign in</button>
+            </form>
+            -->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+        <div class="container-fluid">
+      
+            <%= unescape(body) %>
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38986231-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<footer>
+<!-- <hr /> -->
+<!-- DroneShare &copy; Kevin Hester 2013 -->
+</footer>
+
+        </div> <!-- /container -->
+
+        <!-- Le javascript
+             ================================================== -->
+
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="/bootstrap/assets/js/bootstrap.js"></script>
+        
+        <!--
+        <script src="/bootstrap/assets/js/bootstrap-transition.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-alert.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-modal.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+
+        <script src="/bootstrap/assets/js/bootstrap-scrollspy.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-tab.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-tooltip.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-popover.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-button.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-collapse.js"></script>
+
+        <script src="/bootstrap/assets/js/bootstrap-carousel.js"></script>
+        <script src="/bootstrap/assets/js/bootstrap-typeahead.js"></script>
+		-->
+    </body>
+</html>

@@ -1,0 +1,10 @@
+%tr
+  %td 
+    %a(href={ "/user/" + summary.ownerGuess }) #{ summary.ownerGuess }
+
+  %td #{ summary.startTime } 
+  
+  %td #{ summary.vehicleTypeGuess } 
+  %td #{ summary.minutes.toInt + " minutes" } 
+  %td
+    %a.btn.btn-block(href={ "/view/" + id }) View

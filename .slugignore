@@ -1,0 +1,7 @@
+*.tlog
+arduleader/.git
+arduleader/andropilot
+arduleader/mavjava
+arduleader/posixpilot
+arduleader/scandroid
+art
