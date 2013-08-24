@@ -6,7 +6,7 @@ Released under a GPL 3.0 license (see LICENSE.txt)
 
 This project is the source code of [droneshare.com](http://www.droneshare.com).  I'm making this release in hopes of collaborating with other developers.  Pull requests are eagerly accepted, if you have questions building or running this application please send me an email.
 
-If you are interested in making Droneish webservices (either as a hobby or as a commerical endeavor) please contact me.  I might be able to help.
+If you are interested in making drone web-services (either as a hobby or as a commerical endeavor) please contact me.  I might be able to help.
 
 ## General structure
 
