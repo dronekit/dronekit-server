@@ -28,6 +28,7 @@ $ cd droneshare
 $ git submodule init
 $ git submodule update
 $ sbt
+> eclipse ( if you would like to use eclipse for editing / debugging )
 > container:start
 > browse
 ```
