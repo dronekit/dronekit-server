@@ -45,19 +45,25 @@ class MainServlet extends NestorStack {
     println("Reading parameters")
 
     // One row per tlog, each recors is a (tlog, list params as tuples)
-    val tlogToParams = TLogChunkDAO.tlogsRecent(maxResults).map { tlog =>
+    val tlogToParams = TLogChunkDAO.tlogsRecent(maxResults).flatMap { tlog =>
       println(s"Loading model for $tlog")
-      val model = new PlaybackModel
-      model.loadBytes(tlog.bytes)
-      val params = model.parameters.flatMap { param =>
-        for {
-          id <- param.getId
-          v <- param.getValue
-        } yield {
-          id -> v
+      try {
+        val model = new PlaybackModel
+        model.loadBytes(tlog.bytes)
+        val params = model.parameters.flatMap { param =>
+          for {
+            id <- param.getId
+            v <- param.getValue
+          } yield {
+            id -> v
+          }
         }
+        Some(tlog.summary -> params)
+      } catch {
+        case ex: Exception =>
+          println(s"Skipping due to $ex")
+          None
       }
-      tlog -> params
     }
 
     println("Generating CSV")
@@ -76,10 +82,10 @@ class MainServlet extends NestorStack {
     val csvOut = new CSVWriter(outStr, colNames)
 
     tlogToParams.foreach {
-      case (tlog, params) =>
-        val stdCols = Seq("date" -> DateUtil.isoDateFormat.format(tlog.startTime),
-          "vehicleType" -> tlog.summary.vehicleTypeGuess,
-          "ownerId" -> tlog.summary.ownerGuess)
+      case (summary, params) =>
+        val stdCols = Seq("date" -> DateUtil.isoDateFormat.format(summary.startTime),
+          "vehicleType" -> summary.vehicleTypeGuess,
+          "ownerId" -> summary.ownerGuess)
         csvOut.emit(stdCols ++ params: _*)
     }
 
