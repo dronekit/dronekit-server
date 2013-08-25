@@ -1,14 +1,16 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package com.geeksville.aws
 
 import com.amazonaws.services.s3._
@@ -27,14 +29,6 @@ class S3Bucket(bucketName: String) {
 
   val credentials = new ConfigCredentials
   val client = new AmazonS3Client(credentials)
-
-  /// FIXME - move this some place better as a singleton
-  val isoDateFormat = {
-    val tz = TimeZone.getTimeZone("UTC")
-    val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
-    df.setTimeZone(tz)
-    df
-  }
 
   // At startup make sure our bucket exists
   createBucket()
