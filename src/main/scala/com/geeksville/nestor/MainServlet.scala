@@ -70,7 +70,7 @@ class MainServlet extends NestorStack {
     // CSV requires all column names to be known in advance, so merge all param names
     val allParamNames = new HashSet[String]
     tlogToParams.foreach {
-      case (tlog, params) =>
+      case (_, params) =>
         params.foreach {
           case (id, _) =>
             allParamNames += id
@@ -89,13 +89,13 @@ class MainServlet extends NestorStack {
         csvOut.emit(stdCols ++ params: _*)
     }
 
-    println("Returning CSV")
-    contentType = "text/csv"
-    outStr.toString
-
     val o = new PrintWriter(new FileOutputStream("/tmp/big.csv"))
     o.println(outStr.toString)
     o.close()
+
+    println("Returning CSV")
+    contentType = "text/csv"
+    outStr.toString
   }
 
   /**
