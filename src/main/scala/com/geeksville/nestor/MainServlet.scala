@@ -21,6 +21,7 @@ import scala.collection.mutable.HashSet
 import com.geeksville.util.DateUtil
 import java.io.PrintWriter
 import java.io.FileOutputStream
+import scala.collection.mutable.ListBuffer
 
 class MainServlet extends NestorStack {
 
@@ -40,25 +41,44 @@ class MainServlet extends NestorStack {
     redirect(url("/view/pkulu2"))
   }
 
-  get("/report/parameters.csv") {
-    val maxResults = 10000
+  /**
+   * Standard data included with most CSV reports
+   */
+  private def standardCols(tlog: TLogChunk) = {
+    val summary = tlog.summary
+
+    Seq("date" -> DateUtil.isoDateFormat.format(summary.startTime),
+      "vehicleType" -> summary.vehicleTypeGuess,
+      "ownerId" -> summary.ownerGuess)
+  }
+
+  /**
+   * Extract the parameters as a CSVable row
+   */
+  private def tlogToParamRow(tlog: TLogChunk): Option[Seq[(String, Any)]] = {
+    val model = new PlaybackModel
+    model.loadBytes(tlog.bytes)
+    val params = model.parameters.flatMap { param =>
+      for {
+        id <- param.getId
+        v <- param.getValue
+      } yield {
+        id -> v
+      }
+    }
+
+    Some(standardCols(tlog) ++ params)
+  }
+
+  private def csvGenerator(cb: (TLogChunk) => Option[Seq[(String, Any)]]) = {
+    val maxResults = 1
     println("Reading parameters")
 
-    // One row per tlog, each recors is a (tlog, list params as tuples)
-    val tlogToParams = TLogChunkDAO.tlogsRecent(maxResults).flatMap { tlog =>
+    // One row per tlog, each record is a (tlog, list params as tuples)
+    val rows = TLogChunkDAO.tlogsRecent(maxResults).flatMap { tlog =>
       println(s"Loading model for $tlog")
       try {
-        val model = new PlaybackModel
-        model.loadBytes(tlog.bytes)
-        val params = model.parameters.flatMap { param =>
-          for {
-            id <- param.getId
-            v <- param.getValue
-          } yield {
-            id -> v
-          }
-        }
-        Some(tlog.summary -> params)
+        cb(tlog)
       } catch {
         case ex: Exception =>
           println(s"Skipping due to $ex")
@@ -67,35 +87,40 @@ class MainServlet extends NestorStack {
     }
 
     println("Generating CSV")
-    // CSV requires all column names to be known in advance, so merge all param names
-    val allParamNames = new HashSet[String]
-    tlogToParams.foreach {
-      case (_, params) =>
-        params.foreach {
-          case (id, _) =>
-            allParamNames += id
-        }
+    // CSV requires all column names to be known in advance, so merge all param names, being careful to preserve order
+    val seenCols = new HashSet[String]
+    val colNames = ListBuffer[String]()
+    rows.foreach { r =>
+      r.foreach {
+        case (id, _) =>
+          if (!seenCols.contains(id)) {
+            colNames += id
+            seenCols += id
+          }
+      }
     }
-    val colNames = Seq("date", "vehicleType", "ownerId") ++ allParamNames
 
     val outStr = new StringBuilder
     val csvOut = new CSVWriter(outStr, colNames)
 
-    tlogToParams.foreach {
-      case (summary, params) =>
-        val stdCols = Seq("date" -> DateUtil.isoDateFormat.format(summary.startTime),
-          "vehicleType" -> summary.vehicleTypeGuess,
-          "ownerId" -> summary.ownerGuess)
-        csvOut.emit(stdCols ++ params: _*)
+    rows.foreach { r =>
+      csvOut.emit(r: _*)
     }
 
+    val resultStr = outStr.toString
+
+    // For debugging
     val o = new PrintWriter(new FileOutputStream("/tmp/big.csv"))
-    o.println(outStr.toString)
+    o.println(resultStr)
     o.close()
 
     println("Returning CSV")
+    resultStr
+  }
+
+  get("/report/parameters.csv") {
     contentType = "text/csv"
-    outStr.toString
+    csvGenerator(tlogToParamRow)
   }
 
   /**

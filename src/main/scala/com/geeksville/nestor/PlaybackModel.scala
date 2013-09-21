@@ -1,14 +1,16 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package com.geeksville.nestor
 
 import com.geeksville.mavlink.TimestampedMessage
@@ -67,6 +69,9 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   var messages: Traversable[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
 
+  var startOfFlightMessage: Option[TimestampedMessage] = None
+  var endOfFlightMessage: Option[TimestampedMessage] = None
+
   var numMessages = 0
 
   /// A MAV_TYPE vehicle code
@@ -93,7 +98,23 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
 
   def startTime = firstMessage.get.timeAsDate
   def endTime = lastMessage.get.timeAsDate
-  def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, vehicleTypeName, autopilotType, gcsType, ownerId)
+
+  /**
+   * duration of flying portion in seconds
+   */
+  def flightDuration = (for {
+    s <- startOfFlightMessage
+    e <- endOfFlightMessage
+  } yield {
+    val r = e.timeSeconds - s.timeSeconds
+    println(s"Calculated flight duration of $r")
+    r
+  }).orElse {
+    println("Can't find duration for flight")
+    None
+  }
+
+  def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, vehicleTypeName, autopilotType, gcsType, ownerId, flightDuration)
 
   def modeChanges = modeChangeMsgs.map { m =>
     val code = m.msg.asInstanceOf[msg_heartbeat].custom_mode.toInt
@@ -123,6 +144,12 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
         addPosition(raw, VehicleSimulator.decodePosition(m))
       case m: msg_gps_raw_int =>
         VehicleSimulator.decodePosition(m).foreach { l => addPosition(raw, l) }
+      case m: msg_vfr_hud =>
+        if (m.throttle > 0) {
+          if (!startOfFlightMessage.isDefined)
+            startOfFlightMessage = Some(raw)
+          endOfFlightMessage = Some(raw) // Currently we just use the last place the throttle was on - FIXME
+        }
       case m: msg_mission_item =>
         val wp = Waypoint(m)
         // We fill any missing positions with None
@@ -371,4 +398,4 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
             "<tessellate>1</tessellate>" +
             "<altitudeMode>absolute</altitudeMode>" +
             "<coordinates>"
-*/ 
+*/

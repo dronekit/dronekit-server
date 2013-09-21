@@ -1,14 +1,16 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package com.geeksville.nestor
 
 import com.novus.salat._
@@ -57,7 +59,8 @@ case class MissionSummary(startTime: Date,
   vehicleType: String = "",
   autopilotType: String = "",
   gcsType: String = "",
-  ownerId: String = "") {
+  ownerId: String = "",
+  flightDuration: Option[Double] = None) {
 
   /// A short title sutable for sharing on G+ or facebook
   def titleString = {

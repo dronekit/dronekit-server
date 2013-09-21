@@ -1,14 +1,16 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package com.geeksville.nestor
 
 import org.scalatra._
@@ -133,7 +135,7 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     val model = new PlaybackModel
     model.loadBytes(chunk.bytes)
 
-    val msgs = model.messages.take(100).toSeq // FIXME, temp limit for testing
+    val msgs = model.messages // .take(100).toSeq // FIXME, temp limit for testing
     val msgj = msgs.map { a => MessageJson(a.time, a.msg.toString) }
     val r = grater[MessageJson].toCompactJSONArray(msgj)
     Ok(r)
@@ -216,7 +218,7 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
 
     // Parse strings like the following: "MAVLINK_MSG_ID_PARAM_VALUE : param_value=0.0 bob=45"
 
-    // We try to ignor the boring mavling_msg_id_ prefix if we can
+    // We try to ignore the boring mavling_msg_id_ prefix if we can
     val IdParse = "(?:MAVLINK_MSG_ID_)?(\\S+) :(.*)".r
     val ArgParse = "(\\S+)=(\\S+)".r
 
