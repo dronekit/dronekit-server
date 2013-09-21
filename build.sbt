@@ -8,6 +8,8 @@ EclipseKeys.relativizeLibs in ThisBuild := false // Doesn't seem to work for lib
 
 libraryDependencies += "com.typesafe" % "config" % "1.0.2" withSources()
 
+libraryDependencies += "org.simplex3d" %% "simplex3d-math-double" % "2.4.7" withSources()
+
 // seq(jelasticSettings:_*)
 
 // JelasticKeys.email in JelasticKeys.deploy := sys.env.get("JELASTIC_USERNAME").getOrElse(
