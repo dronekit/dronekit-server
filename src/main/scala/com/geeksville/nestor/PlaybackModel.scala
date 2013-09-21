@@ -114,6 +114,14 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
     None
   }
 
+  /// Just the messages that happened while the vehicle was actively flying
+  def inFlightMessages: Traversable[TimestampedMessage] = (for {
+    s <- startOfFlightMessage
+    e <- endOfFlightMessage
+  } yield {
+    messages.filter { m => m.time >= s.time && m.time <= e.time }
+  }).getOrElse(Seq())
+
   def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, vehicleTypeName, autopilotType, gcsType, ownerId, flightDuration)
 
   def modeChanges = modeChangeMsgs.map { m =>
