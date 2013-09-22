@@ -22,6 +22,10 @@ import com.geeksville.util.DateUtil
 import java.io.PrintWriter
 import java.io.FileOutputStream
 import scala.collection.mutable.ListBuffer
+import simplex3d.math._
+import simplex3d.math.double._
+import simplex3d.math.double.functions._
+import org.mavlink.messages.ardupilotmega.msg_raw_imu
 
 class MainServlet extends NestorStack {
 
@@ -48,6 +52,7 @@ class MainServlet extends NestorStack {
     val summary = tlog.summary
 
     Seq("date" -> DateUtil.isoDateFormat.format(summary.startTime),
+      "id" -> tlog.id,
       "vehicleType" -> summary.vehicleTypeGuess,
       "ownerId" -> summary.ownerGuess)
   }
@@ -71,12 +76,12 @@ class MainServlet extends NestorStack {
   }
 
   private def csvGenerator(cb: (TLogChunk) => Option[Seq[(String, Any)]]) = {
-    val maxResults = 1
+    val maxResults = 10000 // For testing use a lower #
     println("Reading parameters")
 
     // One row per tlog, each record is a (tlog, list params as tuples)
     val rows = TLogChunkDAO.tlogsRecent(maxResults).flatMap { tlog =>
-      println(s"Loading model for $tlog")
+      //println(s"Loading model for $tlog")
       try {
         cb(tlog)
       } catch {
@@ -121,6 +126,68 @@ class MainServlet extends NestorStack {
   get("/report/parameters.csv") {
     contentType = "text/csv"
     csvGenerator(tlogToParamRow)
+  }
+
+  /**
+   * Would it be possible for you to         query this on drone share data?
+   *
+   * For all flights longer than 3 minutes
+   * 1 minute into the flight and more than 1 minute before the flight ends
+   * Get the max angular rate
+   * get the max acceleration
+   * get the system type (copter or plane)
+   *
+   * I'd like to build a histogram of those. It would allow us to better design for the actual application.
+   *
+   * From tridge:
+   *  abs(degrees(RAW_IMU.xgyro*0.001))
+   * abs(degrees(RAW_IMU.ygyro*0.001))
+   * abs(degrees(RAW_IMU.zgyro*0.001))
+   */
+  get("/report/lorenz.csv") {
+    def generator(tlog: TLogChunk) = {
+      val minFlightMinutes = 3.0
+      val summary = tlog.summary
+
+      // Do a quick filter to try and avoid reading useless tlogs (the precalculated data currently is missing some of the fields Lorenz requested)
+      if (summary.minutes < minFlightMinutes) {
+        println(s"Trivally skipping $tlog - too short")
+        None
+      } else {
+        val model = new PlaybackModel
+        model.loadBytes(tlog.bytes)
+
+        val duration = model.flightDuration.getOrElse(0.0)
+        if (duration < minFlightMinutes * 60) {
+          println(s"Skipping $tlog - too short")
+          None
+        } else {
+          var maxAccel = 0.0
+          var maxRate = 0.0
+
+          // We only care about packets >1 min from start and >1min from end
+          val beginSecond = model.startOfFlightMessage.get.timeSeconds + 60
+          val endSecond = model.endOfFlightMessage.get.timeSeconds - 60
+
+          model.inFlightMessages filter { m =>
+            m.timeSeconds >= beginSecond && m.timeSeconds < endSecond
+          } foreach {
+            _.msg match {
+              case imu: msg_raw_imu =>
+                maxRate = math.max(maxRate, length(Vec3(imu.xgyro * 0.001, imu.ygyro * 0.001, imu.zgyro * 0.001)))
+                maxAccel = math.max(maxAccel, length(Vec3(imu.xacc * 0.001, imu.yacc * 0.001, imu.zacc * 0.001)))
+              case _ =>
+              // Ignore
+            }
+          }
+          println(s"Found accel/rate=$maxAccel/$maxRate")
+          Some(standardCols(tlog) :+ ("maxAcc" -> maxAccel) :+ ("maxRate" -> maxRate))
+        }
+      }
+    }
+
+    contentType = "text/csv"
+    csvGenerator(generator)
   }
 
   /**
