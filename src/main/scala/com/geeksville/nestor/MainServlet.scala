@@ -174,7 +174,9 @@ class MainServlet extends NestorStack {
           } foreach {
             _.msg match {
               case imu: msg_raw_imu =>
-                maxRate = math.max(maxRate, length(Vec3(imu.xgyro * 0.001, imu.ygyro * 0.001, imu.zgyro * 0.001)))
+                maxRate = math.max(maxRate, imu.xgyro * 0.001)
+                maxRate = math.max(maxRate, imu.ygyro * 0.001)
+                maxRate = math.max(maxRate, imu.zgyro * 0.001)
                 maxAccel = math.max(maxAccel, length(Vec3(imu.xacc * 0.001, imu.yacc * 0.001, imu.zacc * 0.001)))
               case _ =>
               // Ignore
