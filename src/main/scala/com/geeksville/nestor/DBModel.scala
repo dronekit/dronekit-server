@@ -115,7 +115,7 @@ case class TLogChunk(startTime: Date,
   /**
    * Fetch our bytes from S3 the first time they are needed
    */
-  lazy val bytes: Array[Byte] = TLogChunk.getBytesByKey(id)
+  lazy val bytes: Option[Array[Byte]] = TLogChunk.getBytesByKey(id)
 }
 
 object TLogChunk {
@@ -155,7 +155,7 @@ object TLogChunk {
    */
   def getBytesByKey(id: String) = {
     gcHack()
-    bytesCache.get(id)
+    Option(bytesCache.getUnchecked(id))
   }
 
   /// Uploads are in a temp directory, don't use the cache

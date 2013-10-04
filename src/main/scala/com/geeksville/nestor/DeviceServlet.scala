@@ -104,41 +104,40 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
   getById("/tlog/:id.kml") { chunk =>
     contentType = "application/vnd.google-earth.kml+xml"
 
-    // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
-    Ok(model.toKMLBytes(uriBase))
+    PlaybackModel.fromBytes(chunk).map { model =>
+      Ok(model.toKMLBytes(uriBase))
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id.kmz") { chunk =>
     contentType = "application/vnd.google-earth.kmz"
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
-    Ok(model.toKMZBytes(uriBase, false))
+    PlaybackModel.fromBytes(chunk).map { model =>
+      Ok(model.toKMZBytes(uriBase, false))
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id.gmaps.kmz") { chunk =>
     contentType = "application/vnd.google-earth.kmz"
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
-    Ok(model.toKMZBytes(uriBase, true))
+    PlaybackModel.fromBytes(chunk).map { model =>
+      Ok(model.toKMZBytes(uriBase, true))
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id/messages.json") { chunk =>
     contentType = msgJsonMime
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
+    PlaybackModel.fromBytes(chunk).map { model =>
 
-    val msgs = model.messages // .take(100).toSeq // FIXME, temp limit for testing
-    val msgj = msgs.map { a => MessageJson(a.time, a.msg.toString) }
-    val r = grater[MessageJson].toCompactJSONArray(msgj)
-    Ok(r)
+      val msgs = model.messages // .take(100).toSeq // FIXME, temp limit for testing
+      val msgj = msgs.map { a => MessageJson(a.time, a.msg.toString) }
+      val r = grater[MessageJson].toCompactJSONArray(msgj)
+      Ok(r)
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id/summary.json") { chunk =>
@@ -151,50 +150,50 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     contentType = paramJsonMime
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
+    PlaybackModel.fromBytes(chunk).map { model =>
 
-    val ps = model.parameters
-    val unsorted = ps.flatMap { a =>
-      for {
-        id <- a.getId
-      } yield {
-        ParameterJson(id,
-          a.asString.getOrElse("?"),
-          a.docs.map(_.documentation).getOrElse(""), a.isInRange)
+      val ps = model.parameters
+      val unsorted = ps.flatMap { a =>
+        for {
+          id <- a.getId
+        } yield {
+          ParameterJson(id,
+            a.asString.getOrElse("?"),
+            a.docs.map(_.documentation).getOrElse(""), a.isInRange)
+        }
       }
-    }
-    val sorted = unsorted.sortWith { case (a, b) => a.id < b.id }
-    val r = grater[ParameterJson].toCompactJSONArray(sorted)
-    Ok(r)
+      val sorted = unsorted.sortWith { case (a, b) => a.id < b.id }
+      val r = grater[ParameterJson].toCompactJSONArray(sorted)
+      Ok(r)
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   private def genParams(chunk: TLogChunk, complete: Boolean) = {
     contentType = "application/param+text"
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
+    PlaybackModel.fromBytes(chunk).map { model =>
 
-    val unfiltered = model.parameters
-    val ps = if (complete)
-      unfiltered
-    else
-      unfiltered.filter(_.isSharable)
+      val unfiltered = model.parameters
+      val ps = if (complete)
+        unfiltered
+      else
+        unfiltered.filter(_.isSharable)
 
-    val unsorted = ps.flatMap { a =>
-      for {
-        id <- a.getId
-        v <- a.getValue
-      } yield {
-        "%s,%s".format(id, v)
+      val unsorted = ps.flatMap { a =>
+        for {
+          id <- a.getId
+          v <- a.getValue
+        } yield {
+          "%s,%s".format(id, v)
+        }
       }
-    }
-    val sorted = unsorted.sorted
-    val url = publicUriBase.resolve("/view/" + chunk.id).toString
-    val header = "# Auto generated from " + url
-    val r = header + "\n" + sorted.mkString("\n")
-    Ok(r)
+      val sorted = unsorted.sorted
+      val url = publicUriBase.resolve("/view/" + chunk.id).toString
+      val header = "# Auto generated from " + url
+      val r = header + "\n" + sorted.mkString("\n")
+      Ok(r)
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   /// Parameters as a loadable param file
@@ -211,78 +210,78 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     contentType = msgJsonMime
 
     // Ok(grater[TLogChunk].toJSON(x))
-    val model = new PlaybackModel
-    model.loadBytes(chunk.bytes)
+    PlaybackModel.fromBytes(chunk).map { model =>
 
-    val msgs = model.messages // .take(10000) // FIXME, temp limit for testing
+      val msgs = model.messages // .take(10000) // FIXME, temp limit for testing
 
-    // Parse strings like the following: "MAVLINK_MSG_ID_PARAM_VALUE : param_value=0.0 bob=45"
+      // Parse strings like the following: "MAVLINK_MSG_ID_PARAM_VALUE : param_value=0.0 bob=45"
 
-    // We try to ignore the boring mavling_msg_id_ prefix if we can
-    val IdParse = "(?:MAVLINK_MSG_ID_)?(\\S+) :(.*)".r
-    val ArgParse = "(\\S+)=(\\S+)".r
+      // We try to ignore the boring mavling_msg_id_ prefix if we can
+      val IdParse = "(?:MAVLINK_MSG_ID_)?(\\S+) :(.*)".r
+      val ArgParse = "(\\S+)=(\\S+)".r
 
-    val isPlottable = DataReducer.filterByIds(DataReducer.plottableCommands) _
+      val isPlottable = DataReducer.filterByIds(DataReducer.plottableCommands) _
 
-    // Generate a seq of time -> Seq[ParamVal]
-    val pmsgs = msgs.flatMap { m =>
-      if (!isPlottable(m.msg))
-        None
-      else {
-        // Super skanky - until I can fix the mavlink code generator the easiest way to get values is to parse the string
-        val str = m.msg.toString
+      // Generate a seq of time -> Seq[ParamVal]
+      val pmsgs = msgs.flatMap { m =>
+        if (!isPlottable(m.msg))
+          None
+        else {
+          // Super skanky - until I can fix the mavlink code generator the easiest way to get values is to parse the string
+          val str = m.msg.toString
 
-        str match {
-          case IdParse(id, args) =>
-            //println("Considering args: " + args)
-            val argsFormatted = args.split(" ").flatMap { arg =>
-              arg.trim match {
-                case ArgParse(k, v) =>
-                  ParamVal.perhapsCreate(id + "." + k, v)
-                case "" =>
-                  None // Must have been whitespace
-                case x @ _ =>
-                  println("Error, can't parse: " + x)
-                  None
+          str match {
+            case IdParse(id, args) =>
+              //println("Considering args: " + args)
+              val argsFormatted = args.split(" ").flatMap { arg =>
+                arg.trim match {
+                  case ArgParse(k, v) =>
+                    ParamVal.perhapsCreate(id + "." + k, v)
+                  case "" =>
+                    None // Must have been whitespace
+                  case x @ _ =>
+                    println("Error, can't parse: " + x)
+                    None
+                }
               }
-            }
-            Some(m.timeMsec -> argsFormatted) // Javascript wants msecs
+              Some(m.timeMsec -> argsFormatted) // Javascript wants msecs
+          }
         }
       }
-    }
 
-    /* Emit json like this:
+      /* Emit json like this:
      * [ { label: "Foo", data: [ [10, 1], [17, -14], [30, 5] ] },
          { label: "Bar", data: [ [11, 13], [19, 11], [30, -7] ] } ]
      */
 
-    // Swizzle to get a seq of plotSeries (each data element is a two entry array)
-    case class XYPair(x: Long, y: Double)
-    val seriesOut = HashMap[String, ArrayBuffer[XYPair]]()
+      // Swizzle to get a seq of plotSeries (each data element is a two entry array)
+      case class XYPair(x: Long, y: Double)
+      val seriesOut = HashMap[String, ArrayBuffer[XYPair]]()
 
-    pmsgs.foreach {
-      case (time, params) =>
-        params.foreach { p =>
-          val buffer = seriesOut.getOrElseUpdate(p.name, ArrayBuffer[XYPair]())
+      pmsgs.foreach {
+        case (time, params) =>
+          params.foreach { p =>
+            val buffer = seriesOut.getOrElseUpdate(p.name, ArrayBuffer[XYPair]())
 
-          // Many of the mavlink packets send the same data over and over - for plotting we only care about changes
-          val isNew = buffer.isEmpty || buffer.last.y != p.v
-          if (isNew)
-            buffer += XYPair(time, p.v)
-        }
-    }
+            // Many of the mavlink packets send the same data over and over - for plotting we only care about changes
+            val isNew = buffer.isEmpty || buffer.last.y != p.v
+            if (isNew)
+              buffer += XYPair(time, p.v)
+          }
+      }
 
-    // return thins sorted in order and properly colored
-    val r = seriesOut.toSeq.sortWith((a, b) => (a._1 < b._1)).zipWithIndex.map {
-      case (s, i) =>
-        val array = s._2.map { pair =>
-          JArray(List(JInt(pair.x), JDouble(pair.y))): JValue
-        }
-        val jarray = JArray(array.toList)
-        JObject("label" -> s._1, "data" -> jarray, "color" -> i)
-    }
-    //val r = JArray(List(JInt(4)))
-    Ok(compact(render(r)))
+      // return thins sorted in order and properly colored
+      val r = seriesOut.toSeq.sortWith((a, b) => (a._1 < b._1)).zipWithIndex.map {
+        case (s, i) =>
+          val array = s._2.map { pair =>
+            JArray(List(JInt(pair.x), JDouble(pair.y))): JValue
+          }
+          val jarray = JArray(array.toList)
+          JObject("label" -> s._1, "data" -> jarray, "color" -> i)
+      }
+      //val r = JArray(List(JInt(4)))
+      Ok(compact(render(r)))
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   private def toMongoLoc(l: Location) = {

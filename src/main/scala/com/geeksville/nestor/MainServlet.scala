@@ -26,6 +26,7 @@ import simplex3d.math._
 import simplex3d.math.double._
 import simplex3d.math.double.functions._
 import org.mavlink.messages.ardupilotmega.msg_raw_imu
+import org.mavlink.messages.ardupilotmega.msg_global_position_int
 
 class MainServlet extends NestorStack {
 
@@ -61,18 +62,18 @@ class MainServlet extends NestorStack {
    * Extract the parameters as a CSVable row
    */
   private def tlogToParamRow(tlog: TLogChunk): Option[Seq[(String, Any)]] = {
-    val model = new PlaybackModel
-    model.loadBytes(tlog.bytes)
-    val params = model.parameters.flatMap { param =>
-      for {
-        id <- param.getId
-        v <- param.getValue
-      } yield {
-        id -> v
+    PlaybackModel.fromBytes(tlog).flatMap { model =>
+      val params = model.parameters.flatMap { param =>
+        for {
+          id <- param.getId
+          v <- param.getValue
+        } yield {
+          id -> v
+        }
       }
-    }
 
-    Some(standardCols(tlog) ++ params)
+      Some(standardCols(tlog) ++ params)
+    }
   }
 
   private def csvGenerator(cb: (TLogChunk) => Option[Seq[(String, Any)]]) = {
@@ -154,42 +155,95 @@ class MainServlet extends NestorStack {
         println(s"Trivally skipping $tlog - too short")
         None
       } else {
-        val model = new PlaybackModel
-        model.loadBytes(tlog.bytes)
+        PlaybackModel.fromBytes(tlog).flatMap { model =>
+          val duration = model.flightDuration.getOrElse(0.0)
+          if (duration < minFlightMinutes * 60) {
+            println(s"Skipping $tlog - too short")
+            None
+          } else {
+            var maxAccel = 0.0
+            var maxRate = 0.0
 
-        val duration = model.flightDuration.getOrElse(0.0)
-        if (duration < minFlightMinutes * 60) {
-          println(s"Skipping $tlog - too short")
-          None
-        } else {
-          var maxAccel = 0.0
-          var maxRate = 0.0
+            // We only care about packets >1 min from start and >1min from end
+            val beginSecond = model.startOfFlightMessage.get.timeSeconds + 60
+            val endSecond = model.endOfFlightMessage.get.timeSeconds - 60
 
-          // We only care about packets >1 min from start and >1min from end
-          val beginSecond = model.startOfFlightMessage.get.timeSeconds + 60
-          val endSecond = model.endOfFlightMessage.get.timeSeconds - 60
-
-          model.inFlightMessages filter { m =>
-            m.timeSeconds >= beginSecond && m.timeSeconds < endSecond
-          } foreach {
-            _.msg match {
-              case imu: msg_raw_imu =>
-                maxRate = math.max(maxRate, imu.xgyro * 0.001)
-                maxRate = math.max(maxRate, imu.ygyro * 0.001)
-                maxRate = math.max(maxRate, imu.zgyro * 0.001)
-                maxAccel = math.max(maxAccel, length(Vec3(imu.xacc * 0.001, imu.yacc * 0.001, imu.zacc * 0.001)))
-              case _ =>
-              // Ignore
+            model.inFlightMessages filter { m =>
+              m.timeSeconds >= beginSecond && m.timeSeconds < endSecond
+            } foreach {
+              _.msg match {
+                case imu: msg_raw_imu =>
+                  maxRate = math.max(maxRate, imu.xgyro * 0.001)
+                  maxRate = math.max(maxRate, imu.ygyro * 0.001)
+                  maxRate = math.max(maxRate, imu.zgyro * 0.001)
+                  maxAccel = math.max(maxAccel, length(Vec3(imu.xacc * 0.001, imu.yacc * 0.001, imu.zacc * 0.001)))
+                case _ =>
+                // Ignore
+              }
             }
+            println(s"Found accel/rate=$maxAccel/$maxRate")
+            Some(standardCols(tlog) :+ ("maxAcc" -> maxAccel) :+ ("maxRate" -> maxRate))
           }
-          println(s"Found accel/rate=$maxAccel/$maxRate")
-          Some(standardCols(tlog) :+ ("maxAcc" -> maxAccel) :+ ("maxRate" -> maxRate))
         }
       }
     }
 
     contentType = "text/csv"
     csvGenerator(generator)
+  }
+
+  /**
+   * A quick hack to find all tlogs using the mtk gps.
+   * if  all records GLOBAL_POSITION_INT.vz ==0
+   * and at least one record shows GLOBAL_POSITION_INT.vx != 0
+   */
+  get("/report/mtkonly.csv") {
+    var numMtk = 0
+    var numOther = 0 // FIXME yuck - refactor to not need this vars - the generator model is wrong
+
+    def generator(tlog: TLogChunk) = {
+      // FIXME - refactor to have a new filterByFlightLength primitive...
+
+      val minFlightMinutes = 1.0
+      val summary = tlog.summary
+
+      // Do a quick filter to try and avoid reading useless tlogs (the precalculated data currently is missing some of the fields Lorenz requested)
+      if (summary.minutes < minFlightMinutes) {
+        println(s"Trivally skipping $tlog - too short")
+        None
+      } else {
+        PlaybackModel.fromBytes(tlog).flatMap { model =>
+
+          val duration = model.flightDuration.getOrElse(0.0)
+          if (duration < minFlightMinutes * 60) {
+            println(s"Skipping $tlog - too short")
+            None
+          } else {
+            // Use view to do all this processing lazily - to bail as early as possible
+            val posrecs = model.messages.view.flatMap {
+              _.msg match {
+                case m: msg_global_position_int => Some(m)
+                case _ => None
+              }
+            }
+            val allZzero = posrecs.forall(_.vz == 0.0)
+            val someVx = posrecs.find(_.vx != 0.0).isDefined
+
+            if (allZzero && someVx) {
+              numMtk += 1
+              Some(standardCols(tlog))
+            } else {
+              numOther += 1
+              None
+            }
+          }
+        }
+      }
+    }
+
+    contentType = "text/csv"
+    csvGenerator(generator)
+    println(s"NUM MTK $numMtk vs $numOther")
   }
 
   /**

@@ -200,7 +200,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   /**
    * Load messages from a raw mavlink tlog file
    */
-  def loadBytes(bytes: Array[Byte]) {
+  private def loadBytes(bytes: Array[Byte]) {
     val reader = new BinaryMavlinkReader(bytes)
 
     // FIXME - do this data reduction somewhere else
@@ -374,6 +374,18 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   }
 }
 
+object PlaybackModel {
+  /**
+   * Fully populate a model from bytes, or return None if bytes not available
+   */
+  def fromBytes(tlog: TLogChunk) = {
+    tlog.bytes.map { b =>
+      val model = new PlaybackModel
+      model.loadBytes(b)
+      model
+    }
+  }
+}
 /*
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
             +
