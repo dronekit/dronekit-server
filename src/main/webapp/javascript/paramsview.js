@@ -9,14 +9,26 @@ function paramsInit(tlogid) {
 	    var badRange = false;
 	    $.each(json_data, function(index, item){
 	         var style = item.rangeOk ? "" : "background-color:red";
+	        
+	         var valueEntry = item.value
+	         
+	         if(null != item.range) {
+	        	var title = 'Recommended between ' + item.range[0].toFixed(1) + ' and ' + item.range[1].toFixed(1)
+	        	var prefix = '<a href="#" rel="tooltip" data-original-title="' + title + '">'
+	        	valueEntry = prefix + valueEntry + '</a>'
+	         }
+	         
+	         valueEntry = '<td style="' + style + '">'+valueEntry+'</td>'
 	         
 	         if(!item.rangeOk)
 	        	 badRange = true;
-	        	  
+	        
 	         table_obj.append($('<tr><td>'+item.id+
-	        		 '</td><td style="' + style + '">'+item.value+'</td><td>'+item.doc+'</td></tr>'));
+	        		 '</td>' + valueEntry + '<td>' +item.doc+'</td></tr>'));
 	    })
 
+	    $('[rel=tooltip]').tooltip()
+	    
 	    if(badRange) {
 	    	$('#param-warning').show();
 	    	$('a[href=#paramsTab]').tab('show');

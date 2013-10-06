@@ -153,6 +153,9 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
       case m: msg_gps_raw_int =>
         VehicleSimulator.decodePosition(m).foreach { l => addPosition(raw, l) }
       case m: msg_vfr_hud =>
+        maxAirSpeed = math.max(m.airspeed, maxAirSpeed)
+        maxGroundSpeed = math.max(m.groundspeed, maxGroundSpeed)
+
         if (m.throttle > 0) {
           if (!startOfFlightMessage.isDefined)
             startOfFlightMessage = Some(raw)
@@ -178,9 +181,6 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
         while (parameters.size < msg.param_index + 1)
           parameters.append(new ROParamValue)
         parameters(msg.param_index).raw = Some(msg)
-      case msg: msg_vfr_hud =>
-        maxAirSpeed = math.max(msg.airspeed, maxAirSpeed)
-        maxGroundSpeed = math.max(msg.groundspeed, maxGroundSpeed)
 
       case _ =>
     }

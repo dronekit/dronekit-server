@@ -40,7 +40,7 @@ import org.scalatra.servlet.FileUploadSupport
 import com.google.common.io.ByteStreams
 
 case class MessageJson(time: Long, msg: String)
-case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean)
+case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
 /**
  * The userId (if not null) and password must match the user record in the DB
@@ -157,9 +157,12 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
         for {
           id <- a.getId
         } yield {
+          // The json stuff doesn't understand tuples yet
+          val range = a.rangeOpt.map { t => t.productIterator.map(_.asInstanceOf[Float]).toSeq }
+
           ParameterJson(id,
             a.asString.getOrElse("?"),
-            a.docs.map(_.documentation).getOrElse(""), a.isInRange)
+            a.docs.map(_.documentation).getOrElse(""), a.isInRange, range)
         }
       }
       val sorted = unsorted.sortWith { case (a, b) => a.id < b.id }
