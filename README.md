@@ -35,6 +35,22 @@ $ sbt
 
 If `browse` doesn't launch your browser, manually open [http://localhost:8080/](http://localhost:8080/) in your browser.
 
+## Creating the configuration file
+
+You'll need to create ~/nestor.conf with the following contents:
+
+include "application"
+
+db {
+  password = "dbpass"
+  uri = "mongodb://dbuser:dbname@blahblah.mongolab.com:blah/dbname"
+}
+
+aws {
+  secretKey="YOUR-AWS-SECRET-KEY"
+  accessKey="YOUR-AWS-ACCESS-KEY"
+}
+
 # Deployment
 This app can be easily deployed to either Heroku or EC2.
 
