@@ -98,7 +98,9 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     contentType = tlogMime
 
     // Ok(grater[TLogChunk].toJSON(x))
-    Ok(chunk.bytes)
+    chunk.bytes.map { b =>
+      Ok(b)
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id.kml") { chunk =>
