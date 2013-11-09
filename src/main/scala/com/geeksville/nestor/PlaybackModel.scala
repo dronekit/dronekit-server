@@ -66,7 +66,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   var startPosition: Option[Location] = None
   var endPosition: Option[Location] = None
 
-  var messages: Traversable[TimestampedMessage] = Seq[TimestampedMessage]()
+  var messages: scala.collection.Seq[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
 
   var startOfFlightMessage: Option[TimestampedMessage] = None
@@ -190,7 +190,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   /**
    * Load a series of messages
    */
-  def loadMessages(m: Traversable[TimestampedMessage]) {
+  def loadMessages(m: scala.collection.Seq[TimestampedMessage]) {
     assert(messages.isEmpty) // FIXME, we don't yet support multiple tlog chunks (trying to avoid big allocs)
     messages = m
 
@@ -200,13 +200,16 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   /**
    * Load messages from a raw mavlink tlog file
    */
-  private def loadBytes(bytes: Array[Byte]) {
-    val reader = new BinaryMavlinkReader(bytes)
+  private def loadBytes(bytes: Array[Byte], reduced: Boolean) {
+    var messages = (new BinaryMavlinkReader(bytes)).toSeq
+
+    if (reduced) {
+      val reducer = new DataReducer
+      messages = messages.filter(reducer.filter)
+    }
 
     // FIXME - do this data reduction somewhere else
-    val reducer = new DataReducer
-    val reduced = reader.filter(reducer.filter)
-    loadMessages(reduced)
+    loadMessages(messages)
   }
 
   def toCoord(l: Location) = {
@@ -378,10 +381,10 @@ object PlaybackModel {
   /**
    * Fully populate a model from bytes, or return None if bytes not available
    */
-  def fromBytes(tlog: TLogChunk) = {
+  def fromBytes(tlog: TLogChunk, reduced: Boolean = true) = {
     tlog.bytes.map { b =>
       val model = new PlaybackModel
-      model.loadBytes(b)
+      model.loadBytes(b, reduced)
       model
     }
   }
