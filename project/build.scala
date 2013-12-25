@@ -58,7 +58,8 @@ object NestorBuild extends Build {
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
 
       // To include source for Takipi
-      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" ),
+      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" / "main" / "scala" ),
+      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" / "main" / "java" ),
 
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
