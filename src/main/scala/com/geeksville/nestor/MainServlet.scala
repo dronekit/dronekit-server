@@ -27,6 +27,7 @@ import simplex3d.math.double._
 import simplex3d.math.double.functions._
 import org.mavlink.messages.ardupilotmega.msg_raw_imu
 import org.mavlink.messages.ardupilotmega.msg_global_position_int
+import java.util.GregorianCalendar
 import org.mavlink.messages.ardupilotmega.msg_scaled_pressure
 
 class MainServlet extends NestorStack {
@@ -245,6 +246,70 @@ class MainServlet extends NestorStack {
     contentType = "text/csv"
     csvGenerator(generator)
     println(s"NUM MTK $numMtk vs $numOther")
+  }
+
+  /**
+   * A quick hack to find all tlogs from PX4s with
+   * at least one RAW_IMU message has abs(xacc), abs(yacc) and abs(zacc)
+   * all greater than 20 m/s/s at the same time.
+   * and INS_PRODUCT_ID==5 meaning it is a FMUv2
+   */
+  get("/report/px4fail.csv") {
+    var numSuspect = 0
+    var numOther = 0 // FIXME yuck - refactor to not need this vars - the generator model is wrong
+
+    // We only care about logs after the Iris launch date (sept 1)
+    val start = (new GregorianCalendar(2013, 8, 1)).getTime
+
+    def generator(tlog: TLogChunk) = {
+      // FIXME - refactor to have a new filterByFlightLength primitive...
+
+      val summary = tlog.summary
+
+      if (summary.startTime.before(start))
+        None
+      else
+        PlaybackModel.fromBytes(tlog, false).flatMap { model =>
+
+          val insProductId = model.parameters.find { p =>
+            p.getId.getOrElse("") == "INS_PRODUCT_ID"
+          }.flatMap {
+            _.getInt
+          }.getOrElse(-1)
+
+          val isPx4v2 = insProductId == 5
+          if (isPx4v2) {
+            println(s"Found px4v2 in $tlog")
+
+            def convAcc(a: Int) = { math.abs(a) * 0.001 * 9.81 }
+
+            // Use view to do all this processing lazily - to bail as early as possible
+            val highRec = model.messages.view.zipWithIndex.find {
+              case (m, i) =>
+                m.msg match {
+                  case r: msg_raw_imu =>
+                    convAcc(r.xacc) > 20 && convAcc(r.yacc) > 20 && convAcc(r.zacc) > 20
+                  case _ =>
+                    false
+                }
+            }
+
+            if (highRec.isDefined) {
+              println(s"Highrec $highRec in $tlog")
+              numSuspect += 1
+              Some(standardCols(tlog) :+ ("badRec" -> highRec.get))
+            } else
+              None
+          } else {
+            numOther += 1
+            None
+          }
+        }
+    }
+
+    contentType = "text/csv"
+    csvGenerator(generator)
+    println(s"NUM Suspect $numSuspect vs $numOther")
   }
 
   /**

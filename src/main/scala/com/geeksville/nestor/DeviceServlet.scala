@@ -98,7 +98,9 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     contentType = tlogMime
 
     // Ok(grater[TLogChunk].toJSON(x))
-    Ok(chunk.bytes)
+    chunk.bytes.map { b =>
+      Ok(b)
+    }.getOrElse { NotFound("tlog missing") }
   }
 
   getById("/tlog/:id.kml") { chunk =>
@@ -302,7 +304,7 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
     // Scan the files at upload to see if they are valid
     val reader = new BinaryMavlinkReader(bytes)
     val model = new PlaybackModel
-    model.loadMessages(reader)
+    model.loadMessages(reader.toSeq)
 
     println("Num records: " + model.numMessages + " num bytes: " + bytes.size)
     if (model.numMessages < 2)
