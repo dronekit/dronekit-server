@@ -66,7 +66,7 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion,
         // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
-        "com.novus" %% "salat" % "1.9.5-SNAPSHOT",
+        "com.novus" %% "salat" % "1.9.5",
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
         "com.amazonaws" % "aws-java-sdk" % "1.3.10",
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
