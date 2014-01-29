@@ -27,6 +27,7 @@ import simplex3d.math.double._
 import simplex3d.math.double.functions._
 import org.mavlink.messages.ardupilotmega.msg_raw_imu
 import org.mavlink.messages.ardupilotmega.msg_global_position_int
+import org.mavlink.messages.ardupilotmega.msg_scaled_pressure
 
 class MainServlet extends NestorStack {
 
@@ -246,6 +247,65 @@ class MainServlet extends NestorStack {
     println(s"NUM MTK $numMtk vs $numOther")
   }
 
+  /**
+   * Find
+   * SCALED_PRESSURE.temperature >= 5000 and abs(diff(SCALED_PRESSURE.temperature)) >= 100
+   *
+   * we're looking for cases where the temperature is above 50 degrees and
+   * the temperature changes by 1 degree in a single sample, with a sample
+   * rate of 2Hz or more (so 2 degrees/second).
+   */
+  get("/report/badtemps.csv") {
+    var numFound = 0
+    var numOther = 0 // FIXME yuck - refactor to not need this vars - the generator model is wrong
+
+    def generator(tlog: TLogChunk) = {
+      // FIXME - refactor to have a new filterByFlightLength primitive...
+
+      val summary = tlog.summary
+
+      // Do a quick filter to try and avoid reading useless tlogs (the precalculated data currently is missing some of the fields Lorenz requested)
+      PlaybackModel.fromBytes(tlog).flatMap { model =>
+
+        // Use view to do all this processing lazily - to bail as early as possible
+        val temprecs = model.messages.view.flatMap {
+          _.msg match {
+            case m: msg_scaled_pressure => Some(m)
+            case _ => None
+          }
+        }
+        val pairs = temprecs.toSeq.sliding(2, 1)
+        val suspect = pairs.find {
+          case Seq(single) =>
+            println("Ignoring last")
+            false // Ignore the last entry
+          case Seq(prev, cur) =>
+            if (cur.temperature >= 5000) {
+              println(s"Found high temp ${cur.temperature}")
+              val diff = math.abs(cur.temperature - prev.temperature)
+              if (diff >= 100) {
+                println("Found big change")
+                true
+              } else
+                false
+            } else
+              false
+        }
+
+        if (suspect.isDefined) {
+          numFound += 1
+          Some(standardCols(tlog))
+        } else {
+          numOther += 1
+          None
+        }
+      }
+    }
+
+    contentType = "text/csv"
+    csvGenerator(generator)
+    println(s"NUM found $numFound vs $numOther")
+  }
   /**
    * Our top level browse a flight page
    */
