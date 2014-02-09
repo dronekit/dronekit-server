@@ -25,8 +25,7 @@ object NestorBuild extends Build {
   val Organization = "com.geeksville"
   val Name = "nestor"
   val Version = "0.2.0-SNAPSHOT"
-  val ScalaVersion = "2.10.0"
-  val ScalatraVersion = "2.2.0"
+  val ScalatraVersion = "2.2.2"
 
   val assemblyCustomize = mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {
@@ -52,7 +51,6 @@ object NestorBuild extends Build {
       organization := Organization,
       name := Name,
       version := Version,
-      scalaVersion := ScalaVersion,
       assemblyCustomize,
       resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
@@ -64,6 +62,13 @@ object NestorBuild extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion,
+        
+        // For swagger
+        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
+        // Important to NOT include this: "org.scalatra" %% "scalatra-json" % "2.2.2",
+        // Instead use the json4s standalone version - I have to use force() here because it seems that 3.2.5 or later breaks swagger autodoc generation
+        "org.json4s"   %% "json4s-native" % "3.2.4" force(),
+  
         // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
