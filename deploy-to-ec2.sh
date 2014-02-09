@@ -11,9 +11,9 @@ echo
 
 # we send up src as a super skanky hack because our assembly still accidentally references
 # src/main/webapp/WEB-INF
-rsync -avz -e "ssh" src target/nestor-assembly-*.jar ubuntu@$EC2_HOSTNAME:
+rsync -avz -e "ssh -l ubuntu -i /home/kevinh/.ssh/id_dsa-3dr" src target/nestor-assembly-*.jar ubuntu@$EC2_HOSTNAME:
 
-rsync -avz -e "ssh" S98nestor-startup ubuntu@$EC2_HOSTNAME:/tmp
+rsync -avz -e "ssh -l ubuntu -i /home/kevinh/.ssh/id_dsa-3dr" S98nestor-startup ubuntu@$EC2_HOSTNAME:/tmp
 ./ssh-ec2 sudo mv /tmp/S98nestor-startup /etc/rc2.d
 
 TAGNAME=deploy-`date +%F-%H%M%S`
