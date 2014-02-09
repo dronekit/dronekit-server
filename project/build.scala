@@ -32,11 +32,13 @@ object NestorBuild extends Build {
       // Pull all of the jansi classes from the offical dist jar, not jline
       case PathList("org", "fusesource", xs @ _*) => MergeStrategy.first
       case PathList("META-INF", "native", xs @ _*) => MergeStrategy.first
+      case PathList("org", "slf4j", xs @ _*) => MergeStrategy.first
       //case "application.conf" => MergeStrategy.concat
       case ".project" => MergeStrategy.discard
       case ".classpath" => MergeStrategy.discard
       case "build.xml" => MergeStrategy.discard
       case "about.html" => MergeStrategy.discard
+      case "rootdoc.txt" => MergeStrategy.discard
       case x => old(x)
     }
   }
@@ -68,6 +70,7 @@ object NestorBuild extends Build {
         // Important to NOT include this: "org.scalatra" %% "scalatra-json" % "2.2.2",
         // Instead use the json4s standalone version - I have to use force() here because it seems that 3.2.5 or later breaks swagger autodoc generation
         "org.json4s"   %% "json4s-native" % "3.2.4" force(),
+        "org.slf4j" % "slf4j-log4j12" % "1.7.5",
   
         // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
