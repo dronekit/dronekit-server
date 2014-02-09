@@ -18,6 +18,8 @@ import java.io.File
 import com.geeksville.dapi.UserController
 import com.geeksville.dapi.ResourcesApp
 import com.geeksville.dapi.ApiSwagger
+import com.geeksville.dapi.MissionController
+import com.geeksville.dapi.VehicleController
 
 class ScalatraBootstrap extends LifeCycle {
   implicit val swagger = new ApiSwagger
@@ -37,6 +39,8 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new MainServlet, "/*")
 
     context.mount(new UserController, "/api/v1/user/*")
+    context.mount(new VehicleController, "/api/v1/vehicle/*")
+    context.mount(new MissionController, "/api/v1/mission/*")
     context.mount(new ResourcesApp, "/api-docs/*")
   }
 }
