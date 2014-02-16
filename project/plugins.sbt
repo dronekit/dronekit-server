@@ -15,3 +15,5 @@ addSbtPlugin("com.bowlingx" %% "xsbt-wro4j-plugin" % "0.2.0-SNAPSHOT")
 addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.3")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.8.6")
+
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.4")

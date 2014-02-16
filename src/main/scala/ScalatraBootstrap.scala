@@ -1,20 +1,29 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 import com.geeksville.nestor._
 import org.scalatra._
 import javax.servlet.ServletContext
 import java.io.File
+import com.geeksville.dapi.UserController
+import com.geeksville.dapi.ResourcesApp
+import com.geeksville.dapi.ApiSwagger
+import com.geeksville.dapi.MissionController
+import com.geeksville.dapi.VehicleController
 
 class ScalatraBootstrap extends LifeCycle {
+  implicit val swagger = new ApiSwagger
+
   override def init(context: ServletContext) {
 
     val configOverride = new File(System.getProperty("user.home") + "/nestor.conf")
@@ -28,5 +37,10 @@ class ScalatraBootstrap extends LifeCycle {
 
     context.mount(new DeviceServlet, "/api/*")
     context.mount(new MainServlet, "/*")
+
+    context.mount(new UserController, "/api/v1/user/*")
+    context.mount(new VehicleController, "/api/v1/vehicle/*")
+    context.mount(new MissionController, "/api/v1/mission/*")
+    context.mount(new ResourcesApp, "/api-docs/*")
   }
 }
