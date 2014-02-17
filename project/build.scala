@@ -23,7 +23,7 @@ import AssemblyKeys._ // put this at the top of the file
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
-  val Name = "nestor"
+  val Name = "apihub"
   val Version = "0.2.0-SNAPSHOT"
   val ScalatraVersion = "2.2.2"
 
