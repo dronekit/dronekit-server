@@ -20,6 +20,7 @@ import com.bowlingx.sbt.plugins.Wro4jPlugin._
 import Wro4jKeys._
 import sbtassembly.Plugin._
 import AssemblyKeys._ // put this at the top of the file
+import scalabuff.ScalaBuffPlugin._
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
@@ -43,16 +44,16 @@ object NestorBuild extends Build {
     }
   }
 
-  lazy val common = Project(id = "gcommon2",
+  lazy val common = Project(id = "gcommon3",
                            base = file("arduleader/common"))
 
   lazy val japiProxy = Project(id = "japi-proxy",
                            base = file("japi-proxy"))
 
   lazy val nestorProject = Project(
-    "nestor",
+    "apihub",
     file("."),
-    settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ assemblySettings ++ scalateSettings ++ wro4jSettings ++ Seq(
+    settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ assemblySettings ++ scalateSettings ++ wro4jSettings ++ scalabuffSettings ++ Seq(
       organization := Organization,
       name := Name,
       version := Version,
@@ -110,5 +111,9 @@ object NestorBuild extends Build {
       }
       // busted? needed? 
 	// webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )) dependsOn(common, japiProxy)
+      )).configs(ScalaBuff).dependsOn(common, japiProxy)
 }
+
+
+
+
