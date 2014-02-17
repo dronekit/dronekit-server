@@ -46,6 +46,9 @@ object NestorBuild extends Build {
   lazy val common = Project(id = "gcommon2",
                            base = file("arduleader/common"))
 
+  lazy val japiProxy = Project(id = "japi-proxy",
+                           base = file("japi-proxy"))
+
   lazy val nestorProject = Project(
     "nestor",
     file("."),
@@ -107,5 +110,5 @@ object NestorBuild extends Build {
       }
       // busted? needed? 
 	// webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )) dependsOn(common)
+      )) dependsOn(common, japiProxy)
 }

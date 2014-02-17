@@ -1,3 +1,6 @@
 [submodule "arduleader"]
 	path = arduleader
 	url = https://github.com/geeksville/arduleader
+[submodule "japi-proxy"]
+	path = japi-proxy
+	url = https://github.com/geeksville/japi-proxy

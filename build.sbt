@@ -1,3 +1,5 @@
+import com.typesafe.sbt.SbtStartScript
+
 scalaVersion in ThisBuild := "2.10.3" // To match version used by scala-ide
 
 EclipseKeys.createSrc in ThisBuild := EclipseCreateSrc.Default + EclipseCreateSrc.Resource // Include resources dir in eclipse classpath
@@ -30,7 +32,7 @@ publishTo := None
 
 //JelasticKeys.comment in JelasticKeys.deploy := "Kevin was here"
 
-seq(com.typesafe.startscript.StartScriptPlugin.startScriptForClassesSettings: _*)
+seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
