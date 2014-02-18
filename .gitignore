@@ -49,9 +49,7 @@ pubsub/target
 # eclipse specific
 .metadata
 jrebel.lic
-.settings
 .classpath
-.project
 
 .ensime*
 *.sublime-*
