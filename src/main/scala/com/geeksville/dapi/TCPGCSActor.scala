@@ -9,6 +9,7 @@ import akka.actor.PoisonPill
  * An actor that manages a TCP connection from a GCS
  */
 class TCPGCSActor(private val socket: Socket) extends GCSActor {
+
   // FIXME - change to use the fancy akka TCP API or zeromq so we don't need to burn a thread for each client)
   private val listenerThread = ThreadTools.createDaemon("TCPGCS")(readerFunct)
   listenerThread.start()
@@ -28,13 +29,15 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
 
           // FIXME - use the enum to more quickly find the payload we care about
           Seq(env.mavlink, env.login).foreach { m =>
+
+            log.debug(s"Dispatching $m")
             self ! m
           }
         }
       }
     } catch {
       case ex: Throwable =>
-        error("Exiting TCPGCS due to: " + ex)
+        log.error(s"Exiting TCPGCS due to: $ex")
     } finally {
       // If our reader exits, kill our actor
       self ! PoisonPill
