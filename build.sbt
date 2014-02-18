@@ -12,6 +12,12 @@ libraryDependencies += "com.typesafe" % "config" % "1.0.2" withSources()
 
 libraryDependencies += "org.simplex3d" %% "simplex3d-math-double" % "2.4.7" withSources()
 
+libraryDependencies ++= Seq(
+  "com.github.aselab" %% "scala-activerecord" % "0.2.3",
+  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.3",
+  "com.h2database" % "h2" % "1.3.170"  // See Supported databases
+)
+
 // seq(jelasticSettings:_*)
 
 // JelasticKeys.email in JelasticKeys.deploy := sys.env.get("JELASTIC_USERNAME").getOrElse(
