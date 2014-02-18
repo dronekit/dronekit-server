@@ -6,7 +6,7 @@ import akka.actor.Props
 import scala.reflect.ClassTag
 import akka.actor.ActorLogging
 
-private case object UnexpectedMessage
+case object UnexpectedMessage
 
 /**
  * An actor that listens on a port # and spawns actors to handle any incoming connections.

@@ -28,7 +28,7 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
         mopt.foreach { env =>
 
           // FIXME - use the enum to more quickly find the payload we care about
-          Seq(env.mavlink, env.login).flatten.foreach { m =>
+          Seq(env.mavlink, env.login, env.setVehicle).flatten.foreach { m =>
             log.debug(s"Dispatching $m")
             self ! m
           }

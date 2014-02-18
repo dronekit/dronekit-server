@@ -15,6 +15,8 @@ case class MsgLogin(username: String, password: String)
 class GCSActor extends Actor with ActorLogging {
   def receive = {
     case x: MsgHandleMavlink =>
+      log.info(s"Got $x")
     case x: MsgLogin =>
+      log.info(s"Got $x")
   }
 }
