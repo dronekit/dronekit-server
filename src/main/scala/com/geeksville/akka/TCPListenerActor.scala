@@ -11,6 +11,8 @@ private case object UnexpectedMessage
 /**
  * An actor that listens on a port # and spawns actors to handle any incoming connections.
  * The actor constructor is assumed to take a Socket as the only parameter.
+ *
+ * FIXME - if some kills our socket we won't currently automatically exit the actor
  */
 class TCPListenerActor[T <: Actor: ClassTag](portNum: Int) extends Actor with ActorLogging {
 
