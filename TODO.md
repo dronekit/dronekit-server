@@ -5,9 +5,17 @@
 * Kill TCP actor when client disconnects
 * create new flight log records as flight is received
 
+# Medium term fixme
+
+* Bail on client if his first message is not to log in
+* Validate logins
+* Validate access to vehicles
+* Use sequence # to check for & report dropped packets
+
 # Long term TODO
 
 * Use SASL? http://docs.oracle.com/javase/1.5.0/docs/guide/security/sasl/sasl-refguide.html
+* change mavlink parsing (MAVLinkReader) to use ByteStrings rather than byte arrays - to make for less heap allocs
 
 # Discarded ideas
 
