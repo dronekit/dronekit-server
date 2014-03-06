@@ -14,6 +14,8 @@ import akka.actor.ActorLogging
  */
 class TCPListenerActor[T <: Actor: ClassTag](portNum: Int) extends Actor with ActorLogging {
 
+  log.info(s"TCPListenerActor listening on port $portNum")
+
   private val connectionListener = new TCPListener(portNum, { s =>
     log.info(s"TCP connection received on $s")
 

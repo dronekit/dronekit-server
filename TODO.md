@@ -2,8 +2,8 @@
 
 * Apply tridge comments
 * Investigate mavproxy internals
-* Limit akka internal queue lengths
-* Create a vehicle actor api object (used for zeromq, direct akka tests, anything)
+* Kill TCP actor when client disconnects
+* create new flight log records as flight is received
 
 # Long term TODO
 

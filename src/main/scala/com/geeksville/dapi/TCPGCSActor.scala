@@ -10,6 +10,8 @@ import akka.actor.PoisonPill
  */
 class TCPGCSActor(private val socket: Socket) extends GCSActor {
 
+  log.info(s"TCPGCSActor handling incoming $socket")
+
   // FIXME - change to use the fancy akka TCP API or zeromq so we don't need to burn a thread for each client)
   private val listenerThread = ThreadTools.createDaemon("TCPGCS")(readerFunct)
   listenerThread.start()
@@ -24,13 +26,16 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
     try {
       // Any Envelopes that come over TCP, extract the message and handle just like any other actor msg
       using(socket.getInputStream) { is =>
-        val mopt = Envelope.parseDelimitedFrom(is)
-        mopt.foreach { env =>
+        // Real until we see an invalid envelope - FIXME, don't hang up in this case?
+        Stream.continually(Envelope.parseDelimitedFrom(is)).takeWhile(_.isDefined).foreach { mopt =>
+          mopt.foreach { env =>
+            log.debug(s"Got packet $env")
 
-          // FIXME - use the enum to more quickly find the payload we care about
-          Seq(env.mavlink, env.login, env.setVehicle).flatten.foreach { m =>
-            log.debug(s"Dispatching $m")
-            self ! m
+            // FIXME - use the enum to more quickly find the payload we care about
+            Seq(env.mavlink, env.login, env.setVehicle).flatten.foreach { m =>
+              log.debug(s"Dispatching $m")
+              self ! m
+            }
           }
         }
       }

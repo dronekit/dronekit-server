@@ -12,7 +12,7 @@
  * ****************************************************************************
  */
 import com.geeksville.nestor._
-import org.scalatra._
+import akka.actor.Props
 import javax.servlet.ServletContext
 import java.io.File
 import com.geeksville.dapi.UserController
@@ -20,9 +20,16 @@ import com.geeksville.dapi.ResourcesApp
 import com.geeksville.dapi.ApiSwagger
 import com.geeksville.dapi.MissionController
 import com.geeksville.dapi.VehicleController
+import com.geeksville.akka.MockAkka
+import com.geeksville.akka.TCPListenerActor
+import com.geeksville.dapi.TCPGCSActor
+import org.scalatra.LifeCycle
+import com.geeksville.apiproxy.APIConstants
 
 class ScalatraBootstrap extends LifeCycle {
   implicit val swagger = new ApiSwagger
+
+  def system = MockAkka.system
 
   override def init(context: ServletContext) {
 
@@ -42,5 +49,13 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new VehicleController, "/api/v1/vehicle/*")
     context.mount(new MissionController, "/api/v1/mission/*")
     context.mount(new ResourcesApp, "/api-docs/*")
+
+    // Start up our tcp listener
+    val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
+  }
+
+  /// Make sure you shut down Akka
+  override def destroy(context: ServletContext) {
+    system.shutdown()
   }
 }
