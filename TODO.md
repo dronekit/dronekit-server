@@ -1,6 +1,13 @@
 # TODO
 
+* Apply tridge comments
+* Investigate mavproxy internals
+* Limit akka internal queue lengths
 * Create a vehicle actor api object (used for zeromq, direct akka tests, anything)
+
+# Long term TODO
+
+* Use SASL? http://docs.oracle.com/javase/1.5.0/docs/guide/security/sasl/sasl-refguide.html
 
 # Discarded ideas
 
