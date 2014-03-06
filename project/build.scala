@@ -21,6 +21,7 @@ import Wro4jKeys._
 import sbtassembly.Plugin._
 import AssemblyKeys._ // put this at the top of the file
 import scalabuff.ScalaBuffPlugin._
+import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings }
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
@@ -111,7 +112,7 @@ object NestorBuild extends Build {
       }
       // busted? needed? 
 	// webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )).configs(ScalaBuff).dependsOn(common, japiProxy)
+      )).configs(ScalaBuff).configs(Atmos).settings(atmosSettings: _*).dependsOn(common, japiProxy)
 }
 
 
