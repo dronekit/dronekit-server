@@ -4,6 +4,8 @@ import java.net.Socket
 import com.geeksville.util.ThreadTools
 import com.geeksville.util.Using._
 import akka.actor.PoisonPill
+import akka.actor.SupervisorStrategy
+import java.net.SocketException
 
 /**
  * An actor that manages a TCP connection from a GCS
@@ -15,6 +17,9 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
   // FIXME - change to use the fancy akka TCP API or zeromq so we don't need to burn a thread for each client)
   private val listenerThread = ThreadTools.createDaemon("TCPGCS")(readerFunct)
   listenerThread.start()
+
+  // We can't meaningfully restart this actor because the old socket can not be used?  For now just die and let the client reconnect
+  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def postStop() {
     socket.close()
@@ -40,7 +45,7 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
         }
       }
     } catch {
-      case ex: Throwable =>
+      case ex: SocketException =>
         log.error(s"Exiting TCPGCS due to: $ex")
     } finally {
       // If our reader exits, kill our actor

@@ -21,10 +21,13 @@ case class VehicleDisconnected()
 class LiveVehicleActor(val vehicleId: String) extends Actor with ActorLogging {
   def receive = {
     case VehicleConnected() =>
+      log.debug("Vehicle connected")
     case VehicleDisconnected() =>
+      log.debug("Vehicle disconnected")
     // FIXME - store tlog to server
 
     case msg: TimestampedMessage =>
+      log.debug(s"Ignoring $msg")
     // FIXME - add to running tlog and publish so watchers can do the right thing
   }
 }
