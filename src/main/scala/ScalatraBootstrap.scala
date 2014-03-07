@@ -25,8 +25,9 @@ import com.geeksville.akka.TCPListenerActor
 import com.geeksville.dapi.TCPGCSActor
 import org.scalatra.LifeCycle
 import com.geeksville.apiproxy.APIConstants
+import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
 
-class ScalatraBootstrap extends LifeCycle {
+class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
 
   def system = MockAkka.system

@@ -67,8 +67,13 @@ object NestorBuild extends Build {
       unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" / "main" / "java" ),
 
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-scalate" % ScalatraVersion,
+        "org.scalatra" %% "scalatra" % ScalatraVersion withSources(),
+        "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources(),
+
+	// scala-activerecord support
+  	"com.github.aselab" %% "scala-activerecord" % "0.2.3" withSources(),
+  	"com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.3" withSources(),
+  	"com.h2database" % "h2" % "1.3.170",  // See Supported databases
         
         // For swagger - FIXME, the swagger folks are apparently importing the log4j12 lib, which they should not do - causes multiple 
 	// bindings for logging

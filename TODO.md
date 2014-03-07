@@ -7,6 +7,9 @@
 
 # Medium term fixme
 
+* Set column attributes (indexing etc) for tables: https://github.com/aselab/scala-activerecord/wiki/Using-Models
+* Investigate optimistic vs pessimistic ActiveRecord locking
+
 * Bail on client if his first message is not to log in
 * Validate logins
 * Validate access to vehicles

@@ -6,6 +6,7 @@ import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
+import com.geeksville.dapi.model._
 
 class VehicleController(implicit swagger: Swagger) extends ApiController[Vehicle]("vehicle", swagger) {
 
@@ -29,8 +30,3 @@ class VehicleController(implicit swagger: Swagger) extends ApiController[Vehicle
   // FIXME add operations to list/add/delete missions
 }
 
-// A Flower object to use as a faked-out data model
-case class Vehicle(id: String, name: String)
-
-case class Location(lat: Double, lon: Double, alt: Double)
-case class Attitude(pitch: Double, yaw: Double, roll: Double)
