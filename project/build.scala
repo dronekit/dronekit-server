@@ -27,7 +27,7 @@ object NestorBuild extends Build {
   val Organization = "com.geeksville"
   val Name = "apihub"
   val Version = "0.2.0-SNAPSHOT"
-  val ScalatraVersion = "2.2.2"
+  val ScalatraVersion = "2.3.0-SNAPSHOT"
 
   val assemblyCustomize = mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {

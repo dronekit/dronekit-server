@@ -14,9 +14,9 @@ abstract class DapiRecord extends ActiveRecord with Datestamps
  *
  * @param name a user specified name for the vehicle (i.e. My Bixler)
  */
-case class Vehicle(name: String) // extends DapiRecord
+case class Vehicle(name: String) extends DapiRecord
 
-object Vehicle {} // extends ActiveRecordCompanion[Vehicle]
+object Vehicle extends ActiveRecordCompanion[Vehicle]
 
 case class Location(lat: Double, lon: Double, alt: Double)
 case class Attitude(pitch: Double, yaw: Double, roll: Double)
@@ -24,7 +24,9 @@ case class Attitude(pitch: Double, yaw: Double, roll: Double)
 /**
  * A mission recorded from a vehicle
  */
-case class Mission(name: String)
+case class Mission(name: String) extends DapiRecord
+
+object Mission extends ActiveRecordCompanion[Mission]
 
 // FIXME - unify with real model
 case class Mavlink(time: Long, id: Int, payload: List[Byte])
