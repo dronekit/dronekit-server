@@ -9,6 +9,8 @@ import com.geeksville.mavlink.LogBinaryMavlink
 import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import java.io.File
+import com.geeksville.flight.VehicleModel
+import com.geeksville.akka.InstrumentedActor
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -24,12 +26,14 @@ case class VehicleDisconnected()
  * VehicleConnected - sent by the GCSActor when the vehicle first connects
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
-class LiveVehicleActor(val vehicle: Vehicle) extends Actor with ActorLogging {
+class LiveVehicleActor(val vehicle: Vehicle) extends VehicleModel with ActorLogging {
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
   private var tlogFileOpt: Option[File] = None
 
-  def receive = {
+  override def onReceive = mReceive.orElse(super.onReceive)
+
+  private def mReceive: InstrumentedActor.Receiver = {
     case VehicleConnected() =>
       log.debug("Vehicle connected")
       val f = LogBinaryMavlink.getFilename() // FIXME - create in temp directory instead
@@ -44,7 +48,18 @@ class LiveVehicleActor(val vehicle: Vehicle) extends Actor with ActorLogging {
 
     case msg: TimestampedMessage =>
       log.debug(s"Forwarding $msg")
+
+      // Log to the file
       tloggerOpt.foreach { _ ! msg }
-    // FIXME - publish so watchers can do the right thing
+
+      // Update our live model
+      self ! msg.msg
+  }
+
+  /**
+   * m must be a SendYoungest or a MAVLinkMessage
+   */
+  override protected def sendMavlinkAlways(m: Any) {
+    throw new Exception("FIXME, sending not yet supported")
   }
 }
