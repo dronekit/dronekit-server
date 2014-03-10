@@ -68,6 +68,7 @@ case class User(@Required fullName: String, @Required @Unique login: String) ext
 }
 
 object User extends DapiRecordCompanion[User] {
+  def find(id: String): Option[User] = this.where(_.login === id).headOption
 }
 
 case class Location(lat: Double, lon: Double, alt: Double)
