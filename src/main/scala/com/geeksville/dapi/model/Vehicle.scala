@@ -6,6 +6,8 @@ import com.github.aselab.activerecord.Datestamps
 import com.github.aselab.activerecord.annotations._
 import org.squeryl.annotations.Transient
 import org.mindrot.jbcrypt.BCrypt
+import java.util.UUID
+import com.github.aselab.activerecord.dsl._
 
 /**
  * Behavior common to all Dapi records
@@ -13,20 +15,14 @@ import org.mindrot.jbcrypt.BCrypt
 abstract class DapiRecord extends ActiveRecord with Datestamps
 
 trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] {
-  /**
-   * Find by ID but using a string encoding (i.e. UUID or somesuch)
-   * For now I just convert the int to its base-10 representation
-   */
-  def find(id: String): Option[T] = find(id.toLong)
-
 }
 
 /**
  * A vehicle model
  *
- * @param name a user specified name for the vehicle (i.e. My Bixler)
+ * @param uuid is selected by the client on first connection
  */
-case class Vehicle(name: String) extends DapiRecord {
+case class Vehicle(@Required @Unique uuid: UUID) extends DapiRecord {
   /**
    * Who owns me?
    */
@@ -34,12 +30,23 @@ case class Vehicle(name: String) extends DapiRecord {
   val userId: Option[Long] = None
 
   /**
+   * A user specified name for this vehicle (i.e. my bixler)
+   */
+  var name: String = ""
+
+  /**
    * All the missions this vehicle has made
    */
   lazy val vehicles = hasMany[Mission]
 }
 
-object Vehicle extends DapiRecordCompanion[Vehicle]
+object Vehicle extends DapiRecordCompanion[Vehicle] {
+  /**
+   * Find by ID but using a string encoding (i.e. UUID or somesuch)
+   * For now I just convert the int to its base-10 representation
+   */
+  def find(id: UUID): Option[Vehicle] = this.where(_.uuid === id).headOption
+}
 
 case class User(@Required fullName: String, @Required @Unique login: String) extends DapiRecord {
   @Transient

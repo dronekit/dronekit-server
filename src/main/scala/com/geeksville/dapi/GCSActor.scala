@@ -15,6 +15,7 @@ import com.geeksville.dapi.model.Vehicle
 import com.geeksville.dapi.model.Tables
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.model.User
+import java.util.UUID
 
 /// All messages after connection are identified by this tuple
 case class VehicleBinding(interface: Int, sysId: Int)
@@ -35,13 +36,23 @@ class GCSActor extends Actor with ActorLogging {
 
   private var startTime: Option[Long] = None
 
-  private var user: Option[User] = None
+  private var userOpt: Option[User] = None
+
+  private def user = userOpt.get
 
   def receive = {
     case msg: SetVehicleMsg =>
       log.info(s"Binding vehicle $msg")
-      val vehicle = Vehicle.find(msg.vehicleId).get
-      val actor = vehicleActors.getOrCreate(msg.vehicleId, Props(new LiveVehicleActor(vehicle)))
+      val uuid = UUID.fromString(msg.vehicleUUID)
+      val vehicle = Vehicle.find(uuid).getOrElse {
+        val v = Vehicle(uuid).create
+        user.vehicles += v
+        v.save
+        user.save // FIXME - do I need to explicitly save?
+        v
+      }
+
+      val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle)))
       vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
       actor ! VehicleConnected()
 
@@ -62,7 +73,7 @@ class GCSActor extends Actor with ActorLogging {
     case msg: LoginMsg =>
       log.info(s"FIXME ignoring login $msg")
       startTime = msg.startTime
-      user = Tables.users.where(_.login === msg.username).headOption
+      userOpt = Tables.users.where(_.login === msg.username).headOption
 
     case x @ _ =>
       log.warning(s"Ignoring $x" + x.getClass())

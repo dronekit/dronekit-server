@@ -17,11 +17,6 @@ object Tables extends ActiveRecordTables with ScalatraSupport {
     val u = User("Tester Bob", "test-bob@3drobotics.com").create
     u.password = "sekrit"
     u.save()
-
-    val v = Vehicle("Test Plane").create
-    u.vehicles += v
-
-    u.save()
     //}
   }
 }
