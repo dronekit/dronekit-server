@@ -40,21 +40,30 @@ class GCSActor extends Actor with ActorLogging {
 
   private def user = userOpt.get
 
+  /**
+   * find a vehicle object for a specified UUID, associating it with our user if needed
+   */
+  private def getOrCreateVehicle(uuid: UUID) = Vehicle.find(uuid).getOrElse {
+    val v = Vehicle(uuid).create
+    user.vehicles += v
+    v.save
+    user.save // FIXME - do I need to explicitly save?
+    v
+  }
+
   def receive = {
     case msg: SetVehicleMsg =>
       log.info(s"Binding vehicle $msg")
-      val uuid = UUID.fromString(msg.vehicleUUID)
-      val vehicle = Vehicle.find(uuid).getOrElse {
-        val v = Vehicle(uuid).create
-        user.vehicles += v
-        v.save
-        user.save // FIXME - do I need to explicitly save?
-        v
-      }
+      if (msg.vehicleUUID == "GCS")
+        log.warning("ignoring GCS ID")
+      else {
+        val uuid = UUID.fromString(msg.vehicleUUID)
+        val vehicle = getOrCreateVehicle(uuid)
 
-      val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle)))
-      vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
-      actor ! VehicleConnected()
+        val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle)))
+        vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
+        actor ! VehicleConnected()
+      }
 
     case msg: MavlinkMsg =>
       log.info(s"Got $msg")
@@ -66,8 +75,13 @@ class GCSActor extends Actor with ActorLogging {
         val p = decodeMavlink(pRaw)
 
         // Have our vehicle handle the message
-        val vehicle = vehicles(VehicleBinding(msg.srcInterface, p.sysId))
-        vehicle ! TimestampedMessage(timestamp, p)
+        val timestamped = TimestampedMessage(timestamp, p)
+        val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
+        if (!vehicle.isDefined) {
+          log.warning("Sending unknown payload to all vehicles: " + p)
+          vehicles.values.foreach { _ ! timestamped }
+        } else
+          vehicle.foreach { _ ! timestamped }
       }
 
     case msg: LoginMsg =>
