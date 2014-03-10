@@ -71,9 +71,11 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources(),
 
 	// scala-activerecord support
-  	"com.github.aselab" %% "scala-activerecord" % "0.2.3" withSources(),
-  	"com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.3" withSources(),
+  	"com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources(),
+  	"com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources(),
   	"com.h2database" % "h2" % "1.3.170",  // See Supported databases
+
+        "org.mindrot" % "jbcrypt" % "0.3m", // For password encryption
         
         // For swagger - FIXME, the swagger folks are apparently importing the log4j12 lib, which they should not do - causes multiple 
 	// bindings for logging

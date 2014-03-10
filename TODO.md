@@ -7,6 +7,7 @@
 
 # Medium term fixme
 
+* Exceptions in GCSActor should not cause restart of the actor
 * Renable the REST api (fix swagger cruft first)
 * Set column attributes (indexing etc) for tables: https://github.com/aselab/scala-activerecord/wiki/Using-Models
 * Investigate optimistic vs pessimistic ActiveRecord locking
