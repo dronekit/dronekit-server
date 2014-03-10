@@ -44,6 +44,10 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     super.init(context)
 
+    // start a console so we can browse the H2 database
+    // FIXME - do this someplace else, and only in developer mode
+    //org.h2.tools.Server.createWebServer("-webPort", "10500").start()
+
     // Doesn't work yet - for now allow all origins
     //context.initParameters("org.scalatra.cors.allowedOrigins") = "http://www.droneshare.com http://localhost:8080 http://dmn0kpsvjtmio.cloudfront.net nestor-production.herokuapp.com"
 

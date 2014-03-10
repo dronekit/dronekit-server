@@ -19,6 +19,8 @@
 
 # Long term TODO
 
+* Remove well known DB psw from application.conf
+* Lower the mysql privs granted to the dapi mysql user
 * Use SASL? http://docs.oracle.com/javase/1.5.0/docs/guide/security/sasl/sasl-refguide.html
 * change mavlink parsing (MAVLinkReader) to use ByteStrings rather than byte arrays - to make for less heap allocs
 

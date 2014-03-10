@@ -73,7 +73,11 @@ object NestorBuild extends Build {
 	// scala-activerecord support
   	"com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources(),
   	"com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources(),
-  	"com.h2database" % "h2" % "1.3.170",  // See Supported databases
+  	
+  	"mysql" % "mysql-connector-java" % "5.1.22",
+  	
+  	// Turn off h2 for now
+  	// "com.h2database" % "h2" % "1.3.170",  // See Supported databases
 
         "org.mindrot" % "jbcrypt" % "0.3m", // For password encryption
         
