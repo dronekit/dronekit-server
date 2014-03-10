@@ -12,6 +12,7 @@ case object RunTest
 class SimGCSClient extends Actor with ActorLogging {
   def receive = {
     case RunTest =>
-      TestClient.runTest()
+      log.error("FIXME: This can't work yet - because both the scala and java versions of the protobuf glue conflict")
+    // TestClient.runTest()
   }
 }

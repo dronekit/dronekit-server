@@ -26,6 +26,8 @@ import com.geeksville.dapi.TCPGCSActor
 import org.scalatra.LifeCycle
 import com.geeksville.apiproxy.APIConstants
 import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
+import com.geeksville.dapi.test.SimGCSClient
+import com.geeksville.dapi.test.RunTest
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -39,6 +41,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
       System.setProperty("config.file", configOverride.toString)
     else
       println(s"No config override file found.  You should probably create $configOverride")
+
+    super.init(context)
 
     // Doesn't work yet - for now allow all origins
     //context.initParameters("org.scalatra.cors.allowedOrigins") = "http://www.droneshare.com http://localhost:8080 http://dmn0kpsvjtmio.cloudfront.net nestor-production.herokuapp.com"
@@ -55,10 +59,14 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Start up our tcp listener
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
+
+    val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
+    simClient ! RunTest
   }
 
   /// Make sure you shut down Akka
   override def destroy(context: ServletContext) {
     system.shutdown()
+    super.destroy(context)
   }
 }

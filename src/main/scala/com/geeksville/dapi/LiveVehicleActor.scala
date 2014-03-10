@@ -3,6 +3,7 @@ package com.geeksville.dapi
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import com.geeksville.mavlink.TimestampedMessage
+import com.geeksville.dapi.model.Vehicle
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -18,7 +19,7 @@ case class VehicleDisconnected()
  * VehicleConnected - sent by the GCSActor when the vehicle first connects
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
-class LiveVehicleActor(val vehicleId: String) extends Actor with ActorLogging {
+class LiveVehicleActor(val vehicle: Vehicle) extends Actor with ActorLogging {
   def receive = {
     case VehicleConnected() =>
       log.debug("Vehicle connected")
