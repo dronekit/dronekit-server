@@ -4,6 +4,11 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import com.geeksville.apiproxy.GCSHooksImpl
 import com.geeksville.util.Using._
+import java.io.BufferedInputStream
+import akka.actor.Props
+import com.geeksville.mavlink.TlogStreamReceiver
+import com.geeksville.mavlink.MavlinkEventBus
+import com.geeksville.apiproxy.LiveUploader
 
 case object RunTest
 
@@ -14,10 +19,10 @@ class SimGCSClient extends Actor with ActorLogging {
   def receive = {
     case RunTest =>
       log.error("Running test")
-      runTest()
+      fullTest()
   }
 
-  private def runTest() {
+  private def quickTest() {
     using(new GCSHooksImpl()) { webapi =>
       webapi.loginUser("test-bob@3drobotics.com", "sekrit");
       webapi.flush();
@@ -31,5 +36,24 @@ class SimGCSClient extends Actor with ActorLogging {
 
       log.info("Test successful")
     }
+  }
+
+  /**
+   * Creates an fake vehicle which actually calls up and sends real TLOG data/accepts commands
+   *
+   * FIXME: Add support for accepting commands
+   * FIXME: Don't use the old MavlinkEventBus global
+   */
+  private def fullTest() {
+    log.info("Starting full test vehicle")
+    val s = new BufferedInputStream(getClass.getResourceAsStream("test.tlog"), 8192)
+
+    val tlog = context.actorOf(Props(TlogStreamReceiver.open(s)), "tlogsim")
+
+    // Anything coming from the controller app, forward it to the serial port
+    val groundControlId = 253 // FIXME
+    MavlinkEventBus.subscribe(tlog, groundControlId)
+
+    LiveUploader.create(context)
   }
 }

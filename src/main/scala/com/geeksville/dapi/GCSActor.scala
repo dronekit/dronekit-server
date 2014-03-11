@@ -60,7 +60,7 @@ class GCSActor extends Actor with ActorLogging {
         val uuid = UUID.fromString(msg.vehicleUUID)
         val vehicle = getOrCreateVehicle(uuid)
 
-        val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle, !msg.canAcceptCommands)))
+        val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle, msg.canAcceptCommands)))
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
         actor ! VehicleConnected()
       }
