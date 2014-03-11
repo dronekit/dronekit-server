@@ -26,10 +26,15 @@ case class VehicleDisconnected()
  * VehicleConnected - sent by the GCSActor when the vehicle first connects
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
-class LiveVehicleActor(val vehicle: Vehicle) extends VehicleModel with ActorLogging {
+class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
   private var tlogFileOpt: Option[File] = None
+
+  // Since we are on a server, we don't want to inadvertently spam the vehicle
+  this.listenOnly = !canAcceptCommands
+  autoWaypointDownload = false
+  autoParameterDownload = false
 
   override def onReceive = mReceive.orElse(super.onReceive)
 
