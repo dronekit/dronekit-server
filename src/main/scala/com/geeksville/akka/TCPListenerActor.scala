@@ -6,8 +6,6 @@ import akka.actor.Props
 import scala.reflect.ClassTag
 import akka.actor.ActorLogging
 
-case object UnexpectedMessage
-
 /**
  * An actor that listens on a port # and spawns actors to handle any incoming connections.
  * The actor constructor is assumed to take a Socket as the only parameter.
@@ -15,6 +13,8 @@ case object UnexpectedMessage
  * FIXME - if some kills our socket we won't currently automatically exit the actor
  */
 class TCPListenerActor[T <: Actor: ClassTag](portNum: Int) extends Actor with ActorLogging {
+
+  log.info(s"TCPListenerActor listening on port $portNum")
 
   private val connectionListener = new TCPListener(portNum, { s =>
     log.info(s"TCP connection received on $s")
@@ -30,8 +30,5 @@ class TCPListenerActor[T <: Actor: ClassTag](portNum: Int) extends Actor with Ac
     super.postStop()
   }
 
-  override def receive = {
-    // We need to receive something
-    case UnexpectedMessage => log.error("This should never happen")
-  }
+  override def receive = Actor.emptyBehavior
 }
