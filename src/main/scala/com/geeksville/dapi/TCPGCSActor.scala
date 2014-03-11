@@ -29,10 +29,12 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
 
   private def readerFunct() {
     try {
+      val default = Envelope.defaultInstance
+
       // Any Envelopes that come over TCP, extract the message and handle just like any other actor msg
       using(socket.getInputStream) { is =>
         // Real until we see an invalid envelope - FIXME, don't hang up in this case?
-        Stream.continually(Envelope.parseDelimitedFrom(is)).takeWhile { o =>
+        Stream.continually(default.mergeDelimitedFromStream(is)).takeWhile { o =>
           // log.warning(s"Considering $o")
           o.isDefined
         }.foreach { mopt =>

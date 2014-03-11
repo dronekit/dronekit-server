@@ -1,14 +1,16 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2013 Kevin Hester
- * 
+ *
  * See LICENSE.txt for license details.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 import sbt._
 import Keys._
 import org.scalatra.sbt._
@@ -20,8 +22,7 @@ import com.bowlingx.sbt.plugins.Wro4jPlugin._
 import Wro4jKeys._
 import sbtassembly.Plugin._
 import AssemblyKeys._ // put this at the top of the file
-import scalabuff.ScalaBuffPlugin._
-import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings }
+import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings, traceAkka }
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
@@ -46,15 +47,16 @@ object NestorBuild extends Build {
   }
 
   lazy val common = Project(id = "gcommon3",
-                           base = file("arduleader/common"))
+    base = file("arduleader/common"))
 
   lazy val japiProxy = Project(id = "japi-proxy",
-                           base = file("japi-proxy"))
+    base = file("japi-proxy"))
 
   lazy val nestorProject = Project(
     "apihub",
     file("."),
-    settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ assemblySettings ++ scalateSettings ++ wro4jSettings ++ scalabuffSettings ++ Seq(
+    settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ assemblySettings ++ scalateSettings ++ wro4jSettings ++ Seq(
+      traceAkka("2.2.3"),
       organization := Organization,
       name := Name,
       version := Version,
@@ -63,34 +65,34 @@ object NestorBuild extends Build {
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
 
       // To include source for Takipi
-      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" / "main" / "scala" ),
-      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" / "main" / "java" ),
+      unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
+      unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
 
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion withSources(),
-        "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources(),
+        "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
+        "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
 
-	// scala-activerecord support
-  	"com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources(),
-  	"com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources(),
-  	
-  	"mysql" % "mysql-connector-java" % "5.1.22",
-  	
-  	// Turn off h2 for now
-  	// "com.h2database" % "h2" % "1.3.170",  // See Supported databases
+        // scala-activerecord support
+        "com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources (),
+        "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources (),
+
+        "mysql" % "mysql-connector-java" % "5.1.22",
+
+        // Turn off h2 for now
+        // "com.h2database" % "h2" % "1.3.170",  // See Supported databases
 
         "org.mindrot" % "jbcrypt" % "0.3m", // For password encryption
-        
+
         // For swagger - FIXME, the swagger folks are apparently importing the log4j12 lib, which they should not do - causes multiple 
-	// bindings for logging
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion exclude("org.slf4j", "slf4j-log4j12"),
+        // bindings for logging
+        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion exclude ("org.slf4j", "slf4j-log4j12"),
 
         // Important to NOT include this: "org.scalatra" %% "scalatra-json" % "2.2.2",
         // Instead use the json4s standalone version - I have to use force() here because it seems that 3.2.5 or later breaks swagger autodoc generation
-        "org.json4s"   %% "json4s-native" % "3.2.4" force(),
-	// We want the version from logback
+        "org.json4s" %% "json4s-native" % "3.2.4" force (),
+        // We want the version from logback
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
-  
+
         // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
@@ -100,10 +102,10 @@ object NestorBuild extends Build {
         "com.google.guava" % "guava" % "14.0-rc2",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "compile;container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
-        //"org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container",
-        //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
+      //"org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container",
+      //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
 
-/* no longer works?/needed?
+      /* no longer works?/needed?
       warPostProcess in Compile <<= (target) map {
         (target) => { 
           () =>
@@ -123,10 +125,8 @@ object NestorBuild extends Build {
             Seq.empty, /* default imports should be added here */
             Seq.empty, /* add extra bindings here */
             Some("templates")))
-      }
-      // busted? needed? 
-	// webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )).configs(ScalaBuff).configs(Atmos).settings(atmosSettings: _*).dependsOn(common, japiProxy)
+      } // webappResources in Compile <+= (targetFolder in generateResources in Compile)
+      )).configs(Atmos).settings(atmosSettings: _*).dependsOn(common)
 }
 
 

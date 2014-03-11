@@ -59,7 +59,7 @@ class LiveVehicleActor(val vehicle: Vehicle) extends VehicleModel with ActorLogg
   /**
    * m must be a SendYoungest or a MAVLinkMessage
    */
-  override protected def sendMavlinkAlways(m: Any) {
+  override protected def handlePacket(m: Any) {
     throw new Exception("FIXME, sending not yet supported")
   }
 }
