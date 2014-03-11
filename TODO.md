@@ -7,6 +7,7 @@
 
 # Medium term fixme
 
+* Exceptions in GCSActor should not cause restart of the actor
 * Renable the REST api (fix swagger cruft first)
 * Set column attributes (indexing etc) for tables: https://github.com/aselab/scala-activerecord/wiki/Using-Models
 * Investigate optimistic vs pessimistic ActiveRecord locking
@@ -18,6 +19,9 @@
 
 # Long term TODO
 
+* Add indexes for columns we need indexed
+* Remove well known DB psw from application.conf
+* Lower the mysql privs granted to the dapi mysql user
 * Use SASL? http://docs.oracle.com/javase/1.5.0/docs/guide/security/sasl/sasl-refguide.html
 * change mavlink parsing (MAVLinkReader) to use ByteStrings rather than byte arrays - to make for less heap allocs
 

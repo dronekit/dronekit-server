@@ -5,12 +5,10 @@ import org.scalatra.swagger.SwaggerSupport
 import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json._
 import org.scalatra.swagger.Swagger
+import com.geeksville.dapi.model.User
 
 class UserController(implicit swagger: Swagger) extends ApiController[User]("user", swagger) {
 }
-
-// A Flower object to use as a faked-out data model
-case class User(id: String, name: String)
 
 // An amazing datastore!
 object UserData {

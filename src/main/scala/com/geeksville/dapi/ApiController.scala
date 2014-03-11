@@ -6,6 +6,7 @@ import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
+import com.geeksville.dapi.model.User
 
 class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
@@ -93,7 +94,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   get("/", operation(getOp)) {
     params.get("name") match {
-      case Some(name) => UserData.all filter (_.name.toLowerCase contains name.toLowerCase())
+      case Some(name) => UserData.all filter (_.fullName.toLowerCase contains name.toLowerCase())
       case None => UserData.all
     }
   }
@@ -108,7 +109,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Find a flower using its slug.
    */
   get("/:id", operation(findById)) {
-    UserData.all find (_.id == params("id")) match {
+    UserData.all find (_.id == params("id").toLong) match {
       case Some(b) => b
       case None => halt(404)
     }
