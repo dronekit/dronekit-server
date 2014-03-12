@@ -1,4 +1,4 @@
-export EC2_HOSTNAME=ec2.droneshare.com
+export EC2_HOSTNAME=nestor.3dr.com
 
 echo "SSH connect to current EC2 target: $EC2_HOSTNAME"
-ssh -l ubuntu -i ~/.ssh/id_dsa-3dr $EC2_HOSTNAME $*
+ssh -l ubuntu -i ~/.ssh/id_dsa_dronehub $EC2_HOSTNAME $@
