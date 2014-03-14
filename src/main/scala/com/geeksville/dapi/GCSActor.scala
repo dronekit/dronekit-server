@@ -28,7 +28,7 @@ class MavlinkException(msg: String) extends Exception(msg)
  *
  * FIXME - use a state machine to track logged in state vs not
  */
-class GCSActor extends Actor with ActorLogging {
+abstract class GCSActor extends Actor with ActorLogging {
   import GCSActor._
 
   private var myVehicle: Option[ActorRef] = None
@@ -50,6 +50,8 @@ class GCSActor extends Actor with ActorLogging {
     user.save // FIXME - do I need to explicitly save?
     v
   }
+
+  protected def sendToVehicle(e: Envelope)
 
   def receive = {
     case msg: SetVehicleMsg =>
@@ -84,10 +86,48 @@ class GCSActor extends Actor with ActorLogging {
           vehicle.foreach { _ ! timestamped }
       }
 
+    // For now we let each vehicle handle these msgs
+    case msg: StartMissionMsg =>
+      vehicles.values.foreach { _ ! msg }
+
     case msg: LoginMsg =>
-      log.info(s"FIXME ignoring login $msg")
       startTime = msg.startTime
-      userOpt = Tables.users.where(_.login === msg.username).headOption
+      val found = Tables.users.where(_.login === msg.username).headOption
+      val response = msg.code match {
+        case LoginRequestCode.LOGIN =>
+          if (!found.isDefined || !found.get.isPasswordGood(msg.password.get))
+            LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD)
+          else {
+            // We are now logged in
+            userOpt = found
+            LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+          }
+
+        case LoginRequestCode.CHECK_USERNAME =>
+          LoginResponseMsg(if (found.isDefined)
+            LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE
+          else
+            LoginResponseMsg.ResponseCode.OK)
+
+        case LoginRequestCode.CREATE =>
+          if (found.isDefined)
+            LoginResponseMsg(LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE)
+          else {
+            // Create new user and login
+
+            val u = User(msg.username, msg.email.get, null).create
+            u.password = msg.password.get
+            u.save()
+            userOpt = Some(u)
+
+            LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+          }
+
+        case _ =>
+          throw new Exception("Unexpected login request: " + msg.code)
+      }
+
+      sendToVehicle(Envelope(loginResponse = Some(response)))
 
     case x @ _ =>
       log.warning(s"Ignoring $x" + x.getClass())

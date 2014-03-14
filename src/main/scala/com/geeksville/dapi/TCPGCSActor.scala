@@ -6,11 +6,14 @@ import com.geeksville.util.Using._
 import akka.actor.PoisonPill
 import akka.actor.SupervisorStrategy
 import java.net.SocketException
+import java.io.BufferedOutputStream
 
 /**
  * An actor that manages a TCP connection from a GCS
  */
 class TCPGCSActor(private val socket: Socket) extends GCSActor {
+
+  private lazy val toVehicle = new BufferedOutputStream(socket.getOutputStream, 8192)
 
   log.info(s"TCPGCSActor handling incoming $socket")
 
@@ -25,6 +28,11 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
     socket.close()
 
     super.postStop()
+  }
+
+  override protected def sendToVehicle(e: Envelope) {
+    e.writeDelimitedTo(toVehicle)
+    toVehicle.flush()
   }
 
   private def readerFunct() {

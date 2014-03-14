@@ -16,8 +16,5 @@ object UserData {
   /**
    * Some fake flowers data so we can simulate retrievals.
    */
-  var all = List(
-    User("uid4", "Bob Someone"),
-    User("uid5", "Bob Someone2"),
-    User("uid6", "Bob Someone3"))
+  var all: List[User] = List()
 }
