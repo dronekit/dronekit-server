@@ -82,7 +82,7 @@ abstract class GCSActor extends Actor with ActorLogging {
       }
 
     case msg: MavlinkMsg =>
-      log.info(s"Got $msg")
+      log.info(s"Mavlink from vehicle: $msg")
       checkLoggedIn()
 
       // If the user provided a time then use it, otherwise use our local time

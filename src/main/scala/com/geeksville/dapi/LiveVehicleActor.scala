@@ -32,23 +32,35 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
   private var tlogFileOpt: Option[File] = None
+  private var gcsActorOpt: Option[ActorRef] = None
 
   // Since we are on a server, we don't want to inadvertently spam the vehicle
   this.listenOnly = !canAcceptCommands
   autoWaypointDownload = false
   autoParameterDownload = false
 
+  private def gcsActor = gcsActorOpt.getOrElse(throw new Exception("No GCS connected"))
+
   override def onReceive = mReceive.orElse(super.onReceive)
 
   private def mReceive: InstrumentedActor.Receiver = {
     case VehicleConnected() =>
       log.debug("Vehicle connected")
+
+      assert(!gcsActorOpt.isDefined)
+      gcsActorOpt = Some(sender)
+
       val f = LogBinaryMavlink.getFilename() // FIXME - create in temp directory instead
       tlogFileOpt = Some(f)
       tloggerOpt = Some(context.actorOf(Props(LogBinaryMavlink.create(false, f, wantImprovedFilename = false)), "tlogger"))
 
     case VehicleDisconnected() =>
       log.debug("Vehicle disconnected")
+
+      // Vehicle should only be connected through one gcs actor at a time
+      assert(sender == gcsActor)
+      gcsActorOpt = None
+
       tloggerOpt.foreach { _ ! PoisonPill }
     // FIXME - store tlog to S3
     // FIXME - should I kill myself?
@@ -67,6 +79,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
    * m must be a SendYoungest or a MAVLinkMessage
    */
   override protected def handlePacket(m: Any) {
+    //log.debug(s"handlePacket: forwarding $m to $gcsActor")
+
     val msg = m match {
       case x: MAVLinkMessage => x
       case SendYoungest(x) => x
@@ -75,6 +89,6 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     if (!canAcceptCommands)
       throw new Exception(s"$vehicle does not accept commands")
     else
-      context.parent ! SendMavlinkToVehicle(msg)
+      gcsActor ! SendMavlinkToVehicle(msg)
   }
 }

@@ -30,7 +30,7 @@ class SimGCSClient extends Actor with ActorLogging {
       val interfaceNum = 0;
       val sysId = 1;
       webapi.setVehicleId("550e8400-e29b-41d4-a716-446655440000",
-        interfaceNum, sysId);
+        interfaceNum, sysId, false);
 
       // webapi.filterMavlink(interfaceNum, payload);
 
