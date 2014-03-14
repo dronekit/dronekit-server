@@ -94,7 +94,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   get("/", operation(getOp)) {
     params.get("name") match {
-      case Some(name) => UserData.all filter (_.fullName.toLowerCase contains name.toLowerCase())
+      case Some(name) => UserData.all filter (_.login contains name)
       case None => UserData.all
     }
   }

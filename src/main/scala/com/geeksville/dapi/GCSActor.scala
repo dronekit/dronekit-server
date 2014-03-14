@@ -56,12 +56,19 @@ abstract class GCSActor extends Actor with ActorLogging {
 
   protected def sendToVehicle(e: Envelope)
 
+  private def checkLoggedIn() {
+    if (!userOpt.isDefined)
+      throw new Exception("Not logged-in")
+  }
+
   def receive = {
     case SendMavlinkToVehicle(msg) =>
       log.debug(s"Sending mavlink to vehicle $msg")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
     case msg: SetVehicleMsg =>
+      checkLoggedIn()
+
       log.info(s"Binding vehicle $msg")
       if (msg.vehicleUUID == "GCS")
         log.warning("ignoring GCS ID")
@@ -76,6 +83,7 @@ abstract class GCSActor extends Actor with ActorLogging {
 
     case msg: MavlinkMsg =>
       log.info(s"Got $msg")
+      checkLoggedIn()
 
       // If the user provided a time then use it, otherwise use our local time
       val timestamp = msg.deltaT.map(_ + startTime.get).getOrElse(System.currentTimeMillis * 1000)
@@ -95,6 +103,7 @@ abstract class GCSActor extends Actor with ActorLogging {
 
     // For now we let each vehicle handle these msgs
     case msg: StartMissionMsg =>
+      checkLoggedIn()
       vehicles.values.foreach { _ ! msg }
 
     case msg: LoginMsg =>
@@ -102,31 +111,39 @@ abstract class GCSActor extends Actor with ActorLogging {
       val found = Tables.users.where(_.login === msg.username).headOption
       val response = msg.code match {
         case LoginRequestCode.LOGIN =>
-          if (!found.isDefined || !found.get.isPasswordGood(msg.password.get))
+          if (!found.isDefined) {
+            log.error(s"Bad username " + msg.username)
             LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD)
-          else {
+          } else if (!found.get.isPasswordGood(msg.password.get)) {
+            log.error(s"Bad password for " + msg.username)
+            LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD)
+          } else {
             // We are now logged in
             userOpt = found
+            log.info(s"Logged in " + msg.username)
             LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
           }
 
         case LoginRequestCode.CHECK_USERNAME =>
+          log.info(s"Checking username for " + msg.username + " available=" + !found.isDefined)
           LoginResponseMsg(if (found.isDefined)
             LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE
           else
             LoginResponseMsg.ResponseCode.OK)
 
         case LoginRequestCode.CREATE =>
-          if (found.isDefined)
+          if (found.isDefined) {
+            log.error(s"Username unavailable: " + msg.username)
             LoginResponseMsg(LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE)
-          else {
+          } else {
             // Create new user and login
 
-            val u = User(msg.username, msg.email.get, null).create
+            val u = User(msg.username, msg.email, None).create
             u.password = msg.password.get
             u.save()
             userOpt = Some(u)
 
+            log.info(s"Created user " + msg.username)
             LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
           }
 
@@ -134,6 +151,7 @@ abstract class GCSActor extends Actor with ActorLogging {
           throw new Exception("Unexpected login request: " + msg.code)
       }
 
+      log.debug(s"Sending login response: $response")
       sendToVehicle(Envelope(loginResponse = Some(response)))
 
     case x @ _ =>

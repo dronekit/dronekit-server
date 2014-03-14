@@ -48,7 +48,7 @@ object Vehicle extends DapiRecordCompanion[Vehicle] {
   def find(id: UUID): Option[Vehicle] = this.where(_.uuid === id).headOption
 }
 
-case class User(@Required @Unique login: String, email: String, fullName: String) extends DapiRecord {
+case class User(@Required @Unique login: String, email: Option[String], fullName: Option[String]) extends DapiRecord {
   @Transient
   @Length(min = 8, max = 30)
   var password: String = _

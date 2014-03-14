@@ -31,8 +31,13 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
   }
 
   override protected def sendToVehicle(e: Envelope) {
-    e.writeDelimitedTo(toVehicle)
-    toVehicle.flush()
+    try {
+      e.writeDelimitedTo(toVehicle)
+      toVehicle.flush()
+    } catch {
+      case ex: SocketException =>
+        log.warning(s"Socket already closed? ignoring $ex")
+    }
   }
 
   private def readerFunct() {
@@ -47,11 +52,11 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
           o.isDefined
         }.foreach { mopt =>
           mopt.foreach { env =>
-            log.debug(s"Got packet $env")
+            //log.debug(s"Got packet $env")
 
             // FIXME - use the enum to more quickly find the payload we care about
             Seq(env.mavlink, env.login, env.setVehicle).flatten.foreach { m =>
-              log.debug(s"Dispatching $m")
+              //log.debug(s"Dispatching $m")
               self ! m
             }
           }
