@@ -11,6 +11,8 @@ import akka.actor.PoisonPill
 import java.io.File
 import com.geeksville.flight.VehicleModel
 import com.geeksville.akka.InstrumentedActor
+import com.geeksville.mavlink.SendYoungest
+import org.mavlink.messages.MAVLinkMessage
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -65,6 +67,14 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
    * m must be a SendYoungest or a MAVLinkMessage
    */
   override protected def handlePacket(m: Any) {
-    throw new Exception("FIXME, sending not yet supported")
+    val msg = m match {
+      case x: MAVLinkMessage => x
+      case SendYoungest(x) => x
+    }
+
+    if (!canAcceptCommands)
+      throw new Exception(s"$vehicle does not accept commands")
+    else
+      context.parent ! SendMavlinkToVehicle(msg)
   }
 }

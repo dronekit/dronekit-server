@@ -5,11 +5,11 @@ import akka.actor.ActorLogging
 import com.geeksville.akka.NamedActorClient
 import akka.actor.ActorRef
 import akka.actor.Props
-import scala.collection.mutable
+import scala.collection.mutable.HashMap
 import com.google.protobuf.ByteString
 import org.mavlink.MAVLinkCRC
 import org.mavlink.IMAVLinkCRC
-import org.mavlink.messages.MAVLinkMessageFactory
+import org.mavlink.messages._
 import com.geeksville.mavlink.TimestampedMessage
 import com.geeksville.dapi.model.Vehicle
 import com.geeksville.dapi.model.Tables
@@ -23,6 +23,9 @@ case class VehicleBinding(interface: Int, sysId: Int)
 /// Indicates malformed mavlink payload
 class MavlinkException(msg: String) extends Exception(msg)
 
+/// Sent to GCSActor when we want to send a message to the vehicle
+case class SendMavlinkToVehicle(msg: MAVLinkMessage)
+
 /**
  * Any actor that acts as the sister of a GCS client.  One instance per connected GCS (i.e this actor state includes knowledge of which GCS it is talking to
  *
@@ -32,7 +35,7 @@ abstract class GCSActor extends Actor with ActorLogging {
   import GCSActor._
 
   private var myVehicle: Option[ActorRef] = None
-  private val vehicles = new mutable.HashMap[VehicleBinding, ActorRef]()
+  private val vehicles = HashMap[VehicleBinding, ActorRef]()
 
   private var startTime: Option[Long] = None
 
@@ -54,6 +57,10 @@ abstract class GCSActor extends Actor with ActorLogging {
   protected def sendToVehicle(e: Envelope)
 
   def receive = {
+    case SendMavlinkToVehicle(msg) =>
+      log.debug(s"Sending mavlink to vehicle $msg")
+      sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
+
     case msg: SetVehicleMsg =>
       log.info(s"Binding vehicle $msg")
       if (msg.vehicleUUID == "GCS")
