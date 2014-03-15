@@ -60,7 +60,7 @@ case class User(@Required @Unique login: String, email: Option[String], fullName
    */
   lazy val vehicles = hasMany[Vehicle]
 
-  def isPasswordGood(test: String) = BCrypt.checkpw(password, hashedPassword)
+  def isPasswordGood(test: String) = BCrypt.checkpw(test, hashedPassword)
 
   override def beforeSave() {
     hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
