@@ -4,3 +4,6 @@
 [submodule "japi-proxy"]
 	path = japi-proxy
 	url = https://github.com/geeksville/japi-proxy
+[submodule "3scale-akka"]
+	path = 3scale-akka
+	url = git@github.com:geeksville/3scale-akka.git
