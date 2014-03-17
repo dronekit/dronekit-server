@@ -54,6 +54,6 @@ class SimGCSClient extends Actor with ActorLogging {
     val groundControlId = 253 // FIXME
     MavlinkEventBus.subscribe(tlog, groundControlId)
 
-    LiveUploader.create(context)
+    LiveUploader.create(context, isLive = false)
   }
 }
