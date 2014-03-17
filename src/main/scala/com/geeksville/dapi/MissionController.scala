@@ -14,8 +14,8 @@ class MissionController(implicit swagger: Swagger) extends ApiController[Mission
     parameter queryParam[Option[Boolean]]("completed").description("Completed flights only")
     parameter queryParam[Option[Boolean]]("live").description("Live flights only"))
 
-  raField[Mavlink]("mavlink", null, { (v) => })
-  roField[List[Location]]("location", null)
+  //raField[Mavlink]("mavlink", null, { (v) => })
+  //roField[List[Location]]("location", null)
   roField[List[String]]("mode", null)
 }
 

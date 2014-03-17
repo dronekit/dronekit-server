@@ -12,8 +12,8 @@ class VehicleController(implicit swagger: Swagger) extends ApiController[Vehicle
 
   // FIXME - make this code actually do something
   rwField[String]("mode", "FIXME", { (v) => })
-  roField[Location]("location", null)
-  roField[Attitude]("attitude", null)
+  //roField[Location]("location", null)
+  //roField[Attitude]("attitude", null)
   roField[Double]("airspeed", 1.5)
   roField[Double]("groundspeed", 1.5)
   roField[Double]("batteryVolt", 1.5)
@@ -22,10 +22,10 @@ class VehicleController(implicit swagger: Swagger) extends ApiController[Vehicle
   roField[List[Int]]("rcChannels", List(1, 2, 3))
   woField[List[Int]]("rcOverrides", { (v) => })
 
-  rwField[Location]("targetLocation", null, { (v) => })
+  //rwField[Location]("targetLocation", null, { (v) => })
 
   // FIXME - need to use correct domain objects (Waypoints)
-  rwField[List[Location]]("waypoints", null, { (v) => })
+  //rwField[List[Location]]("waypoints", null, { (v) => })
 
   // FIXME add operations to list/add/delete missions
 }
