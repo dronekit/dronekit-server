@@ -7,11 +7,18 @@ import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import com.github.aselab.activerecord.dsl._
 
-case class User(@Required @Unique login: String, email: Option[String], fullName: Option[String]) extends DapiRecord {
+case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord {
+  /**
+   * A user specified password
+   * If null we assume invalid
+   */
   @Transient
-  @Length(min = 8, max = 30)
+  @Length(min = 8, max = 40)
   var password: String = _
 
+  /**
+   * A hashed password or "invalid" if we want this password to never match
+   */
   var hashedPassword: String = _
 
   /**
@@ -22,7 +29,10 @@ case class User(@Required @Unique login: String, email: Option[String], fullName
   def isPasswordGood(test: String) = BCrypt.checkpw(test, hashedPassword)
 
   override def beforeSave() {
-    hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+    hashedPassword = if (password == null)
+      "invalid"
+    else
+      BCrypt.hashpw(password, BCrypt.gensalt())
   }
 }
 

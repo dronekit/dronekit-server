@@ -135,9 +135,13 @@ object TLogChunk {
     Base32.encode(random.nextInt.toLong & 0xffffffffL)
   }
 
-  private def readBytesByPath(id: String) = {
+  def openInputStream(id: String) = {
     println("Asking S3 for " + id)
-    using(S3Client.downloadStream(id)) { s =>
+    S3Client.downloadStream(id)
+  }
+
+  private def readBytesByPath(id: String) = {
+    using(openInputStream(id)) { s =>
       println("Reading bytes from S3")
       val r = ByteStreams.toByteArray(s)
       println("Done reading S3 bytes")

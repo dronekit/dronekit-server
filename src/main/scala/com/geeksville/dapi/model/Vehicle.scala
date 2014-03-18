@@ -12,7 +12,7 @@ import com.github.aselab.activerecord.dsl._
  *
  * @param uuid is selected by the client on first connection
  */
-case class Vehicle(@Required @Unique uuid: UUID) extends DapiRecord {
+case class Vehicle(@Required @Unique uuid: UUID = UUID.randomUUID()) extends DapiRecord {
   /**
    * Who owns me?
    */

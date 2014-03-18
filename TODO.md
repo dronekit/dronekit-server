@@ -1,9 +1,7 @@
 # TODO
 
-* Apply tridge comments
 * Investigate mavproxy internals
-* Kill TCP actor when client disconnects
-* create new flight log records as flight is received
+* Use reference counting for some actors
 
 # Medium term fixme
 
@@ -19,6 +17,7 @@
 
 # Long term TODO
 
+* Do geo queries? http://www.scribd.com/doc/2569355/Geo-Distance-Search-with-MySQL
 * Add indexes for columns we need indexed
 * Remove well known DB psw from application.conf
 * Lower the mysql privs granted to the dapi mysql user

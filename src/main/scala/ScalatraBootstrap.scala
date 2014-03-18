@@ -28,6 +28,7 @@ import com.geeksville.apiproxy.APIConstants
 import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
 import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.dapi.test.RunTest
+import com.geeksville.dapi.temp._
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -66,6 +67,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
     simClient ! RunTest
+
+    val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
+    // nestorImport ! DoImport
   }
 
   /// Make sure you shut down Akka

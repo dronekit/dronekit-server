@@ -112,7 +112,7 @@ abstract class GCSActor extends Actor with ActorLogging {
 
     case msg: LoginMsg =>
       startTime = msg.startTime
-      val found = Tables.users.where(_.login === msg.username).headOption
+      val found = User.find(msg.username)
       val response = msg.code match {
         case LoginRequestCode.LOGIN =>
           if (!found.isDefined) {
