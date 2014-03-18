@@ -9,6 +9,7 @@ import akka.actor.Props
 import com.geeksville.mavlink.TlogStreamReceiver
 import com.geeksville.mavlink.MavlinkEventBus
 import com.geeksville.apiproxy.LiveUploader
+import com.geeksville.apiproxy.GCSHooks
 
 case object RunTest
 
@@ -19,20 +20,34 @@ class SimGCSClient extends Actor with ActorLogging {
   def receive = {
     case RunTest =>
       log.error("Running test")
-      fullTest()
+      if (false) fullTest() else quickTest()
   }
 
   private def quickTest() {
-    using(new GCSHooksImpl()) { webapi =>
-      webapi.loginUser("test-bob@3drobotics.com", "sekrit");
-      webapi.flush();
+    using(new GCSHooksImpl()) { webapi: GCSHooks =>
+
+      val loginName = "test-bob"
+      val email = "test-bob@3drobotics.com"
+      val password = "sekrit"
+
+      // Create user if necessary/possible
+      if (webapi.isUsernameAvailable(loginName))
+        webapi.createUser(loginName, password, Some(email))
+      else
+        webapi.loginUser(loginName, password)
+
+      webapi.flush()
 
       val interfaceNum = 0;
       val sysId = 1;
       webapi.setVehicleId("550e8400-e29b-41d4-a716-446655440000",
         interfaceNum, sysId, false);
 
+      log.info("Starting mission")
+      webapi.startMission()
       // webapi.filterMavlink(interfaceNum, payload);
+
+      webapi.stopMission()
 
       log.info("Test successful")
     }

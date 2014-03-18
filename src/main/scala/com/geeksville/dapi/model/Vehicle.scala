@@ -27,7 +27,7 @@ case class Vehicle(@Required @Unique uuid: UUID) extends DapiRecord {
   /**
    * All the missions this vehicle has made
    */
-  lazy val vehicles = hasMany[Mission]
+  lazy val missions = hasMany[Mission]
 }
 
 object Vehicle extends DapiRecordCompanion[Vehicle] {

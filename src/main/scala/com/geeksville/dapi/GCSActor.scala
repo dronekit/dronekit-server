@@ -82,7 +82,7 @@ abstract class GCSActor extends Actor with ActorLogging {
       }
 
     case msg: MavlinkMsg =>
-      log.info(s"Mavlink from vehicle: $msg")
+      //log.debug(s"Mavlink from vehicle: $msg")
       checkLoggedIn()
 
       // If the user provided a time then use it, otherwise use our local time
@@ -102,9 +102,12 @@ abstract class GCSActor extends Actor with ActorLogging {
       }
 
     // For now we let each vehicle handle these msgs
-    case msg: StartMissionMsg =>
+    case msg: StartMissionMsg 
+      vehicles.values.foreach { _ forward msg }
+
+    case msg: StopMissionMsg =>
       checkLoggedIn()
-      vehicles.values.foreach { _ ! msg }
+      vehicles.values.foreach { _ forward msg }
 
     case msg: LoginMsg =>
       startTime = msg.startTime
