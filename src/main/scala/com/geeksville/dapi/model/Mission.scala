@@ -24,8 +24,8 @@ import java.io.InputStream
  *
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
-case class MissionSummary(startTime: Date,
-  endTime: Date,
+case class MissionSummary(startTime: Option[Date],
+  endTime: Option[Date],
   maxAlt: Double = 0.0,
   maxGroundSpeed: Double = 0.0,
   maxAirSpeed: Double = 0.0,
@@ -35,7 +35,10 @@ case class MissionSummary(startTime: Date,
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
 
-  def minutes = (endTime.getTime - startTime.getTime) / 1000.0 / 60
+  def minutes = for {
+    s <- startTime
+    e <- endTime
+  } yield (e.getTime - s.getTime) / 1000.0 / 60
 
   /// A detailed description for facebook
   /*
