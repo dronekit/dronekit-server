@@ -14,6 +14,10 @@ import com.geeksville.akka.InstrumentedActor
 import com.geeksville.mavlink.SendYoungest
 import org.mavlink.messages.MAVLinkMessage
 import com.geeksville.dapi.model.Mission
+import scala.concurrent.blocking
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.util.UUID
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -32,7 +36,9 @@ case class VehicleDisconnected()
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
-  private var tlogFileOpt: Option[File] = None
+
+  /// We reserve a tlog ID at mission start - but don't use it until mission end
+  private var tlogId: Option[UUID] = None
 
   private var missionOpt: Option[Mission] = None
 
@@ -97,12 +103,27 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       gcsActor ! SendMavlinkToVehicle(msg)
   }
 
-  private def startMission(msg: StartMissionMsg) {
-    log.debug("Starting tlog")
+  /**
+   * We modify the actor to copy to S3 after the file is closed
+   */
+  private class TlogToS3Actor extends LogBinaryMavlink(LogBinaryMavlink.getFilename(), deleteIfBoring = false, wantImprovedFilename = false) {
+    override protected def onFileClose() {
+      log.debug(s"Copying to s3: $tlogId")
+      // Copy to S3
+      val src = new BufferedInputStream(new FileInputStream(file), 8192)
+      Mission.putBytes(tlogId.get.toString, src, file.length())
+      tlogId = None
+      // FIXME - delete the local copy once things seem to work
+    }
+  }
+
+  private def startMission(msg: StartMissionMsg) = blocking {
+    assert(!tlogId.isDefined)
+    tlogId = Some(UUID.randomUUID())
+    log.debug(s"Starting tlog $tlogId")
 
     val f = LogBinaryMavlink.getFilename() // FIXME - create in temp directory instead
-    tlogFileOpt = Some(f)
-    tloggerOpt = Some(context.actorOf(Props(LogBinaryMavlink.create(false, f, wantImprovedFilename = false)), "tlogger"))
+    tloggerOpt = Some(context.actorOf(Props(new TlogToS3Actor), "tlogger"))
 
     val m = Mission.create(vehicle)
     missionOpt = Some(m)
@@ -116,13 +137,15 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   }
 
   private def stopMission(notes: Option[String] = None) {
-
-    // FIXME - move the tlog to s3 and update the record
+    // Close the tlog and upload to s3
+    tloggerOpt.foreach { _ ! PoisonPill }
 
     missionOpt.foreach { m =>
-      m.isLive = false
-      m.save()
+      blocking {
+        m.isLive = false
+        m.tlogId = tlogId
+        m.save()
+      }
     }
-    tloggerOpt.foreach { _ ! PoisonPill }
   }
 }

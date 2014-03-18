@@ -9,6 +9,15 @@ import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.AccessCode
 import java.util.Date
 import java.text.SimpleDateFormat
+import com.geeksville.util.CacheUtil._
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
+import com.google.common.cache.Cache
+import com.geeksville.logback.Logging
+import com.geeksville.util.Using
+import com.google.common.io.ByteStreams
+import java.io.InputStream
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -76,15 +85,45 @@ case class Mission() extends DapiRecord {
   /**
    * If the tlog is stored to s3 this is the ID
    */
-  var tlogId: Option[String] = None
+  var tlogId: Option[UUID] = None
 
   /**
    * The server generated summary of the flight
    */
   lazy val summary = hasOne[MissionSummary]
+
+  @Transient
+  lazy val tlogBytes = tlogId.flatMap(Mission.getBytes)
 }
 
-object Mission extends DapiRecordCompanion[Mission] {
+object Mission extends DapiRecordCompanion[Mission] with Logging {
+  val mimeType = "application/vnd.nestor.tlog"
+
+  // We use a cache to avoid (slow) rereading of s3 data if we can help it
+  private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: UUID) => readBytesByPath(S3Client.tlogPrefix + key) }
+
+  private def readBytesByPath(id: String): Array[Byte] = {
+    logger.debug("Asking S3 for " + id)
+    Using.using(S3Client.downloadStream(id)) { s =>
+      logger.debug("Reading bytes from S3")
+      val r = ByteStreams.toByteArray(s)
+      logger.debug("Done reading S3 bytes")
+      r
+    }
+  }
+
+  /**
+   * Get bytes from the cache or S3
+   */
+  private def getBytes(id: UUID) = {
+    Option(bytesCache.getUnchecked(id))
+  }
+
+  def putBytes(id: String, src: InputStream, srcLen: Long) {
+    logger.info(s"Uploading to s3: $id")
+    S3Client.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
+  }
+
   def create(vehicle: Vehicle) = {
     val r = Mission().create
     vehicle.missions += r
