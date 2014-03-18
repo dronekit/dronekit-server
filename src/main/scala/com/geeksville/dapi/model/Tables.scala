@@ -7,6 +7,7 @@ import com.github.aselab.activerecord.scalatra._
 object Tables extends ActiveRecordTables with ScalatraSupport {
   val vehicles = table[Vehicle]
   val missions = table[Mission]
+  val missionSummaries = table[MissionSummary]
   val users = table[User]
 
   override def initialize(config: Map[String, Any]) {

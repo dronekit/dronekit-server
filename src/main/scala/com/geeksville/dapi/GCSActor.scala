@@ -102,7 +102,8 @@ abstract class GCSActor extends Actor with ActorLogging {
       }
 
     // For now we let each vehicle handle these msgs
-    case msg: StartMissionMsg 
+    case msg: StartMissionMsg =>
+      checkLoggedIn()
       vehicles.values.foreach { _ forward msg }
 
     case msg: StopMissionMsg =>

@@ -28,6 +28,21 @@ case class Vehicle(@Required @Unique uuid: UUID) extends DapiRecord {
    * All the missions this vehicle has made
    */
   lazy val missions = hasMany[Mission]
+
+  // Vehicle manufacturer if known, preferably from the master vehicle-mfg.txt definitions file.  
+  // To add new definitions to the file, please submit a github pull-request.
+  var manufacturer: Option[String] = None
+
+  // Vehicle type if known, preferably from the master vehicle-types.txt definitions file.  
+  // To add new definitions to the file, please submit a github pull-request.
+  var vehicleType: Option[String] = None
+
+  // Autopilot type if known, preferably from the master autopilot-types.txt definitions file.
+  // To add new definitions to the file, please submit a github pull-request.
+  var autopilotType: Option[String] = None
+
+  // Autopilot software version #
+  var softwareVersion: Option[String] = None
 }
 
 object Vehicle extends DapiRecordCompanion[Vehicle] {
