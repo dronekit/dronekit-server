@@ -52,6 +52,9 @@ object NestorBuild extends Build {
   lazy val japiProxy = Project(id = "japi-proxy",
     base = file("japi-proxy"))
 
+      lazy val threeAkka = Project(id = "three-akka",
+    base = file("three-akka"))
+    
   lazy val nestorProject = Project(
     "apihub",
     file("."),
@@ -126,7 +129,7 @@ object NestorBuild extends Build {
             Seq.empty, /* add extra bindings here */
             Some("templates")))
       } // webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )).configs(Atmos).settings(atmosSettings: _*).dependsOn(common)
+      )).configs(Atmos).settings(atmosSettings: _*).dependsOn(common, threeAkka)
 }
 
 
