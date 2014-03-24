@@ -92,7 +92,8 @@ object NestorBuild extends Build {
 
         // Important to NOT include this: "org.scalatra" %% "scalatra-json" % "2.2.2",
         // Instead use the json4s standalone version - I have to use force() here because it seems that 3.2.5 or later breaks swagger autodoc generation
-        "org.json4s" %% "json4s-native" % "3.2.4" force (),
+        "org.json4s" %% "json4s-native" % "3.2.9-SNAPSHOT",
+        "org.json4s" %% "json4s-core" % "3.2.9-SNAPSHOT",
         // We want the version from logback
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
 

@@ -10,11 +10,3 @@ import com.geeksville.dapi.model.User
 class UserController(implicit swagger: Swagger) extends ApiController[User]("user", swagger) {
 }
 
-// An amazing datastore!
-object UserData {
-
-  /**
-   * Some fake flowers data so we can simulate retrievals.
-   */
-  var all: List[User] = List()
-}

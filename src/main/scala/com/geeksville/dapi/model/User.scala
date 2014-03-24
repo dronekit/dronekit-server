@@ -38,5 +38,7 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 
 object User extends DapiRecordCompanion[User] {
   def find(id: String): Option[User] = this.where(_.login === id).headOption
+
+  def getAll = this.toList
 }
 

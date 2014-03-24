@@ -8,6 +8,11 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model.User
 
+/**
+ * A base class for REST endpoints that contain various fields
+ *
+ * Subclasses can call roField etc... to specify handlers for particular operations
+ */
 class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
   // Sets up automatic case class to JSON output serialization
@@ -90,48 +95,44 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
       parameter queryParam[Option[String]]("name").description("A name to search for"))
 
   /*
-   * Retrieve a list of users
+   * Retrieve a list of instances
    */
   get("/", operation(getOp)) {
-    params.get("name") match {
-      case Some(name) => UserData.all filter (_.login contains name)
-      case None => UserData.all
-    }
+    User.getAll
   }
 
-  private val findById =
+  private val findByIdOp =
     (apiOperation[User]("findById")
       summary "Find by id"
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be fetched")))
 
   /**
-   * Find a flower using its slug.
+   * Find an object
    */
-  get("/:id", operation(findById)) {
-    UserData.all find (_.id == params("id").toLong) match {
-      case Some(b) => b
-      case None => halt(404)
-    }
+  get("/:id", operation(findByIdOp)) {
+    findById(params("id")).getOrElse(halt(404))
   }
 
-  private val createById =
+  def findById(id: String) = User.find(id)
+
+  private val createByIdOp =
     (apiOperation[String]("createById")
       summary "Create by id"
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be created")))
 
-  post("/:id", operation(createById)) {
+  post("/:id", operation(createByIdOp)) {
     halt(404)
   }
 
-  private val deleteById =
+  private val deleteByIdOp =
     (apiOperation[String]("deleteById")
       summary "Delete by id"
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be deleted")))
 
-  delete("/:id", operation(deleteById)) {
+  delete("/:id", operation(deleteByIdOp)) {
     halt(404)
   }
 }

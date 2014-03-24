@@ -56,7 +56,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     context.mount(new MainServlet, "/*")
 
     // FIXME - swagger temp busted
-    // context.mount(new UserController, "/api/v1/user/*")
+    context.mount(new UserController, "/api/v1/user/*")
     // context.mount(new VehicleController, "/api/v1/vehicle/*")
     // context.mount(new MissionController, "/api/v1/mission/*")
 
@@ -66,7 +66,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
 
     val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
-    simClient ! RunTest
+    // simClient ! RunTest
 
     val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
     // nestorImport ! DoImport
