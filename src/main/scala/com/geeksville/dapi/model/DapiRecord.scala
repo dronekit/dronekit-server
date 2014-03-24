@@ -14,5 +14,19 @@ import com.github.aselab.activerecord.dsl._
  */
 abstract class DapiRecord extends ActiveRecord with Datestamps
 
-trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] {
+/**
+ * Standard CRUD operations to support ApiController (normally through ActiveRecord but could be implemented with a different provider)
+ */
+trait CRUDOperations[T] {
+  /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
+  def find(id: String): Option[T]
+
+  def getAll: Seq[T]
+}
+
+trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] with CRUDOperations[T] {
+  /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
+  def find(id: String): Option[T] = this.where(_.id === id.toLong).headOption
+
+  def getAll = this.toList
 }

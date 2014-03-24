@@ -7,13 +7,15 @@ import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model.User
+import com.geeksville.dapi.model.CRUDOperations
 
 /**
  * A base class for REST endpoints that contain various fields
  *
  * Subclasses can call roField etc... to specify handlers for particular operations
+ * T is the primary type
  */
-class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
+class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
   // Sets up automatic case class to JSON output serialization
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -98,7 +100,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Retrieve a list of instances
    */
   get("/", operation(getOp)) {
-    User.getAll
+    companion.getAll
   }
 
   private val findByIdOp =
@@ -114,7 +116,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     findById(params("id")).getOrElse(halt(404))
   }
 
-  def findById(id: String) = User.find(id)
+  def findById(id: String) = companion.find(id)
 
   private val createByIdOp =
     (apiOperation[String]("createById")

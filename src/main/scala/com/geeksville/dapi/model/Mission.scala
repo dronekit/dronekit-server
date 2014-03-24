@@ -58,7 +58,9 @@ case class MissionSummary(startTime: Option[Date],
   */
 }
 
-object MissionSummary extends DapiRecordCompanion[MissionSummary]
+object MissionSummary extends DapiRecordCompanion[MissionSummary] {
+
+}
 
 /**
  * A mission recorded from a vehicle

@@ -57,8 +57,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // FIXME - swagger temp busted
     context.mount(new UserController, "/api/v1/user/*")
-    // context.mount(new VehicleController, "/api/v1/vehicle/*")
-    // context.mount(new MissionController, "/api/v1/mission/*")
+    context.mount(new VehicleController, "/api/v1/vehicle/*")
+    context.mount(new MissionController, "/api/v1/mission/*")
 
     context.mount(new ResourcesApp, "/api-docs/*")
 
