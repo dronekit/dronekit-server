@@ -9,6 +9,7 @@ import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model.User
 import com.geeksville.dapi.model.CRUDOperations
 import com.geeksville.json.GeeksvilleFormats
+import com.geeksville.json.ActiveRecordSerializer
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -19,7 +20,7 @@ import com.geeksville.json.GeeksvilleFormats
 class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
   // Sets up automatic case class to JSON output serialization
-  protected implicit val jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
+  protected implicit val jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats + ActiveRecordSerializer[T]()
 
   override protected val applicationName = Some(aName)
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."
