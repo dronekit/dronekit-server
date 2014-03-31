@@ -7,3 +7,6 @@
 [submodule "3scale-akka"]
 	path = 3scale-akka
 	url = git@github.com:geeksville/3scale-akka.git
+[submodule "droneapi-protobuf"]
+	path = droneapi-protobuf
+	url = git@github.com:diydrones/droneapi-protobuf.git
