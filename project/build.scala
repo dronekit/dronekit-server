@@ -49,11 +49,8 @@ object NestorBuild extends Build {
   lazy val common = Project(id = "gcommon",
     base = file("arduleader/common"))
 
-  lazy val japiProxy = Project(id = "japi-proxy",
-    base = file("japi-proxy"))
-
-      lazy val threeAkka = Project(id = "three-akka",
-    base = file("three-akka"))
+  lazy val threeAkka = Project(id = "three-akka",
+    base = file("3scale-akka"))
     
   lazy val nestorProject = Project(
     "apihub",
