@@ -22,7 +22,7 @@ import com.bowlingx.sbt.plugins.Wro4jPlugin._
 import Wro4jKeys._
 import sbtassembly.Plugin._
 import AssemblyKeys._ // put this at the top of the file
-import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings, traceAkka }
+// import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings, traceAkka }
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
@@ -56,7 +56,7 @@ object NestorBuild extends Build {
     "apihub",
     file("."),
     settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ assemblySettings ++ scalateSettings ++ wro4jSettings ++ Seq(
-      traceAkka("2.2.3"),
+      // traceAkka("2.2.3"),
       organization := Organization,
       name := Name,
       version := Version,
@@ -127,7 +127,9 @@ object NestorBuild extends Build {
             Seq.empty, /* add extra bindings here */
             Some("templates")))
       } // webappResources in Compile <+= (targetFolder in generateResources in Compile)
-      )).configs(Atmos).settings(atmosSettings: _*).dependsOn(common, threeAkka)
+      )).dependsOn(common, threeAkka)
+      
+      // not yet working .settings(atmosSettings: _*).configs(Atmos)
 }
 
 
