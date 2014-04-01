@@ -66,8 +66,10 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     // Start up our tcp listener
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
 
+    Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
+
     val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
-    // simClient ! RunTest
+    simClient ! RunTest
 
     val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
     // nestorImport ! DoImport
