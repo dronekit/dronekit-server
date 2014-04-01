@@ -52,8 +52,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     // Doesn't work yet - for now allow all origins
     //context.initParameters("org.scalatra.cors.allowedOrigins") = "http://www.droneshare.com http://localhost:8080 http://dmn0kpsvjtmio.cloudfront.net nestor-production.herokuapp.com"
 
-    context.mount(new DeviceServlet, "/api/*")
-    context.mount(new MainServlet, "/*")
+    // Don't start old nestor stuff for now
+    //context.mount(new DeviceServlet, "/api/*")
+    //context.mount(new MainServlet, "/*")
 
     // FIXME - swagger temp busted
     context.mount(new UserController, "/api/v1/user/*")
