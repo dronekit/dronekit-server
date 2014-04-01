@@ -50,6 +50,7 @@ pubsub/target
 .metadata
 jrebel.lic
 .classpath
+.settings
 
 .ensime*
 *.sublime-*
@@ -65,3 +66,5 @@ jrebel.lic
 
 # paulp script
 /.lib/
+
+

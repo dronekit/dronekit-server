@@ -10,6 +10,7 @@ import com.geeksville.mavlink.TlogStreamReceiver
 import com.geeksville.mavlink.MavlinkEventBus
 import com.geeksville.apiproxy.LiveUploader
 import com.geeksville.apiproxy.GCSHooks
+import com.geeksville.apiproxy.APIProxyActor
 
 case object RunTest
 
@@ -44,10 +45,10 @@ class SimGCSClient extends Actor with ActorLogging {
         interfaceNum, sysId, false);
 
       log.info("Starting mission")
-      webapi.startMission()
+      webapi.startMission(true)
       // webapi.filterMavlink(interfaceNum, payload);
 
-      webapi.stopMission()
+      webapi.stopMission(true)
 
       log.info("Test successful")
     }
@@ -69,6 +70,6 @@ class SimGCSClient extends Actor with ActorLogging {
     val groundControlId = 253 // FIXME
     MavlinkEventBus.subscribe(tlog, groundControlId)
 
-    LiveUploader.create(context, isLive = false)
+    LiveUploader.create(context, APIProxyActor.testAccount, isLive = false)
   }
 }
