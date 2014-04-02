@@ -61,6 +61,10 @@ abstract class GCSActor extends Actor with ActorLogging {
       throw new Exception("Not logged-in")
   }
 
+  /// Helper function for making user visible messages
+  private def createMessage(s: String) =
+    Some(ShowMsg(text = Some(s)))
+
   def receive = {
     case SendMavlinkToVehicle(msg) =>
       log.debug(s"Sending mavlink to vehicle $msg")
@@ -115,17 +119,24 @@ abstract class GCSActor extends Actor with ActorLogging {
       val found = User.find(msg.username)
       val response = msg.code match {
         case LoginRequestCode.LOGIN =>
-          if (!found.isDefined) {
-            log.error(s"Bad username " + msg.username)
-            LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD)
-          } else if (!found.get.isPasswordGood(msg.password.get)) {
-            log.error(s"Bad password for " + msg.username)
-            LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD)
-          } else {
-            // We are now logged in
-            userOpt = found
-            log.info(s"Logged in " + msg.username)
-            LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+          try {
+            if (!found.isDefined) {
+              log.error(s"Bad username " + msg.username)
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username or password"))
+            } else if (!found.get.isPasswordGood(msg.password.get)) {
+              log.error(s"Bad password for " + msg.username)
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username or password"))
+            } else {
+              // We are now logged in
+              userOpt = found
+              log.info(s"Logged in " + msg.username)
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+            }
+          } catch {
+            case ex: Exception =>
+              // Always send a response - even if we had an exception
+              log.error(s"Server bug: $ex")
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.SERVER_FAULT, createMessage(ex.toString))
           }
 
         case LoginRequestCode.CHECK_USERNAME =>

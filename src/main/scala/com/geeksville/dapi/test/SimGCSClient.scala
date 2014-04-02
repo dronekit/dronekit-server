@@ -11,6 +11,7 @@ import com.geeksville.mavlink.MavlinkEventBus
 import com.geeksville.apiproxy.LiveUploader
 import com.geeksville.apiproxy.GCSHooks
 import com.geeksville.apiproxy.APIProxyActor
+import java.util.UUID
 
 case object RunTest
 
@@ -45,7 +46,7 @@ class SimGCSClient extends Actor with ActorLogging {
         interfaceNum, sysId, false);
 
       log.info("Starting mission")
-      webapi.startMission(true)
+      webapi.startMission(true, UUID.randomUUID)
       // webapi.filterMavlink(interfaceNum, payload);
 
       webapi.stopMission(true)
