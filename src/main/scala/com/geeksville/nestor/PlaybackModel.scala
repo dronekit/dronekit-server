@@ -201,12 +201,13 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
    * Load messages from a raw mavlink tlog file
    */
   private def loadBytes(bytes: Array[Byte], reduced: Boolean) {
-    var messages = (new BinaryMavlinkReader(bytes)).toSeq
+    var m: Iterable[TimestampedMessage] = (new BinaryMavlinkReader(bytes))
 
     if (reduced) {
       val reducer = new DataReducer
-      messages = messages.filter(reducer.filter)
+      m = m.filter(reducer.filter)
     }
+    messages = m.toSeq
 
     // FIXME - do this data reduction somewhere else
     loadMessages(messages)
