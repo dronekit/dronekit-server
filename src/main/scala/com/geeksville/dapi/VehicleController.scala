@@ -8,7 +8,7 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model._
 
-class VehicleController(implicit swagger: Swagger) extends ApiController[Vehicle]("vehicle", swagger, Vehicle) {
+class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) {
 
   // FIXME - make this code actually do something
   rwField[String]("mode", "FIXME", { (v) => })

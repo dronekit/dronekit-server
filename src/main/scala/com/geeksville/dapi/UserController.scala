@@ -7,6 +7,6 @@ import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.User
 
-class UserController(implicit swagger: Swagger) extends ApiController[User]("user", swagger, User) {
+class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
 }
 

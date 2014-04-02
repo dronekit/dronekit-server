@@ -7,7 +7,7 @@ import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model._
 
-class MissionController(implicit swagger: Swagger) extends ApiController[Mission]("mission", swagger, Mission) {
+class MissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
 
   override protected def getOp = (super.getOp
     parameter queryParam[Option[String]]("within").description("Flights within a specified GeoJSON polygon")
