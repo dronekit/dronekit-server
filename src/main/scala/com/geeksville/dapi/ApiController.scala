@@ -20,7 +20,7 @@ import com.geeksville.json.ActiveRecordSerializer
 class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
 
   // Sets up automatic case class to JSON output serialization
-  protected implicit val jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats + ActiveRecordSerializer[T]()
+  protected implicit val jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats + ActiveRecordSerializer[T](Set("hashedPassword"))
 
   override protected val applicationName = Some(aName)
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."

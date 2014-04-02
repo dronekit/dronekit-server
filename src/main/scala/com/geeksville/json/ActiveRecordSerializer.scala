@@ -8,10 +8,10 @@ import org.json4s.FieldSerializer
 object ActiveRecordSerializer {
 
   /// Construct our serializer
-  def apply[T: Manifest]() = FieldSerializer[T](serializer, Map())
+  def apply[T: Manifest](blacklist: Set[String] = Set.empty) = FieldSerializer[T](serializer(blacklist), Map())
 
-  private def serializer: PartialFunction[(String, Any), Option[(String, Any)]] = {
-    case (name, _) if name.startsWith("_") || name.contains('$') => None
+  private def serializer(blacklist: Set[String]): PartialFunction[(String, Any), Option[(String, Any)]] = {
+    case (name, _) if name.startsWith("_") || name.contains('$') || blacklist.contains(name) => None
   }
 
   /* no need for a deserializer yet 
