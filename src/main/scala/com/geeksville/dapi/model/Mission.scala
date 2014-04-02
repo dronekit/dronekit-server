@@ -92,8 +92,10 @@ case class Mission(
    */
   lazy val summary = hasOne[MissionSummary]
 
-  @Transient
-  lazy val tlogBytes = tlogId.flatMap(Mission.getBytes)
+  /**
+   * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
+   */
+  def tlogBytes = tlogId.flatMap(Mission.getBytes)
 }
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
