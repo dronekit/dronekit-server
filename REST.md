@@ -34,8 +34,7 @@ where property is:
 
 # TODO
 
-* implement user/vehicles 
-* implement vehicle/missions
+* make vehicle queries use the int index
 * implement messages.tlog
 * deploy to 3dr server
 * make mission API work with live flights also

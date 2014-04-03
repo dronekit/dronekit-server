@@ -43,12 +43,19 @@ abstract class GCSActor extends Actor with ActorLogging {
 
   private def user = userOpt.get
 
+  private def getVehicle(uuid: UUID) = {
+    // Vehicle.find(uuid.toString)
+    log.debug(s"Looking for $uuid inside of $user")
+    user.vehicles.where(_.uuid === uuid).headOption
+  }
+
   /**
    * find a vehicle object for a specified UUID, associating it with our user if needed
    */
-  private def getOrCreateVehicle(uuid: UUID) = Vehicle.find(uuid.toString).getOrElse {
+  private def getOrCreateVehicle(uuid: UUID) = getVehicle(uuid).getOrElse {
+    log.warning("Vehicle $uuid not found in $user - creating")
     val v = Vehicle(uuid).create
-    user.vehicles += v
+    user.vehicles << v
     v.save
     user.save // FIXME - do I need to explicitly save?
     v
@@ -73,7 +80,7 @@ abstract class GCSActor extends Actor with ActorLogging {
     case msg: SetVehicleMsg =>
       checkLoggedIn()
 
-      log.info(s"Binding vehicle $msg")
+      log.info(s"Binding vehicle $msg, user has " + user.vehicles.toList.mkString(","))
       if (msg.vehicleUUID == "GCS")
         log.warning("ignoring GCS ID")
       else {

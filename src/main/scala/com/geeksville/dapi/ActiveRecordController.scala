@@ -4,7 +4,7 @@ import com.github.aselab.activerecord.ActiveRecord
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.CRUDOperations
 import org.json4s.Formats
-import com.geeksville.json.ActiveRecordSerializer
+import com.geeksville.json.ActiveRecordSerializer2
 
 /**
  * A controller that assumes the backing object comes from ActiveRecord (allows easy field finding)
@@ -13,9 +13,9 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   extends ApiController[T](aName, swagger, companion) {
 
   /// Fields we never want to share with clients
-  val blacklist = Set("hashedPassword")
+  val blacklist = Set("hashedPassword", "password")
 
-  override protected val jsonFormats: Formats = super.jsonFormats + ActiveRecordSerializer[T](blacklist)
+  override protected val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
 
   private val findParamOp =
     (apiOperation[T]("getParam")
@@ -25,10 +25,15 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
         pathParam[String]("param").description(s"The parameter to read from the object")))
 
   get("/:id/:param", operation(findParamOp)) {
-    findById(params("id")).map { obj =>
-      val param = params("param")
-      obj.toMap(params("param"))
-    }.getOrElse(halt(404))
+    // use for comprehension to stack up all the possibly missing values
+    (for {
+      id <- params.get("id")
+      obj <- findById(id)
+      param <- params.get("param")
+      pval <- if (blacklist.contains(param)) None else obj.toMap.get(param)
+    } yield {
+      pval
+    }).getOrElse(halt(404))
   }
 
 }
