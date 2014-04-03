@@ -13,9 +13,10 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   extends ApiController[T](aName, swagger, companion) {
 
   /// Fields we never want to share with clients
-  val blacklist = Set("hashedPassword", "password")
+  /// FIXME - add annotations for this?
+  def blacklist = Set[String]()
 
-  override protected val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
+  override protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
 
   private val findParamOp =
     (apiOperation[T]("getParam")
@@ -27,10 +28,8 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   get("/:id/:param", operation(findParamOp)) {
     // use for comprehension to stack up all the possibly missing values
     (for {
-      id <- params.get("id")
-      obj <- findById(id)
       param <- params.get("param")
-      pval <- if (blacklist.contains(param)) None else obj.toMap.get(param)
+      pval <- if (blacklist.contains(param)) None else findById.toMap.get(param)
     } yield {
       pval
     }).getOrElse(halt(404))

@@ -9,6 +9,7 @@ import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model.User
 import com.geeksville.dapi.model.CRUDOperations
 import com.geeksville.json.GeeksvilleFormats
+import javax.servlet.http.HttpServletRequest
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -34,10 +35,13 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     contentType = formats("json")
   }
 
+  /// syntatic sugar
+  def haltNotFound() = halt(404)
+
   /// Generate a ro attribute on this rest endpoint of the form /:id/name.
   /// call getter as needed
   /// FIXME - move this great utility somewhere else
-  def roField[T: Manifest](name: String, getter: => T) {
+  def roField[R](name: String)(getter: T => R) {
     val getInfo =
       (apiOperation[T]("get" + URLUtil.capitalize(name))
         summary s"Get the $name for the specified $aName"
@@ -45,49 +49,50 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
           pathParam[String]("id").description(s"Id of $aName to be read")))
 
     get("/:id/" + name, operation(getInfo)) {
-      halt(404) // FIXME
+      getter(findById)
     }
   }
 
   /// Generate a wo attribute on this rest endpoint of the form /:id/name.
   /// call getter and setter as needed
   /// FIXME - move this great utility somewhere else
-  def woField[T: Manifest](name: String, setter: T => Unit) {
+  def woField[R: Manifest](name: String, setter: (T, R) => Unit) {
     val putInfo =
       (apiOperation[String]("set" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
         parameters (
           pathParam[String]("id").description(s"Id of $aName to be changed"),
-          bodyParam[T](name).description(s"New value for the $name")))
+          bodyParam[R](name).description(s"New value for the $name")))
 
     put("/:id/" + name, operation(putInfo)) {
-      halt(404) // FIXME
+      haltNotFound() // FIXME
     }
   }
 
   /// Generate an append only attribute on this rest endpoint of the form /:id/name.
-  def aoField[T: Manifest](name: String, appender: T => Unit) {
+  def aoField[R: Manifest](name: String, appender: R => Unit) {
     val putInfo =
       (apiOperation[String]("add" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
         parameters (
           pathParam[String]("id").description(s"Id of $aName to be appended"),
-          bodyParam[T](name).description(s"New value for the $name")))
+          bodyParam[R](name).description(s"New value for the $name")))
 
     post("/:id/" + name, operation(putInfo)) {
-      halt(404) // FIXME
+      haltNotFound() // FIXME
     }
   }
 
   /// Generate a rw attribute on this rest endpoint of the form /:id/name.
   /// call getter and setter as needed
-  def rwField[T: Manifest](name: String, getter: => T, setter: T => Unit) {
-    roField(name, getter)
+  def rwField[R: Manifest](name: String, getter: T => R, setter: (T, R) => Unit) {
+    roField(name)(getter)
     woField(name, setter)
   }
 
-  def raField[T: Manifest](name: String, getter: => List[T], appender: T => Unit) {
-    roField[List[T]](name, getter)
+  /// Read an appendable field
+  def raField[R: Manifest](name: String, getter: T => List[R], appender: R => Unit) {
+    roField(name)(getter)
     aoField(name, appender)
   }
 
@@ -114,10 +119,16 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Find an object
    */
   get("/:id", operation(findByIdOp)) {
-    findById(params("id")).getOrElse(halt(404))
+    findById
   }
 
-  def findById(id: String) = companion.find(id)
+  /**
+   * Get the object associated with the provided id param (or fatally end the request with a 404)
+   */
+  protected def findById(implicit request: HttpServletRequest) = {
+    val id = params("id")
+    companion.find(id).getOrElse(haltNotFound())
+  }
 
   private val createByIdOp =
     (apiOperation[String]("createById")
@@ -126,7 +137,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
         pathParam[String]("id").description(s"Id of $aName that needs to be created")))
 
   post("/:id", operation(createByIdOp)) {
-    halt(404)
+    haltNotFound()
   }
 
   private val deleteByIdOp =
@@ -136,7 +147,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
         pathParam[String]("id").description(s"Id of $aName that needs to be deleted")))
 
   delete("/:id", operation(deleteByIdOp)) {
-    halt(404)
+    haltNotFound()
   }
 }
 

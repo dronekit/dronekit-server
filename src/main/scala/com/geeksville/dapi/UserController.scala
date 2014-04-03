@@ -8,5 +8,7 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.User
 
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
+  override val blacklist = Set("hashedPassword", "password")
+
 }
 

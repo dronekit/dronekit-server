@@ -48,5 +48,5 @@ object Vehicle extends DapiRecordCompanion[Vehicle] {
    * Find by ID but using a string encoding (i.e. UUID or somesuch)
    * For now I just convert the int to its base-10 representation
    */
-  override def find(id: String): Option[Vehicle] = this.where(_.uuid === UUID.fromString(id)).headOption
+  def findByUUID(id: String): Option[Vehicle] = this.where(_.uuid === UUID.fromString(id)).headOption
 }

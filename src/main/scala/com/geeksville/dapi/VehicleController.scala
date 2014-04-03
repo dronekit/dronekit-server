@@ -8,19 +8,20 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model._
 
+/// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) {
 
   // FIXME - make this code actually do something
-  rwField[String]("mode", "FIXME", { (v) => })
+  rwField[String]("mode", (v) => "FIXME", { (v, arg) => })
   //roField[Location]("location", null)
   //roField[Attitude]("attitude", null)
-  roField[Double]("airspeed", 1.5)
-  roField[Double]("groundspeed", 1.5)
-  roField[Double]("batteryVolt", 1.5)
-  roField[Double]("batterySOC", 1.5)
+  roField("airspeed") { (v) => 1.5 }
+  roField("groundspeed") { (v) => 1.5 }
+  roField("batteryVolt") { (v) => 1.5 }
+  roField("batterySOC") { (v) => 1.5 }
 
-  roField[List[Int]]("rcChannels", List(1, 2, 3))
-  woField[List[Int]]("rcOverrides", { (v) => })
+  roField[List[Int]]("rcChannels") { (v) => List(1, 2, 3) }
+  woField[List[Int]]("rcOverrides", { (v, arg) => })
 
   //rwField[Location]("targetLocation", null, { (v) => })
 

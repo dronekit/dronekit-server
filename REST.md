@@ -35,9 +35,10 @@ where property is:
 # TODO
 
 * make vehicle queries use the int index
-* implement messages.tlog
 * deploy to 3dr server
 * make mission API work with live flights also
+
+* check for user perms/roles per servlet API: get("/foo", request.getRemoteUser == "admin") {...}
 
 * Use UI browser at http://swagger.wordnik.com/
 * Add API key support

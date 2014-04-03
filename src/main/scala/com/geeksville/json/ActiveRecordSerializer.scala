@@ -9,6 +9,7 @@ import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
 
 /**
+ * DEPRECATED - DELETE ME
  * A serializer that is smart enough to ignore various bits of private ActiveRecord state...
  */
 object ActiveRecordSerializer {

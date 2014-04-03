@@ -16,6 +16,18 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   //raField[Mavlink]("mavlink", null, { (v) => })
   //roField[List[Location]]("location", null)
-  roField[List[String]]("mode", null)
+  //roField[List[String]]("mode", null)
+
+  // Send a response with a recommended filename
+  def OkWithFilename(payload: Any, filename: String) = {
+    Ok(payload, Map(
+      // "Content-Type"        -> (file.contentType.getOrElse("application/octet-stream")),
+      "Content-Disposition" -> ("attachment; filename=\"" + filename + "\"")))
+  }
+
+  roField("messages.tlog") { (o) =>
+    contentType = Mission.mimeType
+    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound()), o.tlogId.get + ".tlog")
+  }
 }
 
