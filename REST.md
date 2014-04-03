@@ -29,7 +29,7 @@ where property is:
 * messages.tlog (raw tlog data)
 * messages.json (a json encoding of messages)
 * messages.kmz
-* messages-lite.kmz (FIXME - store in local DB?)
+* messages.gmaps.kmz (kmz but obeying the limits associated with gmaps) (FIXME - store in local DB?)
 * messages.jpg (a jpg thumbnail view of the flight)
 
 # TODO

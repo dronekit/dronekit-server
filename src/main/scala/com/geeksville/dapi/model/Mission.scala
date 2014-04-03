@@ -99,7 +99,7 @@ case class Mission(
 }
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
-  val mimeType = "application/vnd.nestor.tlog"
+  val mimeType = "application/vnd.diydrones.tlog"
 
   // We use a cache to avoid (slow) rereading of s3 data if we can help it
   private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: UUID) => readBytesByPath(S3Client.tlogPrefix + key) }
