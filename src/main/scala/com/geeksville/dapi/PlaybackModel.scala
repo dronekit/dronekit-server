@@ -101,7 +101,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
     debug(s"Calculated flight duration of $r")
     r
   }).orElse {
-    error("Can't find duration for flight")
+    warn("Can't find duration for flight")
     None
   }
 

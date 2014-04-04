@@ -32,7 +32,7 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
       pval <- if (blacklist.contains(param)) None else findById.toMap.get(param)
     } yield {
       pval
-    }).getOrElse(halt(404))
+    }).getOrElse(haltNotFound("object or parameter not found"))
   }
 
 }

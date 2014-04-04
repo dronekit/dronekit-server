@@ -46,6 +46,8 @@ abstract class DroneHubStack extends ScalatraServlet with Logging {
   }
 
   /// syntatic sugar
-  def haltNotFound() = halt(404)
+  def haltNotFound(reason: String = null) = halt(404, reason = reason)
   def haltBadRequest(reason: String = null) = halt(400, reason = reason)
+  def haltNotImplemented(reason: String = null) = halt(501, reason = reason)
+  def haltInternalServerError(reason: String = null) = halt(500, reason = reason)
 }
