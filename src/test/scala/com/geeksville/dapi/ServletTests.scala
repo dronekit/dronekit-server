@@ -10,8 +10,13 @@ import org.json4s.DefaultFormats
 import com.geeksville.json.GeeksvilleFormats
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import java.io.File
+import org.scalatra.test.BytesPart
+import com.geeksville.dapi.model.Mission
+import grizzled.slf4j.Logging
+import org.scalatra.test.Client
 
-class ServletTests extends FunSuite with ScalatraSuite with BeforeAndAfter {
+class ServletTests extends FunSuite with ScalatraSuite with Logging {
   implicit val swagger = new ApiSwagger
 
   lazy val activeRecordTables = new ScalatraConfig().schema
@@ -19,12 +24,18 @@ class ServletTests extends FunSuite with ScalatraSuite with BeforeAndAfter {
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
 
-  before {
+  // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
+  override def beforeAll() {
+    Global.setConfig()
+
+    super.beforeAll()
+
     activeRecordTables.initialize
   }
 
-  after {
+  override def afterAll() {
     activeRecordTables.cleanup
+    super.afterAll()
   }
 
   // `HelloWorldServlet` is your app which extends ScalatraServlet
@@ -34,13 +45,19 @@ class ServletTests extends FunSuite with ScalatraSuite with BeforeAndAfter {
 
   def jsonGet(uri: String) = {
     get(uri) {
-      status should equal(200)
-
+      checkStatusOk()
       parse(body)
     }
   }
+
+  def checkStatusOk() {
+    if (status != 200) // If not okay then show the error msg from server
+      error(body)
+    status should equal(200)
+  }
+
   test("vehicle") {
-    jsonGet("/api/v1/vehicle/1").extract[Vehicle]
+    jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
   }
 
   test("mission") {
@@ -49,5 +66,19 @@ class ServletTests extends FunSuite with ScalatraSuite with BeforeAndAfter {
 
   test("user") {
     jsonGet("/api/v1/user")
+  }
+
+  test("tlog-upload") {
+    // Set the payload
+    val name = "test.tlog"
+    val is = getClass.getResourceAsStream(name)
+    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    is.close()
+    val payload = BytesPart(name, bytes, Mission.mimeType)
+
+    post("/api/v1/vehicle/1/missions", Map("private" -> "false"), Map("payload" -> payload)) {
+      checkStatusOk()
+      info("View URL is " + body)
+    }
   }
 }

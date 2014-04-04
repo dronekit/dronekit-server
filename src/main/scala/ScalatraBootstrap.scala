@@ -29,6 +29,7 @@ import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
 import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.dapi.test.RunTest
 import com.geeksville.dapi.temp._
+import com.geeksville.dapi.Global
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -37,11 +38,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
   override def init(context: ServletContext) {
 
-    val configOverride = new File(System.getProperty("user.home") + "/nestor.conf")
-    if (configOverride.exists)
-      System.setProperty("config.file", configOverride.toString)
-    else
-      println(s"No config override file found.  You should probably create $configOverride")
+    Global.setConfig()
 
     super.init(context)
 
@@ -81,3 +78,4 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     super.destroy(context)
   }
 }
+

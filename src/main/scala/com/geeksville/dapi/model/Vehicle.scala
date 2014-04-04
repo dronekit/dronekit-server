@@ -46,16 +46,15 @@ case class Vehicle(
   lazy val missions = hasMany[Mission]
 
   /// Create a new mission as a child of this vehicle (given tlog bytes)
-  def createMission(bytes: Array[Byte]) {
+  def createMission(bytes: Array[Byte], notes: Option[String] = None) {
     // Copy over tlog
     val newTlogId = UUID.randomUUID()
-    info("Copying from S3")
     val s = new ByteArrayInputStream(bytes)
     Mission.putBytes(newTlogId.toString, s, bytes.length)
 
     // Create mission record
     val m = Mission.create(this)
-    m.notes = Some("Imported from Droneshare")
+    m.notes = notes
     m.controlPrivacy = AccessCode.DEFAULT.id
     m.viewPrivacy = AccessCode.DEFAULT.id
     m.keep = true

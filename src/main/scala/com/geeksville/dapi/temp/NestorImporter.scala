@@ -54,7 +54,7 @@ class NestorImporter extends Actor with ActorLogging {
       // Copy over tlog
 
       tlog.bytes.foreach { bytes =>
-        vehicle.createMission(bytes)
+        vehicle.createMission(bytes, Some("Imported from Droneshare"))
       }
     }
   }

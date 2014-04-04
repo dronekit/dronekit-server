@@ -9,6 +9,7 @@ import com.geeksville.util.URLUtil
 import com.geeksville.dapi.model._
 import org.scalatra.servlet.FileUploadSupport
 import javax.servlet.annotation.MultipartConfig
+import org.json4s.JsonAST.JString
 
 /// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 @MultipartConfig(maxFileSize = 1024 * 1024)
@@ -44,7 +45,12 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
     if (Mission.mimeType != ctype)
       haltBadRequest("invalid content-type")
 
-    v.createMission(payload.get)
+    v.createMission(payload.get, Some("Web upload"))
+
+    warn("Returning")
+
+    // Return a URL where the flight can be viewed
+    JString("http://fish.com")
   }
 
 }
