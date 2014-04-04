@@ -35,9 +35,6 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     contentType = formats("json")
   }
 
-  /// syntatic sugar
-  def haltNotFound() = halt(404)
-
   /// Generate a ro attribute on this rest endpoint of the form /:id/name.
   /// call getter as needed
   /// FIXME - move this great utility somewhere else
@@ -65,12 +62,12 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
           bodyParam[R](name).description(s"New value for the $name")))
 
     put("/:id/" + name, operation(putInfo)) {
-      haltNotFound() // FIXME
+      setter(findById, parsedBody.extract[R])
     }
   }
 
   /// Generate an append only attribute on this rest endpoint of the form /:id/name.
-  def aoField[R: Manifest](name: String, appender: R => Unit) {
+  def aoField[R: Manifest](name: String)(appender: (T, R) => Unit) {
     val putInfo =
       (apiOperation[String]("add" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
@@ -79,7 +76,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
           bodyParam[R](name).description(s"New value for the $name")))
 
     post("/:id/" + name, operation(putInfo)) {
-      haltNotFound() // FIXME
+      appender(findById, parsedBody.extract[R])
     }
   }
 
@@ -91,9 +88,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   /// Read an appendable field
-  def raField[R: Manifest](name: String, getter: T => List[R], appender: R => Unit) {
+  def raField[R: Manifest](name: String, getter: T => List[R], appender: (T, R) => Unit) {
     roField(name)(getter)
-    aoField(name, appender)
+    aoField(name)(appender)
   }
 
   protected def getOp =

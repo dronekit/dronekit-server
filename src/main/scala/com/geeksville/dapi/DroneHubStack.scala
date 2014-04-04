@@ -45,4 +45,7 @@ abstract class DroneHubStack extends ScalatraServlet with Logging {
     new URL(request.getScheme(), if (h == "localhost") "nestor.3dr.com" else h, "").toURI
   }
 
+  /// syntatic sugar
+  def haltNotFound() = halt(404)
+  def haltBadRequest(reason: String = null) = halt(400, reason = reason)
 }

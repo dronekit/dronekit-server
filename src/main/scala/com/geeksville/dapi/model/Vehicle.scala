@@ -6,6 +6,9 @@ import org.squeryl.annotations.Transient
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import com.github.aselab.activerecord.dsl._
+import grizzled.slf4j.Logging
+import java.io.ByteArrayInputStream
+import com.geeksville.dapi.AccessCode
 
 /**
  * A vehicle model
@@ -30,7 +33,7 @@ case class Vehicle(
   var autopilotType: Option[String] = None,
 
   // Autopilot software version #
-  var softwareVersion: Option[String] = None) extends DapiRecord {
+  var softwareVersion: Option[String] = None) extends DapiRecord with Logging {
   /**
    * Who owns me?
    */
@@ -41,6 +44,27 @@ case class Vehicle(
    * All the missions this vehicle has made
    */
   lazy val missions = hasMany[Mission]
+
+  /// Create a new mission as a child of this vehicle (given tlog bytes)
+  def createMission(bytes: Array[Byte]) {
+    // Copy over tlog
+    val newTlogId = UUID.randomUUID()
+    info("Copying from S3")
+    val s = new ByteArrayInputStream(bytes)
+    Mission.putBytes(newTlogId.toString, s, bytes.length)
+
+    // Create mission record
+    val m = Mission.create(this)
+    m.notes = Some("Imported from Droneshare")
+    m.controlPrivacy = AccessCode.DEFAULT.id
+    m.viewPrivacy = AccessCode.DEFAULT.id
+    m.keep = true
+    m.isLive = false
+    m.tlogId = Some(newTlogId)
+    // FIXME - regenerate summaries?
+    m.save()
+    debug("Done with record")
+  }
 }
 
 object Vehicle extends DapiRecordCompanion[Vehicle] {

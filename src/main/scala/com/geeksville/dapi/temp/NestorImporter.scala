@@ -52,25 +52,10 @@ class NestorImporter extends Actor with ActorLogging {
       }
 
       // Copy over tlog
-      val newTlogId = UUID.randomUUID()
+
       tlog.bytes.foreach { bytes =>
-
-        log.info("Copying from S3")
-        val s = new ByteArrayInputStream(bytes)
-        Mission.putBytes(newTlogId.toString, s, bytes.length)
+        vehicle.createMission(bytes)
       }
-
-      // Create mission record
-      val m = Mission.create(vehicle)
-      m.notes = Some("Imported from Droneshare")
-      m.controlPrivacy = AccessCode.DEFAULT.id
-      m.viewPrivacy = AccessCode.DEFAULT.id
-      m.keep = true
-      m.isLive = false
-      m.tlogId = Some(newTlogId)
-      // FIXME - regenerate summaries?
-      m.save()
-      log.debug("Done with record")
     }
   }
 }
