@@ -7,6 +7,7 @@ import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
+import java.lang.reflect.InvocationTargetException
 
 /**
  * DEPRECATED - DELETE ME
@@ -72,6 +73,8 @@ class ActiveRecordSerializer2(val blacklist: Set[String] = Set.empty) extends Se
           } catch {
             case ex: NoSuchMethodException =>
             // No getter
+            case ex: InvocationTargetException =>
+              throw ex.getCause // Probably better to rethrow the actual failure
           }
 
         //println(s"Encoding $name as $v ${p.returnType}")
