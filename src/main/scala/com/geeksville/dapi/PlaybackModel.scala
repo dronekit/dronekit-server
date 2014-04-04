@@ -87,8 +87,8 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
 
   // Summary data
 
-  def startTime = firstMessage.get.timeAsDate
-  def endTime = lastMessage.get.timeAsDate
+  def startTime = firstMessage.map(_.timeAsDate)
+  def endTime = lastMessage.map(_.timeAsDate)
 
   /**
    * duration of flying portion in seconds
@@ -126,7 +126,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
 
   def summary = {
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
-    MissionSummary(checkTime(startTime), checkTime(endTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration)
+    MissionSummary(startTime.flatMap(checkTime), endTime.flatMap(checkTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration)
   }
 
   def modeChanges = modeChangeMsgs.map { m =>
