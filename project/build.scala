@@ -51,7 +51,7 @@ object NestorBuild extends Build {
 
   lazy val threeAkka = Project(id = "three-akka",
     base = file("3scale-akka"))
-    
+
   lazy val nestorProject = Project(
     "apihub",
     file("."),
@@ -68,10 +68,14 @@ object NestorBuild extends Build {
       unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
       unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
 
+      // Make "test" command work again per https://groups.google.com/forum/#!topic/scalatra-user/Mkx2lHAqQI0
+
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
-
+        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test" withSources (),
+        //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
+        
         // scala-activerecord support
         "com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources (),
         "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources (),
@@ -94,17 +98,22 @@ object NestorBuild extends Build {
         // We want the version from logback
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
 
-        // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
-        "com.amazonaws" % "aws-java-sdk" % "1.3.10",
+        
+        
+        //"org.apache.httpcomponents" % "httpclient" % "4.1" % "test", // We need to force this version of http client to keep newer aws libs working
+        //"org.apache.httpcomponents" % "httpcore" % "4.1" % "test",         
+        //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
+        "com.amazonaws" % "aws-java-sdk" % "1.7.5",
+        //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",    
+        //"commons-codec" % "commons-codec" % "1.6",
+        
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
         "com.google.guava" % "guava" % "14.0-rc2",
-        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "compile;container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
-      //"org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container",
-      //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
+        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container"),
+        //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "compile;container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
 
       /* no longer works?/needed?
       warPostProcess in Compile <<= (target) map {
@@ -128,8 +137,8 @@ object NestorBuild extends Build {
             Some("templates")))
       } // webappResources in Compile <+= (targetFolder in generateResources in Compile)
       )).dependsOn(common, threeAkka)
-      
-      // not yet working .settings(atmosSettings: _*).configs(Atmos)
+
+  // not yet working .settings(atmosSettings: _*).configs(Atmos)
 }
 
 
