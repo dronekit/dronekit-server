@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest
  * Subclasses can call roField etc... to specify handlers for particular operations
  * T is the primary type
  */
-class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport {
+class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with NativeJsonSupport with SwaggerSupport {
 
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats

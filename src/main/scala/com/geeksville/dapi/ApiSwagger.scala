@@ -6,7 +6,7 @@ import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.ApiInfo
 
-class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase {
+class ResourcesApp(implicit val swagger: Swagger) extends DroneHubStack with NativeSwaggerBase {
   implicit override val jsonFormats: Formats = DefaultFormats
 }
 

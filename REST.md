@@ -34,8 +34,12 @@ where property is:
 
 # TODO
 
-* make vehicle queries use the int index
+* update to latest google earth lib
+* add tlog upload
+* regen MissionSummaries dynamically
 * deploy to 3dr server
+* turn on exception notification via pushover or bugsense or takipi
+* change droneshare to be entirely a javascript app
 * make mission API work with live flights also
 
 * check for user perms/roles per servlet API: get("/foo", request.getRemoteUser == "admin") {...}
