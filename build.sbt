@@ -1,6 +1,6 @@
 import com.typesafe.sbt.SbtStartScript
 
-scalaVersion in ThisBuild := "2.10.4" // To match version used by scala-ide
+scalaVersion in ThisBuild := "2.10.4" 
 
 EclipseKeys.createSrc in ThisBuild := EclipseCreateSrc.Default + EclipseCreateSrc.Resource + EclipseCreateSrc.Managed // Include resources dir in eclipse classpath
 
