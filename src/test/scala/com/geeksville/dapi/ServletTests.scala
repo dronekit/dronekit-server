@@ -32,13 +32,22 @@ class ServletTests extends FunSuite with ScalatraSuite with BeforeAndAfter {
   addServlet(new VehicleController, "/api/v1/vehicle/*")
   addServlet(new MissionController, "/api/v1/mission/*")
 
-  test("simple get") {
-    get("/api/v1/vehicle/1") {
+  def jsonGet(uri: String) = {
+    get(uri) {
       status should equal(200)
 
-      val parsedBody = parse(body)
-      parsedBody.extract[Vehicle]
+      parse(body)
     }
   }
+  test("vehicle") {
+    jsonGet("/api/v1/vehicle/1").extract[Vehicle]
+  }
 
+  test("mission") {
+    jsonGet("/api/v1/mission/1")
+  }
+
+  test("user") {
+    jsonGet("/api/v1/user")
+  }
 }

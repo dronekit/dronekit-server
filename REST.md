@@ -34,7 +34,6 @@ where property is:
 
 # TODO
 
-* add simple unit test 
 * add unit test for tlog upload
 * deploy to 3dr server
 * turn on exception notification via pushover or bugsense or takipi
