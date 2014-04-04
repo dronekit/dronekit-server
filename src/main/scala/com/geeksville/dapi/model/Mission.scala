@@ -19,6 +19,7 @@ import com.google.common.io.ByteStreams
 import java.io.InputStream
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.PlaybackModel
+import com.amazonaws.services.s3.model.AmazonS3Exception
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -116,7 +117,13 @@ case class Mission(
   /**
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
-  def tlogBytes = tlogId.flatMap(Mission.getBytes)
+  def tlogBytes = try {
+    tlogId.flatMap(Mission.getBytes)
+  } catch {
+    case ex: Exception =>
+      error(s"S3 can't find tlog ${tlogId.get} due to $ex")
+      None
+  }
 }
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
