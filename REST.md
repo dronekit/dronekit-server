@@ -34,9 +34,7 @@ where property is:
 
 # TODO
 
-* update to latest google earth lib
 * add tlog upload
-* regen MissionSummaries dynamically
 * deploy to 3dr server
 * turn on exception notification via pushover or bugsense or takipi
 * change droneshare to be entirely a javascript app

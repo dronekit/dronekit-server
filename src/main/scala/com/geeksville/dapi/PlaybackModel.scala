@@ -31,6 +31,9 @@ import de.micromata.opengis.kml.v_2_2_0.Folder
 import de.micromata.opengis.kml.v_2_2_0.Container
 import org.mavlink.messages.MAV_TYPE
 import com.geeksville.dapi.model.MissionSummary
+import java.util.Date
+import java.util.Calendar
+import grizzled.slf4j.Logging
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -40,7 +43,7 @@ case class TimestampedLocation(time: Long, loc: Location)
  * Can be used on one TLogChunk or a series of chunks.
  * DO NOT DEPEND on any web services in this class (will move to common someday?)
  */
-class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
+class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Logging {
 
   /**
    * a seq of usec_time -> location
@@ -95,10 +98,10 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
     e <- endOfFlightMessage
   } yield {
     val r = e.timeSeconds - s.timeSeconds
-    println(s"Calculated flight duration of $r")
+    debug(s"Calculated flight duration of $r")
     r
   }).orElse {
-    println("Can't find duration for flight")
+    error("Can't find duration for flight")
     None
   }
 
@@ -110,8 +113,21 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
     messages.filter { m => m.time >= s.time && m.time <= e.time }
   }).getOrElse(Seq())
 
-  def summary(ownerId: String) = MissionSummary(Some(startTime), Some(endTime), maxAltitude, maxGroundSpeed, maxAirSpeed,
-    maxG, flightDuration)
+  private def checkTime(date: Date) = {
+    if (date.getYear < 1975) {
+      warn("Bogus timestamp in past")
+      None
+    } else if (date.getYear > PlaybackModel.currentYear + 1) {
+      warn("Bogus timestamp in future")
+      None
+    } else
+      Some(date)
+  }
+
+  def summary = {
+    // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
+    MissionSummary(checkTime(startTime), checkTime(endTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration)
+  }
 
   def modeChanges = modeChangeMsgs.map { m =>
     val code = m.msg.asInstanceOf[msg_heartbeat].custom_mode.toInt
@@ -373,6 +389,9 @@ object PlaybackModel {
     model.loadBytes(b, reduced)
     model
   }
+
+  val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+
 }
 /*
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"

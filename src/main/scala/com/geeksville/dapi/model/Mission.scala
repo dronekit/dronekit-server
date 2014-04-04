@@ -14,18 +14,19 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.cache.Cache
-import com.geeksville.logback.Logging
 import com.geeksville.util.Using
 import com.google.common.io.ByteStreams
 import java.io.InputStream
+import grizzled.slf4j.Logging
+import com.geeksville.dapi.PlaybackModel
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
  *
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
-case class MissionSummary(startTime: Option[Date],
-  endTime: Option[Date],
+case class MissionSummary(startTime: Option[Date] = None,
+  endTime: Option[Date] = None,
   maxAlt: Double = 0.0,
   maxGroundSpeed: Double = 0.0,
   maxAirSpeed: Double = 0.0,
@@ -34,6 +35,8 @@ case class MissionSummary(startTime: Option[Date],
 
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
+
+  def isSummaryValid = startTime.isDefined
 
   def minutes = for {
     s <- startTime
@@ -72,7 +75,7 @@ case class Mission(
   var isLive: Boolean = false,
   var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
 
-  var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord {
+  var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
    * What vehicle made me?
    */
@@ -90,7 +93,25 @@ case class Mission(
   /**
    * The server generated summary of the flight
    */
-  lazy val summary = hasOne[MissionSummary]
+  lazy val summary = {
+    val r = hasOne[MissionSummary]
+
+    if (!r.headOption.isDefined) {
+      warn("Mission summary missing")
+      tlogBytes.foreach { bytes =>
+        warn("Regenerating")
+        val model = PlaybackModel.fromBytes(bytes, false)
+        val s = model.summary
+        s.create
+        s.mission := this
+        s.save
+        this.save
+        warn("Regen completed")
+      }
+
+    }
+    r
+  }
 
   /**
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
