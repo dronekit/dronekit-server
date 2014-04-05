@@ -32,6 +32,20 @@ where property is:
 * messages.gmaps.kmz (kmz but obeying the limits associated with gmaps) (FIXME - store in local DB?)
 * messages.jpg (a jpg thumbnail view of the flight)
 
+# /session Logging in
+
+## POST /session/login
+To login
+
+## GET /session/user
+Get the logged in user object (or Forbidden 403)
+
+## POST /session/logout
+To logout
+
+Cookies are optionally supported, if your client uses cookies you can log in the user once and just attach the cookie to future operations.
+If you do not support cookies, you'll need to attach login & password as query params for all operations.
+
 # TODO
 
 * deploy to 3dr server

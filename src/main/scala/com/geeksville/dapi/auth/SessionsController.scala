@@ -41,6 +41,14 @@ class SessionsController extends DroneHubStack {
     * */
   }
 
+  /**
+   * Return the user-object if we are logged in, else 401
+   */
+  get("/user") {
+    requireLogin()
+    user
+  }
+
   // Never do this in a real app. State changes should never happen as a result of a GET request. However, this does
   // make it easier to illustrate the logout code.
   post("/logout") {

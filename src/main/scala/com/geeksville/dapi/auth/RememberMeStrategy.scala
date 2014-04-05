@@ -15,6 +15,15 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
   val COOKIE_KEY = "rememberMe"
   private val oneWeek = 7 * 24 * 3600
 
+  def shouldUseCookies = {
+    // Does the user want to use cookies.
+    // If using a checkbox do this
+    // checkbox2boolean(app.params.get("rememberMe").getOrElse("").toString)
+
+    // But for now always try to use cookies
+    true
+  }
+
   /**
    * *
    * Grab the value of the rememberMe cookie token.
@@ -65,7 +74,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
   override def afterAuthenticate(winningStrategy: String, user: User)(implicit request: HttpServletRequest, response: HttpServletResponse) = {
     logger.info("rememberMe: afterAuth fired")
     if (winningStrategy == "RememberMe" ||
-      (winningStrategy == "UserPassword" && checkbox2boolean(app.params.get("rememberMe").getOrElse("").toString))) {
+      (winningStrategy == "UserPassword" && shouldUseCookies)) {
 
       val token = "foobar"
       app.cookies.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))

@@ -15,14 +15,18 @@ import org.scalatra.test.BytesPart
 import com.geeksville.dapi.model.Mission
 import grizzled.slf4j.Logging
 import org.scalatra.test.Client
+import com.geeksville.dapi.auth.SessionsController
+import org.scalatest.GivenWhenThen
 
-class ServletTests extends FunSuite with ScalatraSuite with Logging {
+class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
 
   lazy val activeRecordTables = new ScalatraConfig().schema
 
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
+
+  val loginInfo = Map("login" -> "test-bob", "password" -> "sekrit")
 
   // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
   override def beforeAll() {
@@ -38,7 +42,7 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging {
     super.afterAll()
   }
 
-  // `HelloWorldServlet` is your app which extends ScalatraServlet
+  addServlet(new SessionsController, "/api/v1/session/*")
   addServlet(new UserController, "/api/v1/user/*")
   addServlet(new VehicleController, "/api/v1/vehicle/*")
   addServlet(new MissionController, "/api/v1/mission/*")
@@ -82,9 +86,35 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging {
     is.close()
     val payload = BytesPart(name, bytes, Mission.mimeType)
 
-    post("/api/v1/vehicle/1/missions", Map("login" -> "test-bob", "password" -> "sekrit"), Map("payload" -> payload)) {
+    post("/api/v1/vehicle/1/missions", loginInfo, Map("payload" -> payload)) {
       checkStatusOk()
       info("View URL is " + body)
+    }
+  }
+
+  test("sessions work") {
+    // We want cookies for this test
+    session {
+      Given("We start by logging out")
+      post("/api/v1/session/logout", loginInfo) {
+        checkStatusOk()
+      }
+
+      Then("We are logged out")
+      // First try being not logged in
+      get("/api/v1/session/user") {
+        status should equal(401)
+      }
+
+      Then("We can log in")
+      post("/api/v1/session/login", loginInfo) {
+        checkStatusOk()
+      }
+
+      And("login cookie works")
+      get("/api/v1/session/user") {
+        checkStatusOk()
+      }
     }
   }
 }
