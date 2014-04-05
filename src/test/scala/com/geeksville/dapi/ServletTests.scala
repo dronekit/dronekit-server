@@ -68,6 +68,12 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging {
     jsonGet("/api/v1/user")
   }
 
+  test("security-tlog-upload (not logged in)") {
+    post("/api/v1/vehicle/1/missions") {
+      status should equal(401)
+    }
+  }
+
   test("tlog-upload") {
     // Set the payload
     val name = "test.tlog"
@@ -76,7 +82,7 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging {
     is.close()
     val payload = BytesPart(name, bytes, Mission.mimeType)
 
-    post("/api/v1/vehicle/1/missions", Map("private" -> "false"), Map("payload" -> payload)) {
+    post("/api/v1/vehicle/1/missions", Map("login" -> "test-bob", "password" -> "sekrit"), Map("payload" -> payload)) {
       checkStatusOk()
       info("View URL is " + body)
     }

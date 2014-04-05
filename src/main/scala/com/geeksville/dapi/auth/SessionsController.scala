@@ -29,7 +29,7 @@ class SessionsController extends DroneHubStack {
 
     // User just tried to login - if login has failed tell them they can't access the site
     if (!isAuthenticated)
-      haltForbidden()
+      haltForbidden("Invalid login")
     /*
     If we were using HTML this is what we would give
     

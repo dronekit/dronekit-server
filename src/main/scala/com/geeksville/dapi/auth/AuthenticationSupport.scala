@@ -21,10 +21,8 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
   /// Subclasses can call this method to ensure that the request is aborted if the user is not logged in
   protected def requireLogin() = {
-    if (!isAuthenticated) {
-      // For HTML: redirect(scentryConfig.login)
-      haltUnauthorized()
-    }
+    // This will implicitly call the unauthorized method if the user is not logged in
+    scentry.authenticate()
   }
 
   /**
@@ -36,7 +34,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     scentry.unauthenticated {
       // DISABLED - we expect to talk only to JSON clients - so no redirecting to login pages.
       // scentry.strategies("UserPassword").unauthenticated()
-      haltUnauthorized()
+      haltUnauthorized("You are not logged in")
     }
   }
 
