@@ -39,6 +39,8 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
         pathParam[String]("id").description(s"Id of $aName to be appended")))
 
   post("/:id/missions", operation(addMissionInfo)) {
+    requireLogin()
+
     val v = findById
     val payload = fileParams("payload")
     val ctype = payload.contentType.getOrElse(haltBadRequest("content-type not set"))

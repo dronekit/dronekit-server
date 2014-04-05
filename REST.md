@@ -34,11 +34,11 @@ where property is:
 
 # TODO
 
-* add unit test for tlog upload
 * deploy to 3dr server
 * turn on exception notification via pushover or bugsense or takipi
 * change droneshare to be entirely a javascript app
 * make mission API work with live flights also
+* Turn on CI server (after I figure out how to use a test DB)
 
 * check for user perms/roles per servlet API: get("/foo", request.getRemoteUser == "admin") {...}
 

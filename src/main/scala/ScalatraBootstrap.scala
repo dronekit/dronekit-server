@@ -30,6 +30,7 @@ import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.dapi.test.RunTest
 import com.geeksville.dapi.temp._
 import com.geeksville.dapi.Global
+import com.geeksville.dapi.auth.SessionsController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -53,11 +54,15 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     //context.mount(new DeviceServlet, "/api/*")
     //context.mount(new MainServlet, "/*")
 
-    // FIXME - swagger temp busted
+    // Auth controller
+    context.mount(new SessionsController, "/api/v1/session/*")
+
+    // API controllers
     context.mount(new UserController, "/api/v1/user/*")
     context.mount(new VehicleController, "/api/v1/vehicle/*")
     context.mount(new MissionController, "/api/v1/mission/*")
 
+    // Swagger autodocs
     context.mount(new ResourcesApp, "/api-docs/*")
 
     // Start up our tcp listener

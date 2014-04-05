@@ -74,6 +74,7 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test" withSources (),
+        "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         
         // scala-activerecord support
