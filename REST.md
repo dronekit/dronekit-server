@@ -34,6 +34,11 @@ where property is:
 * messages.kmz
 * messages.gmaps.kmz (kmz but obeying the limits associated with gmaps) (FIXME - store in local DB?)
 * messages.jpg (a jpg thumbnail view of the flight)
+* parameters.json (a json representation of vehicle parameters)
+* parameters.complete (a complete param file)
+* parameters.share (a param file with 'vehicle specific' parameters stripped)
+* waypoints (a json representation of waypoints)
+* dseries (a temporary json representatio to support the old droneshare interface)
 
 # /session Logging in
 
@@ -51,6 +56,7 @@ If you do not support cookies, you'll need to attach login & password as query p
 
 # TODO
 
+* http://localhost:8080/view/5n72bt make it work using only the mission URL
 * deploy to 3dr server
 * turn on exception notification via pushover or bugsense or takipi
 * change droneshare to be entirely a javascript app

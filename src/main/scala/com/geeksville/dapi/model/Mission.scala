@@ -92,6 +92,15 @@ case class Mission(
   var tlogId: Option[UUID] = None
 
   /**
+   * A reconstructed playback model for this vehicle - note: accessing this lazy val is _expensive_
+   * CPU and ongoing memory
+   */
+  def model = tlogBytes.map { bytes =>
+    warn(s"Regenerating model for $this")
+    PlaybackModel.fromBytes(bytes, false)
+  }
+
+  /**
    * The server generated summary of the flight
    */
   lazy val summary = {
@@ -99,17 +108,14 @@ case class Mission(
 
     if (!r.headOption.isDefined) {
       warn("Mission summary missing")
-      tlogBytes.foreach { bytes =>
-        warn("Regenerating")
-        val model = PlaybackModel.fromBytes(bytes, false)
-        val s = model.summary
+      model.foreach { m =>
+        val s = m.summary
         s.create
         s.mission := this
         s.save
         this.save
         warn("Regen completed")
       }
-
     }
     r
   }
