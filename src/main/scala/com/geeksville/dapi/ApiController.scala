@@ -76,15 +76,6 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     haltMethodNotAllowed()
   }
 
-  put("/:id") {
-    createById(params("id"), parsedBody.extract[JObject])
-  }
-
-  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
-  protected def createById(id: String, payload: JObject): Any = {
-    haltMethodNotAllowed()
-  }
-
   delete("/:id") {
     deleteById(params("id"))
   }

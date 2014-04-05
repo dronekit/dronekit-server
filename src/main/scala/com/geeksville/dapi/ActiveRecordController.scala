@@ -16,7 +16,7 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   /// FIXME - add annotations for this?
   def blacklist = Set[String]()
 
-  override protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
+  override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
 
   private val findParamOp =
     (apiOperation[T]("getParam")

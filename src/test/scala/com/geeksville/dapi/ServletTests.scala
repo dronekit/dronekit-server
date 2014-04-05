@@ -20,8 +20,6 @@ import com.geeksville.dapi.auth.SessionsController
 import org.scalatest.GivenWhenThen
 import scala.util.Random
 
-case class UserJson(password: String, email: Option[String] = None, fullName: Option[String] = None)
-
 class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
 
