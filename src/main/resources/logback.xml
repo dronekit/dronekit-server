@@ -8,15 +8,21 @@
       <pattern>%d{mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
     </encoder>
 
+    <!--  
+    I think that sticking in loggers (see below) does the same thing better.
 		<filter class="com.geeksville.logback.NameLevelFilter">
 			<Prefix>com.geeksville</Prefix>
 			<MinLevel>DEBUG</MinLevel>
 		</filter>
-
+	-->
 		<filter class="com.geeksville.logback.MuteAllFilter" />
   </appender>
 
-  <root level="debug">
+  <!-- See all our log msgs -->
+  <logger name="com.geeksville" level="DEBUG"/>
+  
+  <!-- But ignore debug msgs from others -->
+  <root level="info">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
