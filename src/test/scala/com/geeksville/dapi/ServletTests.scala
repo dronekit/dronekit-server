@@ -88,6 +88,11 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
       checkStatusOk()
     }
 
+    Then("FIXME - fails: Make sure we can't recreate using the same ID")
+    //put(s"/api/v1/user/$login", toJSON(u), headers = jsonHeaders) {
+    //  status should equal(409) // conflict
+    //}
+
     And("List all users")
     jsonGet("/api/v1/user")
   }
