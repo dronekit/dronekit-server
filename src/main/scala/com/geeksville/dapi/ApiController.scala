@@ -10,6 +10,7 @@ import com.geeksville.dapi.model.User
 import com.geeksville.dapi.model.CRUDOperations
 import com.geeksville.json.GeeksvilleFormats
 import javax.servlet.http.HttpServletRequest
+import org.json4s.JsonAST.JObject
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -66,6 +67,33 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     }
   }
 
+  put("/") {
+    createDynamically(parsedBody.extract[JObject])
+  }
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to / to result in creating new objects.  implementations should return the new ID
+  protected def createDynamically(payload: JObject): Any = {
+    haltMethodNotAllowed()
+  }
+
+  put("/:id") {
+    createById(params("id"), parsedBody.extract[JObject])
+  }
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
+  protected def createById(id: String, payload: JObject): Any = {
+    haltMethodNotAllowed()
+  }
+
+  delete("/:id") {
+    deleteById(params("id"))
+  }
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
+  protected def deleteById(id: String): Any = {
+    haltMethodNotAllowed()
+  }
+
   /// Generate an append only attribute on this rest endpoint of the form /:id/name.
   def aoField[R: Manifest](name: String)(appender: (T, R) => Unit) {
     val putInfo =
@@ -101,6 +129,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
   /*
    * Retrieve a list of instances
+   * FIXME - support sql query operations
    */
   get("/", operation(getOp)) {
     companion.getAll

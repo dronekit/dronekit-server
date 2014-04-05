@@ -10,6 +10,7 @@ import org.json4s.DefaultFormats
 import com.geeksville.json.GeeksvilleFormats
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization
 import java.io.File
 import org.scalatra.test.BytesPart
 import com.geeksville.dapi.model.Mission
@@ -17,6 +18,9 @@ import grizzled.slf4j.Logging
 import org.scalatra.test.Client
 import com.geeksville.dapi.auth.SessionsController
 import org.scalatest.GivenWhenThen
+import scala.util.Random
+
+case class UserJson(password: String, email: Option[String] = None, fullName: Option[String] = None)
 
 class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
@@ -25,6 +29,8 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
 
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
+
+  val jsonHeaders = Map("Accept" -> "application/json", "Content-Type" -> "application/json")
 
   val loginInfo = Map("login" -> "test-bob", "password" -> "sekrit")
 
@@ -48,7 +54,7 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
   addServlet(new MissionController, "/api/v1/mission/*")
 
   def jsonGet(uri: String) = {
-    get(uri) {
+    get(uri, headers = jsonHeaders) {
       checkStatusOk()
       parse(body)
     }
@@ -60,25 +66,39 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
     status should equal(200)
   }
 
-  test("vehicle") {
+  ignore("vehicle") {
     jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
   }
 
-  test("mission") {
+  ignore("mission") {
     jsonGet("/api/v1/mission/1")
   }
 
+  def toJSON(x: AnyRef) = {
+    val r = Serialization.write(x)
+    debug(s"Sending $r")
+    r.getBytes
+  }
+
   test("user") {
+    Given("First make a new user")
+    val login = "test-" + Random.alphanumeric.take(6).mkString
+    val u = UserJson("sekrit")
+    put(s"/api/v1/user/$login", toJSON(u), headers = jsonHeaders) {
+      checkStatusOk()
+    }
+
+    And("List all users")
     jsonGet("/api/v1/user")
   }
 
-  test("security-tlog-upload (not logged in)") {
+  ignore("security-tlog-upload (not logged in)") {
     post("/api/v1/vehicle/1/missions") {
       status should equal(401)
     }
   }
 
-  test("tlog-upload") {
+  ignore("tlog-upload") {
     // Set the payload
     val name = "test.tlog"
     val is = getClass.getResourceAsStream(name)
@@ -92,7 +112,7 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
     }
   }
 
-  test("sessions work") {
+  ignore("sessions work") {
     // We want cookies for this test
     session {
       Given("We start by logging out")

@@ -38,5 +38,12 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 
 object User extends DapiRecordCompanion[User] {
   override def find(id: String): Option[User] = this.where(_.login === id).headOption
+
+  def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None) = {
+    val u = User(login, email, fullName).create
+    u.password = password
+    u.save() // FIXME - do I need to save?
+    u
+  }
 }
 

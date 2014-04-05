@@ -160,9 +160,7 @@ abstract class GCSActor extends Actor with ActorLogging {
           } else {
             // Create new user and login
 
-            val u = User(msg.username, msg.email, None).create
-            u.password = msg.password.get
-            u.save()
+            val u = User.create(msg.username, msg.password.get, msg.email, None)
             userOpt = Some(u)
 
             log.info(s"Created user " + msg.username)

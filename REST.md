@@ -10,6 +10,9 @@ GET /user/<id>/<property>
 where property is:
 * vehicles - returns a JSON array of vehicle IDs for this user (eventually support query params for filtering)
 
+PUT /user/<id> - create new user with the specified ID (this operation is allowed for even non logged in users)
+POST /user/<id>/vehicles - creates a new vehicle
+
 ## /vehicle
 
 GET /vehicle/<id>/<property>
@@ -35,7 +38,7 @@ where property is:
 # /session Logging in
 
 ## POST /session/login
-To login
+Login using the login and password parameters
 
 ## GET /session/user
 Get the logged in user object (or Forbidden 403)
