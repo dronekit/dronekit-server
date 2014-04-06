@@ -48,7 +48,8 @@ class ActiveRecordSerializer2(val blacklist: Set[String] = Set.empty) extends Se
 
   private def isBad(name: String) = name.startsWith("_") || name.contains('$') || globalBlacklist.contains(name) || blacklist.contains(name)
 
-  def deserialize(implicit format: Formats) = throw new Exception("Can't deserialize yet")
+  def deserialize(implicit format: Formats) = PartialFunction.empty
+  // throw new Exception("Can't deserialize yet")
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case x: ActiveRecord =>
