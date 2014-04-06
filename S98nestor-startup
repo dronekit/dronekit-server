@@ -4,5 +4,5 @@ UNAME=ubuntu
 DIR=/home/$UNAME
 # FIXME - don't run as root use -u $UNAME 
 cd $DIR
-sudo -b sh -c "sudo PORT=80 java -jar $DIR/nestor-assembly-0.2.0-SNAPSHOT.jar </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
+sudo -b sh -c "sudo PORT=80 java -jar $DIR/apihub-assembly-0.2.0-SNAPSHOT.jar </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
 
