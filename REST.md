@@ -61,6 +61,7 @@ If you do not support cookies, you'll need to attach login & password as query p
 * turn on exception notification via pushover or bugsense or takipi
 * change droneshare to be entirely a javascript app
 * make mission API work with live flights also
+* use atmosphere+scalatra for async update
 * Turn on CI server (after I figure out how to use a test DB)
 
 * check for user perms/roles per servlet API: get("/foo", request.getRemoteUser == "admin") {...}

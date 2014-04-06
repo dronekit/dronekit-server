@@ -17,6 +17,7 @@ import org.json4s.JsonAST.JObject
 import org.json4s.JsonAST.JInt
 import org.json4s.JsonAST.JDouble
 import org.json4s.JsonAST.JString
+import org.json4s.JsonDSL._
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -136,8 +137,11 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
         val array = s._2.map { pair =>
           JArray(List(JInt(pair.x), JDouble(pair.y))): JValue
         }
-        val jarray = JArray(array.toList)
-        JObject("label" -> JString(s._1), "data" -> jarray, "color" -> JInt(i))
+
+        // The following is the slick json4s version
+        // val jarray = JArray(array.toList)
+        // JObject("label" -> JString(s._1), "data" -> jarray, "color" -> JInt(i))
+        ("label" -> s._1) ~ ("data" -> array) ~ ("color" -> i)
     }
     r
   }
