@@ -70,7 +70,7 @@ abstract class GCSActor extends Actor with ActorLogging {
 
   /// Helper function for making user visible messages
   private def createMessage(s: String) =
-    Some(ShowMsg(text = Some(s)))
+    Some(ShowMsg(text = Some(s), priority = ShowMsg.Priority.MEDIUM))
 
   def receive = {
     case SendMavlinkToVehicle(msg) =>
