@@ -6,8 +6,9 @@ import org.squeryl.annotations.Transient
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import com.github.aselab.activerecord.dsl._
+import grizzled.slf4j.Logging
 
-case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord {
+case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
    * A user specified password
    * If null we assume invalid
@@ -26,13 +27,31 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
    */
   lazy val vehicles = hasMany[Vehicle]
 
-  def isPasswordGood(test: String) = BCrypt.checkpw(test, hashedPassword)
+  def isPasswordGood(test: String) = {
+    if (hashedPassword == "invalid") {
+      logger.warn(s"Failing password test for $login, because stored password is invalid")
+      false
+    } else {
+      // FIXME - never leave enabled in production code, because emitting psws to logs is bad juju
+      // logger.warn(s"Checking password $test againsted hashed version $hashedPassword")
+      BCrypt.checkpw(test, hashedPassword)
+    }
+  }
 
   override def beforeSave() {
-    hashedPassword = if (password == null)
-      "invalid"
-    else
-      BCrypt.hashpw(password, BCrypt.gensalt())
+
+    if (password != null) {
+      // A new password has been requested
+      logger.warn(s"Saving $this with new password")
+      hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+    }
+
+    if (hashedPassword == null) {
+      logger.warn(s"Saving $this with invalid password")
+      hashedPassword = "invalid"
+    }
+
+    super.beforeSave()
   }
 }
 
