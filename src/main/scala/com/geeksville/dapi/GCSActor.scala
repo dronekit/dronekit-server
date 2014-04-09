@@ -53,7 +53,7 @@ abstract class GCSActor extends Actor with ActorLogging {
    * find a vehicle object for a specified UUID, associating it with our user if needed
    */
   private def getOrCreateVehicle(uuid: UUID) = getVehicle(uuid).getOrElse {
-    log.warning("Vehicle $uuid not found in $user - creating")
+    log.warning(s"Vehicle $uuid not found in $user - creating")
     val v = Vehicle(uuid).create
     user.vehicles << v
     v.save
