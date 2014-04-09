@@ -51,14 +51,12 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   /// Stop time for current mission in usecs
   private var stopTime: Option[Long] = None
 
-  private var gcsActorOpt: Option[ActorRef] = None
+  private var gcsActor: Option[ActorRef] = None
 
   // Since we are on a server, we don't want to inadvertently spam the vehicle
   this.listenOnly = !canAcceptCommands
   autoWaypointDownload = false
   autoParameterDownload = false
-
-  private def gcsActor = gcsActorOpt.getOrElse(throw new Exception("No GCS connected"))
 
   override def onReceive = mReceive.orElse(super.onReceive)
 
@@ -66,15 +64,15 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     case VehicleConnected() =>
       log.debug("Vehicle connected")
 
-      assert(!gcsActorOpt.isDefined)
-      gcsActorOpt = Some(sender)
+      assert(!gcsActor.isDefined)
+      gcsActor = Some(sender)
 
     case VehicleDisconnected() =>
       log.debug("Vehicle disconnected")
 
       // Vehicle should only be connected through one gcs actor at a time
       assert(sender == gcsActor)
-      gcsActorOpt = None
+      gcsActor = None
 
       stopMission() // In case client forgot
     // FIXME - store tlog to S3
@@ -117,7 +115,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     if (!canAcceptCommands)
       throw new Exception(s"$vehicle does not accept commands")
     else
-      gcsActor ! SendMavlinkToVehicle(msg)
+      gcsActor.foreach(_ ! SendMavlinkToVehicle(msg))
   }
 
   /**
