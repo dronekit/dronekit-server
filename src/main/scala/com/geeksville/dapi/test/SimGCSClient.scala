@@ -12,17 +12,20 @@ import com.geeksville.apiproxy.LiveUploader
 import com.geeksville.apiproxy.GCSHooks
 import com.geeksville.apiproxy.APIProxyActor
 import java.util.UUID
+import akka.actor.Terminated
+import akka.actor.PoisonPill
+import com.geeksville.apiproxy.StopMissionAndExitMsg
 
-case object RunTest
+case class RunTest(quick: Boolean)
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
  */
 class SimGCSClient extends Actor with ActorLogging {
   def receive = {
-    case RunTest =>
+    case RunTest(quick) =>
       log.error("Running test")
-      if (false) fullTest() else quickTest()
+      if (!quick) fullTest() else quickTest()
   }
 
   private def quickTest() {
@@ -63,14 +66,25 @@ class SimGCSClient extends Actor with ActorLogging {
    */
   private def fullTest() {
     log.info("Starting full test vehicle")
-    val s = new BufferedInputStream(getClass.getResourceAsStream("test.tlog"), 8192)
-
-    val tlog = context.actorOf(Props(TlogStreamReceiver.open(s)), "tlogsim")
+    val tlog = context.actorOf(Props {
+      val s = new BufferedInputStream(getClass.getResourceAsStream("test.tlog"), 8192)
+      TlogStreamReceiver.open(s, 10000) // Play back the file at 10000x the normal speed
+    }, "tlogsim")
 
     // Anything coming from the controller app, forward it to the serial port
     val groundControlId = 253 // FIXME
     MavlinkEventBus.subscribe(tlog, groundControlId)
 
-    LiveUploader.create(context, APIProxyActor.testAccount, isLive = false)
+    val uploader = LiveUploader.create(context, APIProxyActor.testAccount, isLive = false)
+
+    // When our tlog reader finishes, we automatically end the upload
+    context.watch(tlog)
+    log.debug("Waiting for tlog file to end")
+    context.become {
+      case Terminated(t) =>
+        log.info("Tlog finished, telling uploader to exit")
+        uploader ! StopMissionAndExitMsg
+        context.unbecome()
+    }
   }
 }
