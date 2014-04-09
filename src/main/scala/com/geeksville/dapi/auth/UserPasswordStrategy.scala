@@ -5,6 +5,7 @@ import org.scalatra.auth.ScentryStrategy
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import org.slf4j.LoggerFactory
 import com.geeksville.dapi.model.User
+import grizzled.slf4j.Logging
 
 class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: HttpServletRequest, response: HttpServletResponse)
   extends ScentryStrategy[User] {
@@ -33,6 +34,20 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {
     logger.debug("attempting authentication")
 
+    UserPasswordStrategy.getValidatedUser(login, password)
+  }
+
+  /**
+   * What should happen if the user is currently not authenticated?
+   */
+  override def unauthenticated()(implicit request: HttpServletRequest, response: HttpServletResponse) {
+    app.redirect("/sessions/new")
+  }
+
+}
+
+object UserPasswordStrategy extends Logging {
+  def getValidatedUser(login: String, password: String) = {
     User.find(login).filter { user =>
       if (user.isPasswordGood(password)) {
         logger.info(s"login succeeded for $login")
@@ -43,12 +58,4 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
       }
     }
   }
-
-  /**
-   * What should happen if the user is currently not authenticated?
-   */
-  override def unauthenticated()(implicit request: HttpServletRequest, response: HttpServletResponse) {
-    app.redirect("/sessions/new")
-  }
-
 }

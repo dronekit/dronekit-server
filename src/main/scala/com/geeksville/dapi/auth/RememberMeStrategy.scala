@@ -73,8 +73,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    */
   override def afterAuthenticate(winningStrategy: String, user: User)(implicit request: HttpServletRequest, response: HttpServletResponse) = {
     logger.info("rememberMe: afterAuth fired")
-    if (winningStrategy == "RememberMe" ||
-      (winningStrategy == "UserPassword" && shouldUseCookies)) {
+    if (winningStrategy == "RememberMe" || shouldUseCookies) {
 
       val token = "foobar"
       app.cookies.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))

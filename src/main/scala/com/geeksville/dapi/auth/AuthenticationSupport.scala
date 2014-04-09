@@ -43,6 +43,9 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
    * progressively use all registered strategies to log the user in, falling back if necessary.
    */
   override protected def registerAuthStrategies = {
+    // We are temporarily guarding the entire site with http basic
+    //scentry.register("HttpBasic", app => new UserPasswordStrategy(app))
+
     scentry.register("UserPassword", app => new UserPasswordStrategy(app))
     scentry.register("RememberMe", app => new RememberMeStrategy(app))
   }
