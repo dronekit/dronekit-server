@@ -75,8 +75,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       gcsActor = None
 
       stopMission() // In case client forgot
-    // FIXME - store tlog to S3
-    // FIXME - should I kill myself? - FIXME - need to use supervisors to do reference counting
+      // FIXME - store tlog to S3
+      // FIXME - should I kill myself? - FIXME - need to use supervisors to do reference counting
+      self ! PoisonPill
 
     case msg: StartMissionMsg =>
       startMission(msg)
@@ -156,8 +157,13 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   }
 
   private def stopMission(notes: Option[String] = None) {
+    println("Stopping")
+    Thread.dumpStack()
     // Close the tlog and upload to s3
-    tloggerOpt.foreach { _ ! PoisonPill }
+    tloggerOpt.foreach { a =>
+      a ! PoisonPill
+      tloggerOpt = None
+    }
 
     missionOpt.foreach { m =>
       blocking {
@@ -168,6 +174,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         summary.save()
         m.save()
       }
+      missionOpt = None
     }
   }
 }
