@@ -71,7 +71,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       log.debug("Vehicle disconnected")
 
       // Vehicle should only be connected through one gcs actor at a time
-      assert(sender == gcsActor)
+      assert(sender == gcsActor.get)
       gcsActor = None
 
       stopMission() // In case client forgot
