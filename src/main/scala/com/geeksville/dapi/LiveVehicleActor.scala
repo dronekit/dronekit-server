@@ -157,8 +157,6 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   }
 
   private def stopMission(notes: Option[String] = None) {
-    println("Stopping")
-    Thread.dumpStack()
     // Close the tlog and upload to s3
     tloggerOpt.foreach { a =>
       a ! PoisonPill
@@ -167,6 +165,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
 
     missionOpt.foreach { m =>
       blocking {
+        log.debug("Saving mission")
         m.isLive = false
         m.tlogId = tlogId
         summary.create
