@@ -23,9 +23,19 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   var hashedPassword: String = _
 
   /**
+   * The group Id for htis user (eventually we will support group tables, for now the only options are null, admin.
+   */
+  @Length(max = 40)
+  var groupId: String = ""
+
+  /**
    * All the vehicles this user owns
    */
   lazy val vehicles = hasMany[Vehicle]
+
+  def isAdmin = groupId == "admin"
+
+  def isDeveloper = groupId == "develop"
 
   def isPasswordGood(test: String) = {
     if (hashedPassword == "invalid") {
@@ -56,7 +66,20 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 }
 
 object User extends DapiRecordCompanion[User] {
-  override def find(id: String): Option[User] = this.where(_.login === id).headOption
+  /**
+   * Find a user (creating the root acct if necessary)
+   */
+  override def find(id: String): Option[User] = {
+    this.where(_.login === id).headOption.orElse {
+      if (id == "root") {
+        // If we don't find a root account - make a new one (must be a virgin/damaged DB)
+        // FIXME - choose a random initial password and print it to the log
+        val psw = "fish4403"
+        Some(create("root", psw, Some("kevin@3drobotics.com"), Some("Kevin Hester")))
+      } else
+        None
+    }
+  }
 
   def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None) = {
     val u = User(login, email, fullName).create
