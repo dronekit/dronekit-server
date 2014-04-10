@@ -12,7 +12,7 @@ import org.json4s._
 case class UserJson(password: String, email: Option[String] = None, fullName: Option[String] = None)
 
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
-  override val blacklist = Set("hashedPassword", "password")
+  override val blacklist = Set("hashedPassword", "password", "groupId")
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
   put("/:id") {
