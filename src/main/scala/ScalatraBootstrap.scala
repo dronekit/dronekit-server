@@ -30,6 +30,7 @@ import com.geeksville.dapi.temp._
 import com.geeksville.dapi.Global
 import com.geeksville.dapi.auth.SessionsController
 import com.geeksville.dapi.AdminController
+import com.geeksville.akka.EventStreamDebugger
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -69,6 +70,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Start up our tcp listener
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
+
+    system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 
     Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
   }
