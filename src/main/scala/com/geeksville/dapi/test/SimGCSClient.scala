@@ -15,21 +15,22 @@ import java.util.UUID
 import akka.actor.Terminated
 import akka.actor.PoisonPill
 import com.geeksville.apiproxy.StopMissionAndExitMsg
+import com.geeksville.apiproxy.APIConstants
 
-case class RunTest(quick: Boolean)
+case class RunTest(host: String = APIConstants.DEFAULT_SERVER, quick: Boolean = true)
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
  */
 class SimGCSClient extends Actor with ActorLogging {
   def receive = {
-    case RunTest(quick) =>
+    case RunTest(host, quick) =>
       log.error("Running test")
-      if (!quick) fullTest() else quickTest()
+      if (!quick) fullTest(host) else quickTest(host)
   }
 
-  private def quickTest() {
-    using(new GCSHooksImpl()) { webapi: GCSHooks =>
+  private def quickTest(host: String) {
+    using(new GCSHooksImpl(host)) { webapi: GCSHooks =>
 
       val loginName = "test-bob"
       val email = "test-bob@3drobotics.com"
@@ -64,7 +65,7 @@ class SimGCSClient extends Actor with ActorLogging {
    * FIXME: Add support for accepting commands
    * FIXME: Don't use the old MavlinkEventBus global
    */
-  private def fullTest() {
+  private def fullTest(host: String) {
     log.info("Starting full test vehicle")
     val tlog = context.actorOf(Props {
       val s = new BufferedInputStream(getClass.getResourceAsStream("test.tlog"), 8192)
