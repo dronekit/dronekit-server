@@ -26,11 +26,10 @@ import com.geeksville.dapi.TCPGCSActor
 import org.scalatra.LifeCycle
 import com.geeksville.apiproxy.APIConstants
 import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
-import com.geeksville.dapi.test.SimGCSClient
-import com.geeksville.dapi.test.RunTest
 import com.geeksville.dapi.temp._
 import com.geeksville.dapi.Global
 import com.geeksville.dapi.auth.SessionsController
+import com.geeksville.dapi.AdminController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -62,6 +61,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     context.mount(new VehicleController, "/api/v1/vehicle/*")
     context.mount(new MissionController, "/api/v1/mission/*")
 
+    // Admin operations
+    context.mount(new AdminController, "/admin/*")
+
     // Swagger autodocs
     context.mount(new ResourcesApp, "/api-docs/*")
 
@@ -69,12 +71,6 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
 
     Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
-
-    val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
-    simClient ! RunTest(false)
-
-    val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
-    // nestorImport ! DoImport
   }
 
   /// Make sure you shut down Akka
