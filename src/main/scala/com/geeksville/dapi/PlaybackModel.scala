@@ -34,6 +34,8 @@ import com.geeksville.dapi.model.MissionSummary
 import java.util.Date
 import java.util.Calendar
 import grizzled.slf4j.Logging
+import org.json4s.JsonAST.JObject
+import com.geeksville.json.GeoJSON
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -378,6 +380,11 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
     out.closeEntry()
     out.close()
     byteStream.toByteArray
+  }
+
+  def toGeoJSON(uri: URI): JObject = {
+    val locs = positions.view.map(_.loc)
+    GeoJSON.makeLineString(locs)
   }
 }
 

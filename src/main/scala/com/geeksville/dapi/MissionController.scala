@@ -70,6 +70,11 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
     getModel(o).toKMZBytes(uriBase, true)
   }
 
+  roField("messages.geo.json") { (o) =>
+    // FIXME - we should pull our static content (icons etc... from a cdn)
+    getModel(o).toGeoJSON(uriBase)
+  }
+
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
   roField("dseries") { (o) =>
     val model = getModel(o)
