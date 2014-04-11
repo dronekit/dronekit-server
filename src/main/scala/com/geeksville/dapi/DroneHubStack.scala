@@ -10,6 +10,10 @@ import com.geeksville.scalatra.ControllerExtras
 
 abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras {
 
+  before() {
+    logger.debug("Handle " + request)
+  }
+
   /// If we are on localhost, lie and claim we are on the public server (so gmaps will work)
   def publicUriBase = {
     val h = request.getServerName()

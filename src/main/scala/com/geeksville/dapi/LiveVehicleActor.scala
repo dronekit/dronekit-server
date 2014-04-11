@@ -20,6 +20,7 @@ import java.io.FileInputStream
 import java.util.UUID
 import com.geeksville.dapi.model.MissionSummary
 import com.geeksville.mavlink.TimestampedMessage
+import com.geeksville.util.Throttled
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -36,6 +37,8 @@ case class VehicleDisconnected()
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
+  private val msgLogThrottle = new Throttled(5000)
+
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
 
@@ -85,7 +88,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       stopMission(msg.notes)
 
     case msg: TimestampedMessage =>
-      log.debug(s"Forwarding $msg")
+      msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+        log.debug(s"Receive ${msg.msg} (and $numIgnored others)")
+      }
 
       // Log to the file
       tloggerOpt.foreach { _ ! msg }
@@ -153,7 +158,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     m.keep = msg.keep
     m.isLive = true
     m.save()
-    log.debug("wrote db")
+    log.debug(s"wrote Mission: $m")
   }
 
   private def stopMission(notes: Option[String] = None) {
@@ -168,9 +173,10 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         log.debug("Saving mission")
         m.isLive = false
         m.tlogId = tlogId
-        summary.create
-        summary.mission := m
-        summary.save()
+        val s = summary
+        s.create
+        s.mission := m
+        s.save()
         m.save()
       }
       missionOpt = None

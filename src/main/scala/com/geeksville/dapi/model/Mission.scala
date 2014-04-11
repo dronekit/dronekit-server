@@ -26,13 +26,16 @@ import com.amazonaws.services.s3.model.AmazonS3Exception
  *
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
-case class MissionSummary(startTime: Option[Date] = None,
+case class MissionSummary(
+  startTime: Option[Date] = None,
   endTime: Option[Date] = None,
   maxAlt: Double = 0.0,
   maxGroundSpeed: Double = 0.0,
   maxAirSpeed: Double = 0.0,
   maxG: Double = 0.0,
-  flightDuration: Option[Double] = None) extends DapiRecord {
+  flightDuration: Option[Double] = None,
+  latitude: Option[Double] = None,
+  longitude: Option[Double] = None) extends DapiRecord {
 
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
@@ -100,13 +103,9 @@ case class Mission(
     PlaybackModel.fromBytes(bytes, false)
   }
 
-  /**
-   * The server generated summary of the flight
-   */
-  lazy val summary = {
-    val r = hasOne[MissionSummary]
-
-    if (!r.headOption.isDefined) {
+  /// FIXME - figure out when to call this
+  def regenSummary() {
+    if (!summary.headOption.isDefined) {
       warn("Mission summary missing")
       model.foreach { m =>
         val s = m.summary
@@ -117,8 +116,12 @@ case class Mission(
         warn("Regen completed")
       }
     }
-    r
   }
+
+  /**
+   * The server generated summary of the flight
+   */
+  lazy val summary = hasOne[MissionSummary]
 
   /**
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
@@ -130,6 +133,8 @@ case class Mission(
       error(s"S3 can't find tlog ${tlogId.get} due to $ex")
       None
   }
+
+  override def toString = s"Mission id=$id, tlog=$tlogId, summary=$summary"
 }
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
