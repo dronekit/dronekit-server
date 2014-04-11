@@ -16,6 +16,7 @@ import com.geeksville.dapi.model.Tables
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.model.User
 import java.util.UUID
+import com.geeksville.util.Throttled
 
 /// All messages after connection are identified by this tuple
 case class VehicleBinding(interface: Int, sysId: Int)
@@ -34,12 +35,17 @@ case class SendMavlinkToVehicle(msg: MAVLinkMessage)
 abstract class GCSActor extends Actor with ActorLogging {
   import GCSActor._
 
+  private val msgLogThrottle = new Throttled(5000)
+
   private var myVehicle: Option[ActorRef] = None
   private val vehicles = HashMap[VehicleBinding, ActorRef]()
 
   private var startTime: Option[Long] = None
 
   private var userOpt: Option[User] = None
+
+  // vehicle IDs might come _after_ start mission - so keep it around so we can resend to new vehicle actors as needed
+  private var currentMission: Option[StartMissionMsg] = None
 
   private def user = userOpt.get
 
@@ -80,7 +86,8 @@ abstract class GCSActor extends Actor with ActorLogging {
     case msg: SetVehicleMsg =>
       checkLoggedIn()
 
-      log.info(s"Binding vehicle $msg, user has " + user.vehicles.toList.mkString(","))
+      log.info(s"Binding vehicle $msg")
+      //log.info(s"Binding vehicle $msg, user has " + user.vehicles.toList.mkString(","))
       if (msg.vehicleUUID == "GCS")
         log.warning("ignoring GCS ID")
       else {
@@ -90,6 +97,9 @@ abstract class GCSActor extends Actor with ActorLogging {
         val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle, msg.canAcceptCommands)))
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
         actor ! VehicleConnected()
+
+        // The actor might need to immediately start a mission
+        currentMission.foreach { actor ! _ }
       }
 
     case msg: MavlinkMsg =>
@@ -106,7 +116,10 @@ abstract class GCSActor extends Actor with ActorLogging {
         val timestamped = TimestampedMessage(timestamp, p)
         val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
         if (!vehicle.isDefined) {
-          log.warning("Sending unknown payload to all vehicles: " + p)
+          msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+            log.warning(s"Unknown payload to all vehicles: $p (and $numIgnored others)")
+          }
+
           vehicles.values.foreach { _ ! timestamped }
         } else
           vehicle.foreach { _ ! timestamped }
@@ -116,10 +129,12 @@ abstract class GCSActor extends Actor with ActorLogging {
     case msg: StartMissionMsg =>
       checkLoggedIn()
       vehicles.values.foreach { _ forward msg }
+      currentMission = Some(msg)
 
     case msg: StopMissionMsg =>
       checkLoggedIn()
       vehicles.values.foreach { _ forward msg }
+      currentMission = None
 
     case msg: LoginMsg =>
       startTime = msg.startTime
