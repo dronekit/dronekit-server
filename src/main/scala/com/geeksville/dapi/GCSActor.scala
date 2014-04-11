@@ -115,9 +115,10 @@ abstract class GCSActor extends Actor with ActorLogging {
         // Have our vehicle handle the message
         val timestamped = TimestampedMessage(timestamp, p)
         val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
-        if (!vehicle.isDefined) {
+        val probablyGCS = p.sysId > 200 // Don't spam the log about GCS msgs - just send them to every vehicle
+        if (!vehicle.isDefined && !probablyGCS) {
           msgLogThrottle.withIgnoreCount { numIgnored: Int =>
-            log.warning(s"Unknown payload to all vehicles: $p (and $numIgnored others)")
+            log.warning(s"Unknown sysId=${p.sysId} send to all: $p (and $numIgnored others)")
           }
 
           vehicles.values.foreach { _ ! timestamped }
