@@ -126,7 +126,8 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
 
   def summary = {
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
-    MissionSummary(startTime.flatMap(checkTime), endTime.flatMap(checkTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration)
+    MissionSummary(startTime.flatMap(checkTime), endTime.flatMap(checkTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
+      endPosition.map(_.lat), endPosition.map(_.lon))
   }
 
   def modeChanges = modeChangeMsgs.map { m =>
