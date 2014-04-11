@@ -27,26 +27,40 @@ class AdminController extends DroneHubStack {
 
   lazy val akkaReflect = system.actorOf(Props(new AkkaReflector), "akkaReflect")
 
+  def host = multiParams("host").headOption.getOrElse("localhost")
+
   before() {
     requireLogin("basic")
   }
 
   get("/import") {
     nestorImport ! DoImport
+    "started import"
+  }
+
+  get("/sim/huge") {
+    simClient ! RunTest(host, "bigtest")
+    "started sim"
   }
 
   get("/sim/full") {
-    val host = multiParams("host").headOption.getOrElse("localhost")
-    simClient ! RunTest(host, false)
+    simClient ! RunTest(host, "test")
   }
 
   get("/sim/quick") {
-    val host = multiParams("host").headOption.getOrElse("localhost")
-    simClient ! RunTest(host, true)
+    simClient ! RunTest(host, "quick")
+    "started sim"
+  }
+
+  // FIXME -very dangerous remove before production
+  get("/db/reset") {
+    Tables.reset
+    "DB Reset completed"
   }
 
   get("/db/create") {
     Tables.create
+    "DB created"
   }
 
   get("/akka") {
