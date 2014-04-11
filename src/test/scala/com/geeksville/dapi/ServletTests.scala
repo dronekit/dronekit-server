@@ -78,7 +78,7 @@ class ServletTests extends FunSuite with ScalatraSuite with Logging with GivenWh
     r.getBytes
   }
 
-  test("user") {
+  ignore("user") {
     Given("First make a new user")
     val login = "test-" + Random.alphanumeric.take(6).mkString
     val u = UserJson("sekrit")
