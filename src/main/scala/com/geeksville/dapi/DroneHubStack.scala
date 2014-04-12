@@ -7,8 +7,9 @@ import grizzled.slf4j.Logging
 import java.net.URL
 import com.geeksville.dapi.auth.AuthenticationSupport
 import com.geeksville.scalatra.ControllerExtras
+import org.scalatra.GZipSupport
 
-abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras {
+abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras with GZipSupport {
 
   before() {
     logger.debug("Handle " + request)
