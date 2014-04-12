@@ -53,7 +53,20 @@ object GeoJSON {
     ("type" -> "FeatureCollection") ~ ("features" -> Extraction.decompose(f))
   }
 
-  def makeFeature(geo: JObject, properties: JObject): JObject = {
+  def makeFeature(geo: JObject, properties: JValue = JNull): JObject = {
     ("type" -> "Feature") ~ ("geometry" -> geo) ~ ("properties" -> properties)
+  }
+
+  def makeMarker(coords: Location, title: String, color: Option[String] = None, size: String = "medium", symbol: Option[String] = None) = {
+    val geo = makePoint(coords)
+    var ps = ("marker-size" -> size) ~ ("title" -> title)
+    color.foreach { s =>
+      ps = ps ~ ("marker-color" -> s)
+    }
+    symbol.foreach { s =>
+      ps = ps ~ ("marker-symbol" -> s)
+    }
+    val props: JObject = ps
+    makeFeature(geo, props)
   }
 }
