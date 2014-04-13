@@ -109,7 +109,7 @@ object NestorBuild extends Build {
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",
         //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",    
-        //"commons-codec" % "commons-codec" % "1.6",
+        "commons-codec" % "commons-codec" % "1.6",
         
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
         "com.google.guava" % "guava" % "14.0-rc2",
