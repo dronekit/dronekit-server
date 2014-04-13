@@ -55,7 +55,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     //context.mount(new MainServlet, "/*")
 
     // Auth controller
-    context.mount(new SessionsController, "/api/v1/session/*")
+    context.mount(new SessionsController, "/api/v1/auth/*")
 
     // API controllers
     context.mount(new UserController, "/api/v1/user/*")
