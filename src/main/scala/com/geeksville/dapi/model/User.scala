@@ -66,27 +66,35 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 
     super.beforeSave()
   }
+
+  override def toString() = s"User:$login(group = $groupId)"
 }
 
-object User extends DapiRecordCompanion[User] {
+object User extends DapiRecordCompanion[User] with Logging {
   /**
    * Find a user (creating the root acct if necessary)
    */
   override def find(id: String): Option[User] = {
     this.where(_.login === id).headOption.orElse {
+      debug("Read user $id from DB")
+
       if (id == "root") {
         // If we don't find a root account - make a new one (must be a virgin/damaged DB)
         // FIXME - choose a random initial password and print it to the log
         val psw = "fish4403"
-        Some(create("root", psw, Some("kevin@3drobotics.com"), Some("Kevin Hester")))
-      } else
+        val u = create("root", psw, Some("kevin@3drobotics.com"), Some("Kevin Hester"), group = "admin")
+        Some(u)
+      } else {
+        debug("User $id not found in DB")
         None
+      }
     }
   }
 
-  def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None) = {
+  def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
     val u = User(login, email, fullName).create
     u.password = password
+    u.groupId = group
     u.save() // FIXME - do I need to save?
     u
   }
