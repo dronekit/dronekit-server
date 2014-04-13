@@ -30,7 +30,7 @@ class AdminController extends DroneHubStack {
   def host = multiParams("host").headOption.getOrElse("localhost")
 
   before() {
-    requireLogin("basic")
+    requireAdmin()
   }
 
   get("/import") {
