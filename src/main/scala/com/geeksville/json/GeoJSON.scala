@@ -59,13 +59,8 @@ object GeoJSON {
 
   def makeMarker(coords: Location, title: String, color: Option[String] = None, size: String = "medium", symbol: Option[String] = None) = {
     val geo = makePoint(coords)
-    var ps = ("marker-size" -> size) ~ ("title" -> title)
-    color.foreach { s =>
-      ps = ps ~ ("marker-color" -> s)
-    }
-    symbol.foreach { s =>
-      ps = ps ~ ("marker-symbol" -> s)
-    }
+    var ps = ("marker-size" -> size) ~ ("title" -> title) ~ ("marker-color" -> color) ~ ("marker-symbol" -> symbol)
+
     val props: JObject = ps
     makeFeature(geo, props)
   }

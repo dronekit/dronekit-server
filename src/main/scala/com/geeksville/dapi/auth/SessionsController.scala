@@ -2,8 +2,18 @@ package com.geeksville.dapi.auth
 
 import com.geeksville.dapi.DroneHubStack
 import com.ridemission.rest.JString
+import org.json4s.Extraction
+import org.json4s.Formats
+import org.json4s.DefaultFormats
+import com.geeksville.json.GeeksvilleFormats
+import com.geeksville.json.ActiveRecordSerializer
 
 class SessionsController extends DroneHubStack {
+
+  // Before every action runs, set the content type to be in JSON format.
+  before() {
+    contentType = formats("json")
+  }
 
   before("/login") {
     logger.info("SessionsController: checking whether to run RememberMeStrategy: " + !isAuthenticated)
@@ -39,7 +49,7 @@ class SessionsController extends DroneHubStack {
       redirect("/sessions/new")
     }
     * */
-    user
+    Extraction.decompose(user)
   }
 
   post("/login") {

@@ -9,40 +9,7 @@ import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
 import java.lang.reflect.InvocationTargetException
 
-/**
- * DEPRECATED - DELETE ME
- * A serializer that is smart enough to ignore various bits of private ActiveRecord state...
- */
-object ActiveRecordSerializer {
-
-  val globalBlacklist = Set("errors")
-
-  /// Construct our serializer
-  def apply[T: Manifest](blacklist: Set[String] = Set.empty) = FieldSerializer[T](serializer(blacklist), Map())
-
-  private def serializer(blacklist: Set[String]): PartialFunction[(String, Any), Option[(String, Any)]] = {
-    case (name, x) => println(s"Being asked to serialize $name $x (${if (x != null) x.getClass else "null"})"); Some(name, x)
-    // case (name, _) if name.startsWith("_") || name.contains('$') || globalBlacklist.contains(name) || blacklist.contains(name) => None
-  }
-
-  /* no need for a deserializer yet 
-  case class FieldSerializer[A](
-    serializer: PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
-    deserializer: PartialFunction[JField, JField] = Map())(implicit val mf: Manifest[A])
-  */
-}
-
-// FIXME - this can't work - not enough state with only the association
-class CollectionAssociationSerializer[O <: ActiveRecord, T <: ActiveRecord] extends Serializer[ActiveRecord.CollectionAssociation[O, T]] {
-  def deserialize(implicit format: Formats) = throw new Exception("Can't deserialize yet")
-  def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: ActiveRecord.CollectionAssociation[O, T] =>
-      println(s"Considering hasmany $x")
-      JString("fish")
-  }
-}
-
-class ActiveRecordSerializer2(val blacklist: Set[String] = Set.empty) extends Serializer[ActiveRecord] {
+class ActiveRecordSerializer(val blacklist: Set[String] = Set.empty) extends Serializer[ActiveRecord] {
 
   val globalBlacklist = Set("errors")
 

@@ -4,7 +4,7 @@ import com.github.aselab.activerecord.ActiveRecord
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.CRUDOperations
 import org.json4s.Formats
-import com.geeksville.json.ActiveRecordSerializer2
+import com.geeksville.json.ActiveRecordSerializer
 
 /**
  * A controller that assumes the backing object comes from ActiveRecord (allows easy field finding)
@@ -15,8 +15,6 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   /// Fields we never want to share with clients
   /// FIXME - add annotations for this?
   def blacklist = Set[String]()
-
-  override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer2(blacklist)
 
   private val findParamOp =
     (apiOperation[T]("getParam")

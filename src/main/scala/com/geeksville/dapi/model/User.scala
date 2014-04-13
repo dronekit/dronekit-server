@@ -8,6 +8,9 @@ import java.util.UUID
 import com.github.aselab.activerecord.dsl._
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.AccessCode
+import org.json4s.CustomSerializer
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
 
 case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -69,6 +72,17 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 
   override def toString() = s"User:$login(group = $groupId)"
 }
+
+/// We provide an initionally restricted view of users
+object UserSerializer extends CustomSerializer[User](format => (
+  {
+    case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+      User(s, fullName = Some(e))
+  },
+  {
+    case u: User =>
+      ("login" -> u.login) ~ ("fullName" -> u.fullName) ~ ("isAdmin" -> u.isAdmin)
+  }))
 
 object User extends DapiRecordCompanion[User] with Logging {
   /**

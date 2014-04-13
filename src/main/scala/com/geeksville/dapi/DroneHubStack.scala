@@ -8,8 +8,15 @@ import java.net.URL
 import com.geeksville.dapi.auth.AuthenticationSupport
 import com.geeksville.scalatra.ControllerExtras
 import org.scalatra.GZipSupport
+import org.json4s.Formats
+import org.json4s.DefaultFormats
+import com.geeksville.json.GeeksvilleFormats
+import com.geeksville.dapi.model.DroneModelFormats
 
-abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras with GZipSupport {
+abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras with GZipSupport with NativeJsonSupport {
+
+  // Sets up automatic case class to JSON output serialization
+  protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats ++ DroneModelFormats
 
   before() {
     logger.debug("Handle " + request)

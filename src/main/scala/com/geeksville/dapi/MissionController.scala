@@ -19,10 +19,14 @@ import org.json4s.JsonAST.JDouble
 import org.json4s.JsonAST.JString
 import org.json4s.JsonDSL._
 import com.github.aselab.activerecord.dsl._
+import com.geeksville.json.ActiveRecordSerializer
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
 class MissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
+
+  // For now we just pull fields out using active record
+  override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer
 
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
