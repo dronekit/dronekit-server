@@ -24,7 +24,7 @@ class SessionsController extends DroneHubStack {
     }
     */
 
-  post("/login") {
+  private def doLogin() = {
     scentry.authenticate()
 
     // User just tried to login - if login has failed tell them they can't access the site
@@ -39,6 +39,16 @@ class SessionsController extends DroneHubStack {
       redirect("/sessions/new")
     }
     * */
+    user
+  }
+
+  post("/login") {
+    doLogin()
+  }
+
+  // NOTE: For most applications this GET method should not be used - but it does make for easier browser based testing
+  get("/login") {
+    doLogin()
   }
 
   /**

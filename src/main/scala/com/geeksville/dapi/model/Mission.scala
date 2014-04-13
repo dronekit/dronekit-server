@@ -77,9 +77,7 @@ case class Mission(
   var notes: Option[String] = None,
   // Is the client currently uploading data to this mission
   var isLive: Boolean = false,
-  var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
-
-  var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
+  var viewPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
    * What vehicle made me?
    */

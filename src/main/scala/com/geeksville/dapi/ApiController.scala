@@ -36,6 +36,34 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     contentType = formats("json")
   }
 
+  /**
+   * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
+   * If not allowed, override should call haltUnauthorized()
+   */
+  protected def requireReadAccess(o: T) = {
+    o
+  }
+
+  /**
+   * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
+   * If not allowed, override should call haltUnauthorized()
+   */
+  protected def requireWriteAccess(o: T): T = {
+    haltMethodNotAllowed("We don't allow writes to this")
+  }
+
+  /**
+   * Check if the specified owned resource can be accessed by the current user given an AccessCode
+   */
+  protected def requireAccessCode(ownerId: Long, privacyCode: Int) {
+    val u = tryLogin()
+    val isOwner = u.map(_.id == ownerId).getOrElse(false)
+    val isResearcher = u.map(_.isResearcher).getOrElse(false)
+
+    if (!ApiController.isAccessAllowed(privacyCode, isOwner, isResearcher))
+      haltUnauthorized("No access")
+  }
+
   /// Generate a ro attribute on this rest endpoint of the form /:id/name.
   /// call getter as needed
   /// FIXME - move this great utility somewhere else
@@ -144,7 +172,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   protected def findById(implicit request: HttpServletRequest) = {
     val id = params("id")
-    companion.find(id).getOrElse(haltNotFound())
+    val r = companion.find(id).getOrElse(haltNotFound())
+
+    requireReadAccess(r)
   }
 
   private val createByIdOp =
@@ -168,3 +198,20 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 }
 
+object ApiController {
+  /**
+   * Does the user have appropriate access to see the specified AccessCode?
+   */
+  def isAccessAllowed(required: Int, isOwner: Boolean, isResearcher: Boolean) = required match {
+    case AccessCode.DEFAULT_VALUE =>
+      throw new Exception("Bug: Can't check against default access code")
+    case AccessCode.PRIVATE_VALUE =>
+      isOwner
+    case AccessCode.PUBLIC_VALUE =>
+      true
+    case AccessCode.SHARED_VALUE =>
+      true // If they got here they must have the URL
+    case AccessCode.RESEARCHER_VALUE =>
+      isOwner || isResearcher
+  }
+}

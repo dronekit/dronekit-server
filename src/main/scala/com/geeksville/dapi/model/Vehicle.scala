@@ -33,7 +33,9 @@ case class Vehicle(
   var autopilotType: Option[String] = None,
 
   // Autopilot software version #
-  var softwareVersion: Option[String] = None) extends DapiRecord with Logging {
+  var softwareVersion: Option[String] = None,
+  var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
+  var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
    * Who owns me?
    */
@@ -55,8 +57,7 @@ case class Vehicle(
     // Create mission record
     val m = Mission.create(this)
     m.notes = notes
-    m.controlPrivacy = AccessCode.DEFAULT.id
-    m.viewPrivacy = AccessCode.DEFAULT.id
+    m.viewPrivacy = viewPrivacy
     m.keep = true
     m.isLive = false
     m.tlogId = Some(newTlogId)

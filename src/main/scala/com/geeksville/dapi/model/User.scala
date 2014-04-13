@@ -7,6 +7,7 @@ import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import com.github.aselab.activerecord.dsl._
 import grizzled.slf4j.Logging
+import com.geeksville.dapi.AccessCode
 
 case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -36,6 +37,8 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   def isAdmin = groupId == "admin"
 
   def isDeveloper = groupId == "develop"
+
+  def isResearcher = groupId == "research"
 
   def isPasswordGood(test: String) = {
     if (hashedPassword == "invalid") {

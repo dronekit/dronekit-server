@@ -153,8 +153,13 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     missionOpt = Some(m)
     startTime = None
     m.notes = msg.notes
-    m.controlPrivacy = msg.controlPrivacy.getOrElse(AccessCode.DEFAULT).id
-    m.viewPrivacy = msg.viewPrivacy.getOrElse(AccessCode.DEFAULT).id
+
+    // Pull privacy from vehicle if not specified
+    var viewPriv = msg.viewPrivacy.getOrElse(AccessCode.DEFAULT).id
+    if (viewPriv == AccessCode.DEFAULT_VALUE)
+      viewPriv = vehicle.viewPrivacy
+
+    m.viewPrivacy = viewPriv
     m.keep = msg.keep
     m.isLive = true
     m.save()

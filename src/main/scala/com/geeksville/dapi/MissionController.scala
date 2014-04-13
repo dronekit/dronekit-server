@@ -18,10 +18,26 @@ import org.json4s.JsonAST.JInt
 import org.json4s.JsonAST.JDouble
 import org.json4s.JsonAST.JString
 import org.json4s.JsonDSL._
+import com.github.aselab.activerecord.dsl._
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
 class MissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
+
+  /**
+   * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
+   */
+  override protected def requireReadAccess(o: Mission) = {
+    val userId = for {
+      v <- o.vehicle
+      uid <- v.userId
+    } yield {
+      uid
+    }
+
+    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy)
+    o
+  }
 
   override protected def getOp = (super.getOp
     parameter queryParam[Option[String]]("within").description("Flights within a specified GeoJSON polygon")
@@ -41,7 +57,7 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   roField("messages.tlog") { (o) =>
     contentType = Mission.mimeType
-    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound()), o.tlogId.get + ".tlog")
+    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound()), o.tlogId.get.toString + ".tlog")
   }
 
   private def getModel(o: Mission) = o.model.getOrElse(haltNotFound("no tlog found"))

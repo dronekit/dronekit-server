@@ -22,24 +22,29 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
   }).asInstanceOf[ScentryConfiguration]
   */
 
-  /// Subclasses can call this method to ensure that the request is aborted if the user is not logged in
-  protected def requireLogin(names: String*) = {
-    // This will implicitly call the unauthorized method if the user is not logged in
-    // val r = scentry.authenticate(names: _*)
-    val r = basicAuth()
+  /**
+   * Attempt to log in the user (but do not throw if they are not logged in)
+   */
+  protected def tryLogin(names: String*) = {
+    val r = scentry.authenticate(names: _*)
+    // val r = basicAuth()
+    r
+  }
 
-    r.getOrElse {
-      logger.error("Aborting request: user not logged in")
-      haltUnauthorized("You are not logged in")
-    }
+  /// Subclasses can call this method to ensure that the request is aborted if the user is not logged in
+  protected def requireLogin(names: String*) = tryLogin(names: _*).getOrElse {
+    logger.error("Aborting request: user not logged in")
+    haltUnauthorized("You are not logged in")
   }
 
   /**
    * Aborts request if user doesn't have admin permissions
    */
   protected def requireAdmin(names: String*) = {
-    if (!requireLogin(names: _*).isAdmin)
+    val r = requireLogin(names: _*)
+    if (!r.isAdmin)
       haltUnauthorized("Insufficient permissions")
+    r
   }
 
   /**
@@ -51,7 +56,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     scentry.unauthenticated {
       // DISABLED - we expect to talk only to JSON clients - so no redirecting to login pages.
       // scentry.strategies("Password").unauthenticated()
-      scentry.strategies("Basic").unauthenticated()
+      //scentry.strategies("Basic").unauthenticated()
     }
   }
 
@@ -61,9 +66,9 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
    */
   override protected def registerAuthStrategies = {
     // We are temporarily guarding the entire site with http basic
-    scentry.register("Basic", app => new UserHttpBasicStrategy(app, realm))
+    // scentry.register("Basic", app => new UserHttpBasicStrategy(app, realm))
 
-    // scentry.register("Password", app => new UserPasswordStrategy(app))
+    scentry.register("Password", app => new UserPasswordStrategy(app))
     scentry.register("Remember", app => new RememberMeStrategy(app))
   }
 

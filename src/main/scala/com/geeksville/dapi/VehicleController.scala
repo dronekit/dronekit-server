@@ -15,6 +15,23 @@ import org.json4s.JsonAST.JString
 @MultipartConfig(maxFileSize = 1024 * 1024)
 class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) with FileUploadSupport {
 
+  /**
+   * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
+   */
+  override protected def requireReadAccess(o: Vehicle) = {
+    requireAccessCode(o.userId.getOrElse(-1L), o.viewPrivacy)
+    o
+  }
+
+  /**
+   * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
+   * If not allowed, override should call haltUnauthorized()
+   */
+  override protected def requireWriteAccess(o: Vehicle) = {
+    requireAccessCode(o.userId.getOrElse(-1L), o.controlPrivacy)
+    o
+  }
+
   // FIXME - make this code actually do something
   rwField[String]("mode", (v) => "FIXME", { (v, arg) => })
   //roField[Location]("location", null)
@@ -39,9 +56,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
         pathParam[String]("id").description(s"Id of $aName to be appended")))
 
   post("/:id/missions", operation(addMissionInfo)) {
-    requireLogin()
-
-    val v = findById
+    val v = requireWriteAccess(findById)
     val payload = fileParams("payload")
     val ctype = payload.contentType.getOrElse(haltBadRequest("content-type not set"))
     if (Mission.mimeType != ctype)
