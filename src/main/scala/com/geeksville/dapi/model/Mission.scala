@@ -89,8 +89,11 @@ case class Mission(
 
   /**
    * If the tlog is stored to s3 this is the ID
+   * Normally this is a UUID, but for old droneshare records it might be some other sort of unique string
    */
-  var tlogId: Option[UUID] = None
+  @Unique
+  @Length(max = 40)
+  var tlogId: Option[String] = None
 
   /**
    * A reconstructed playback model for this vehicle - note: accessing this lazy val is _expensive_
@@ -125,7 +128,7 @@ case class Mission(
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
   def tlogBytes = try {
-    tlogId.flatMap(Mission.getBytes)
+    tlogId.flatMap { s => Mission.getBytes(UUID.fromString(s)) }
   } catch {
     case ex: Exception =>
       error(s"S3 can't find tlog ${tlogId.get} due to $ex")
@@ -169,5 +172,9 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
     r.save
     vehicle.save // FIXME - do I need to explicitly save?
     r
+  }
+
+  def findByTlogId(id: String): Option[Mission] = {
+    this.where(_.tlogId === id).headOption
   }
 }

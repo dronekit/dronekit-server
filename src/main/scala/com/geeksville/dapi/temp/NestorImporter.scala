@@ -13,7 +13,7 @@ import java.util.UUID
 import com.geeksville.nestor.TLogChunk
 import java.io.ByteArrayInputStream
 
-object DoImport
+case class DoImport(numRecords: Int)
 
 /**
  * Migrates old nestor records to the new dronehub db (including tlogs etc)
@@ -21,40 +21,45 @@ object DoImport
 class NestorImporter extends Actor with ActorLogging {
 
   def receive = {
-    case DoImport =>
-      migrate(5)
+    case DoImport(numRecords) =>
+      migrate(numRecords)
   }
 
   def migrate(maxResults: Int) = blocking {
     TLogChunkDAO.tlogsRecent(maxResults).foreach { tlog =>
-      val summary = tlog.summary
-      var userid = summary.ownerId
 
-      log.info(s"Migrating $tlog")
+      if (Mission.findByTlogId(tlog.id).isDefined)
+        log.info(s"Skipping $tlog - already imported")
+      else {
+        val summary = tlog.summary
+        var userid = summary.ownerId
 
-      // Create user record if necessary (with an invalid password)
-      if (userid.isEmpty)
-        userid = "anonymous"
-      val user = User.find(userid).getOrElse {
-        val u = User(userid).create
-        u.save
-        u
-      }
+        log.info(s"Migrating $tlog")
 
-      // Create vehicle record if nessary
-      val vehicle = user.vehicles.headOption.getOrElse {
-        val v = Vehicle().create
-        v.name = "Imported from Droneshare"
-        user.vehicles += v
-        v.save
-        user.save // FIXME - do I need to explicitly save?
-        v
-      }
+        // Create user record if necessary (with an invalid password)
+        if (userid.isEmpty)
+          userid = "anonymous"
+        val user = User.find(userid).getOrElse {
+          val u = User(userid).create
+          u.save
+          u
+        }
 
-      // Copy over tlog
+        // Create vehicle record if nessary
+        val vehicle = user.vehicles.headOption.getOrElse {
+          val v = Vehicle().create
+          v.name = "Imported from Droneshare"
+          user.vehicles += v
+          v.save
+          user.save // FIXME - do I need to explicitly save?
+          v
+        }
 
-      tlog.bytes.foreach { bytes =>
-        vehicle.createMission(bytes, Some("Imported from Droneshare"))
+        // Copy over tlog
+
+        tlog.bytes.foreach { bytes =>
+          vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
+        }
       }
     }
   }

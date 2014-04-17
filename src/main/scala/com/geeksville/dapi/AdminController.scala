@@ -34,8 +34,8 @@ class AdminController extends DroneHubStack {
     requireServiceAuth("admin")
   }
 
-  get("/import") {
-    nestorImport ! DoImport
+  get("/import/:count") {
+    nestorImport ! DoImport(params("count").toInt)
     "started import"
   }
 

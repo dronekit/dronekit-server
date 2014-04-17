@@ -48,11 +48,10 @@ case class Vehicle(
   lazy val missions = hasMany[Mission]
 
   /// Create a new mission as a child of this vehicle (given tlog bytes)
-  def createMission(bytes: Array[Byte], notes: Option[String] = None) {
+  def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) {
     // Copy over tlog
-    val newTlogId = UUID.randomUUID()
     val s = new ByteArrayInputStream(bytes)
-    Mission.putBytes(newTlogId.toString, s, bytes.length)
+    Mission.putBytes(tlogId, s, bytes.length)
 
     // Create mission record
     val m = Mission.create(this)
@@ -60,7 +59,7 @@ case class Vehicle(
     m.viewPrivacy = viewPrivacy
     m.keep = true
     m.isLive = false
-    m.tlogId = Some(newTlogId)
+    m.tlogId = Some(tlogId)
     // FIXME - regenerate summaries?
     m.save()
     debug("Done with record")

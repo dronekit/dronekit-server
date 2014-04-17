@@ -177,7 +177,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       blocking {
         log.debug("Saving mission")
         m.isLive = false
-        m.tlogId = tlogId
+        m.tlogId = tlogId.map(_.toString)
         val s = summary
         s.create
         s.mission := m
