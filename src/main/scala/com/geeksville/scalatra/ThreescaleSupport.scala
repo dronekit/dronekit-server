@@ -24,8 +24,8 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
   import ThreescaleSupport._
 
   // FIXME - we should not be making a separate threescale actor for each endpoint
-  private lazy val threeActor: ActorRef = MockAkka.system.actorOf(Props(new ThreeActor(MockAkka.config.getString("threescale.apiKey"))))
-  private lazy val service = MockAkka.config.getString("threescale.serviceId")
+  private lazy val threeActor: ActorRef = MockAkka.system.actorOf(Props(new ThreeActor(MockAkka.config.getString("dapi.threescale.apiKey"))))
+  private lazy val service = MockAkka.config.getString("dapi.threescale.serviceId")
 
   def requireServiceAuth(metricIn: String) {
     val metric = metricIn.replace('/', '_') // 3scale converts slashes to underscores

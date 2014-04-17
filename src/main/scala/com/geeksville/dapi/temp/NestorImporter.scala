@@ -26,15 +26,17 @@ class NestorImporter extends Actor with ActorLogging {
   }
 
   def migrate(maxResults: Int) = blocking {
-    TLogChunkDAO.tlogsRecent(maxResults).foreach { tlog =>
+    TLogChunkDAO.tlogsRecent(maxResults).find { tlog =>
 
-      if (Mission.findByTlogId(tlog.id).isDefined)
-        log.info(s"Skipping $tlog - already imported")
-      else {
+      val id = tlog.id
+      val wantStop = if (Mission.findByTlogId(id).isDefined) {
+        log.info(s"Skipping $id ${tlog.startTime}")
+        false
+      } else {
         val summary = tlog.summary
         var userid = summary.ownerId
 
-        log.info(s"Migrating $tlog")
+        log.info(s"Migrating $id ${tlog.startTime}")
 
         // Create user record if necessary (with an invalid password)
         if (userid.isEmpty)
@@ -60,7 +62,11 @@ class NestorImporter extends Actor with ActorLogging {
         tlog.bytes.foreach { bytes =>
           vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
         }
+        false
       }
+
+      wantStop
     }
+    log.info("Done with migration!")
   }
 }

@@ -15,19 +15,21 @@ package com.geeksville.aws
 
 import com.amazonaws.auth.AWSCredentials
 import com.typesafe.config.ConfigFactory
+import grizzled.slf4j.Logging
 
 /**
  * Provides AWS credentials from a Typesafe style config db
  *
  * @param baseKey - we look for AWS keys underneed this root entry
  */
-class ConfigCredentials(baseKey: String) extends AWSCredentials {
-  private def base = ConfigFactory.load()
-  private lazy val conf = if (baseKey.isEmpty)
-    base
-  else
-    base.atKey(baseKey)
+class ConfigCredentials(baseKey: String) extends AWSCredentials with Logging {
+  private lazy val conf = ConfigFactory.load()
+  private def prefix = if (baseKey.isEmpty) baseKey else baseKey + "."
 
-  def getAWSAccessKeyId() = conf.getString("aws.accessKey")
-  def getAWSSecretKey() = conf.getString("aws.secretKey")
+  def getAWSAccessKeyId() = {
+    val r = conf.getString(prefix + "aws.accessKey")
+    //debug(s"Using AWS access key $r")
+    r
+  }
+  def getAWSSecretKey() = conf.getString(prefix + "aws.secretKey")
 }

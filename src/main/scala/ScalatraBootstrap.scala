@@ -64,7 +64,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     context.mount(new MissionController, "/api/v1/mission/*")
 
     // Admin operations
-    context.mount(new AdminController, "/admin/*")
+    context.mount(new AdminController, "/api/v1/admin/*")
 
     // Swagger autodocs
     context.mount(new ResourcesApp, "/api-docs/*")

@@ -68,6 +68,10 @@ To logout
 Cookies are optionally supported, if your client uses cookies you can log in the user once and just attach the cookie to future operations.
 If you do not support cookies, you'll need to attach login & password as query params for all operations.
 
+# /admin Administration operations
+
+Various private admin functions sit here.
+
 # TODO
 
 * http://localhost:8080/view/5n72bt make it work using only the mission URL
