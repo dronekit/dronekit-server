@@ -30,6 +30,37 @@
 * Populate that system with a PublicVehicleAPI actor.  Initially all vehicles will call into this restricted actor.  Eventually a non akka based API
 will use this object.
 
+# setup mailgun
+
+curl -s --user 'api:***REMOVED***' \
+    https://api.mailgun.net/v2/sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org/messages \
+    -F from='Mailgun Sandbox <postmaster@sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org>' \
+    -F to='Kevin Hester <kevin@3drobotics.com>'\
+    -F subject='Hello Kevin Hester' \
+    -F text='Congratulations Kevin Hester, you just sent an email with Mailgun!  You are truly awesome! You can see a record of this email in your logs: https://mailgun.com/cp/log You can send up to 300 emails/day from this sandbox server. Next, you should add your own domain so you can send 10,000 emails/month for free.'
+
+public static ClientResponse SendSimpleMessage() {
+    Client client = Client.create();
+    client.addFilter(new HTTPBasicAuthFilter("api",
+                "***REMOVED***"));
+    WebResource webResource =
+        client.resource("https://api.mailgun.net/v2/sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org/messages");
+    MultivaluedMapImpl formData = new MultivaluedMapImpl();
+    formData.add("from", "Mailgun Sandbox <postmaster@sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org>");
+    formData.add("to", "Kevin Hester <kevin@3drobotics.com>");
+    formData.add("subject", "Hello Kevin Hester");
+    formData.add("text", "Congratulations Kevin Hester, you just sent an email with Mailgun!  You are truly awesome!  You can see a record of this email in your logs: https://mailgun.com/cp/log .  You can send up to 300 emails/day from this sandbox server.  Next, you should add your own domain so you can send 10,000 emails/month for free.");
+    return webResource.type(MediaType.APPLICATION_FORM_URLENCODED).
+                                                post(ClientResponse.class, formData);
+}
+
+expected response
+
+{
+  "message": "Queued. Thank you.",
+  "id": "<20140416171814.3136.15870@sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org>"
+}
+
 # Check in swagger fix:
 
 fails here:
