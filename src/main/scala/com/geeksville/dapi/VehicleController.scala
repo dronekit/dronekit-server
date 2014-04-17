@@ -23,8 +23,8 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */
   override protected def requireReadAccess(o: Vehicle) = {
-    requireAccessCode(o.userId.getOrElse(-1L), o.viewPrivacy)
-    o
+    requireAccessCode(o.userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
+    super.requireReadAccess(o)
   }
 
   /**
@@ -32,8 +32,8 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
    * If not allowed, override should call haltUnauthorized()
    */
   override protected def requireWriteAccess(o: Vehicle) = {
-    requireAccessCode(o.userId.getOrElse(-1L), o.controlPrivacy)
-    o
+    requireAccessCode(o.userId.getOrElse(-1L), o.controlPrivacy, ApiController.defaultVehicleControlAccess)
+    super.requireWriteAccess(o)
   }
 
   // FIXME - make this code actually do something

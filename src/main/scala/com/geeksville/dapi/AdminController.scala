@@ -31,6 +31,7 @@ class AdminController extends DroneHubStack {
 
   before() {
     requireAdmin()
+    requireServiceAuth("admin")
   }
 
   get("/import") {

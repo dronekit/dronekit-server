@@ -33,6 +33,10 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     contentType = formats("json")
   }
 
+  protected def requireReadAllAccess() = {
+    requireServiceAuth(aName + "/read")
+  }
+
   /**
    * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
    * If not allowed, override should call haltUnauthorized()
@@ -51,15 +55,19 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     haltMethodNotAllowed("We don't allow writes to this")
   }
 
+  protected def requireDeleteAccess(o: T): T = {
+    requireWriteAccess(o) // Not quite correct but rare
+  }
+
   /**
    * Check if the specified owned resource can be accessed by the current user given an AccessCode
    */
-  protected def requireAccessCode(ownerId: Long, privacyCode: Int) {
+  protected def requireAccessCode(ownerId: Long, privacyCode: Int, defaultPrivacy: Int) {
     val u = tryLogin()
     val isOwner = u.map(_.id == ownerId).getOrElse(false)
     val isResearcher = u.map(_.isResearcher).getOrElse(false)
 
-    if (!ApiController.isAccessAllowed(privacyCode, isOwner, isResearcher))
+    if (!ApiController.isAccessAllowed(privacyCode, isOwner, isResearcher, defaultPrivacy))
       haltUnauthorized("No access")
   }
 
@@ -103,12 +111,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     haltMethodNotAllowed()
   }
 
-  delete("/:id") {
-    deleteById(params("id"))
-  }
-
-  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
-  protected def deleteById(id: String): Any = {
+  /// Subclasses can provide suitable behavior if they want to allow DELs to /:id to result in deleting objects
+  protected def doDelete(o: T): Any = {
     haltMethodNotAllowed()
   }
 
@@ -150,6 +154,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * FIXME - support sql query operations
    */
   get("/", operation(getOp)) {
+    requireReadAllAccess()
     companion.getAll
   }
 
@@ -193,7 +198,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
         pathParam[String]("id").description(s"Id of $aName that needs to be deleted")))
 
   delete("/:id", operation(deleteByIdOp)) {
-    haltNotFound()
+    val o = findById
+    requireDeleteAccess(o)
+    doDelete(o)
   }
 }
 
@@ -201,16 +208,26 @@ object ApiController {
   /**
    * Does the user have appropriate access to see the specified AccessCode?
    */
-  def isAccessAllowed(required: Int, isOwner: Boolean, isResearcher: Boolean) = required match {
-    case AccessCode.DEFAULT_VALUE =>
-      throw new Exception("Bug: Can't check against default access code")
-    case AccessCode.PRIVATE_VALUE =>
-      isOwner
-    case AccessCode.PUBLIC_VALUE =>
-      true
-    case AccessCode.SHARED_VALUE =>
-      true // If they got here they must have the URL
-    case AccessCode.RESEARCHER_VALUE =>
-      isOwner || isResearcher
+  def isAccessAllowed(requiredIn: Int, isOwner: Boolean, isResearcher: Boolean, default: Int) = {
+    val required = if (requiredIn == AccessCode.DEFAULT_VALUE)
+      default
+    else
+      requiredIn
+
+    required match {
+      case AccessCode.DEFAULT_VALUE =>
+        throw new Exception("Bug: Can't check against default access code")
+      case AccessCode.PRIVATE_VALUE =>
+        isOwner
+      case AccessCode.PUBLIC_VALUE =>
+        true
+      case AccessCode.SHARED_VALUE =>
+        true // If they got here they must have the URL
+      case AccessCode.RESEARCHER_VALUE =>
+        isOwner || isResearcher
+    }
   }
+
+  val defaultVehicleViewAccess = AccessCode.PUBLIC_VALUE
+  val defaultVehicleControlAccess = AccessCode.PRIVATE_VALUE
 }

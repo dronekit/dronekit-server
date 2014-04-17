@@ -39,8 +39,8 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
       uid
     }
 
-    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy)
-    o
+    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
+    super.requireReadAccess(o)
   }
 
   override protected def getOp = (super.getOp
