@@ -38,6 +38,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * If not allowed, override should call haltUnauthorized()
    */
   protected def requireReadAccess(o: T) = {
+    requireServiceAuth(aName + "/read")
     o
   }
 
@@ -46,6 +47,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * If not allowed, override should call haltUnauthorized()
    */
   protected def requireWriteAccess(o: T): T = {
+    requireServiceAuth(aName + "/update")
     haltMethodNotAllowed("We don't allow writes to this")
   }
 

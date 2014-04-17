@@ -31,6 +31,7 @@ import com.geeksville.dapi.Global
 import com.geeksville.dapi.auth.SessionsController
 import com.geeksville.dapi.AdminController
 import com.geeksville.akka.EventStreamDebugger
+import com.geeksville.threescale.ThreeActor
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger

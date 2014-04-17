@@ -12,8 +12,9 @@ import org.json4s.Formats
 import org.json4s.DefaultFormats
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
+import com.geeksville.scalatra.ThreescaleSupport
 
-abstract class DroneHubStack extends ScalatraServlet with AuthenticationSupport with ControllerExtras with GZipSupport with NativeJsonSupport {
+abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with AuthenticationSupport with GZipSupport with NativeJsonSupport with ThreescaleSupport {
 
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats ++ DroneModelFormats
