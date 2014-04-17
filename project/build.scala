@@ -77,6 +77,8 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         
+        "xml-apis" % "xml-apis" % "2.0.2", // Needed to fix old dependency in xom (used by 3scale)
+
         // scala-activerecord support
         "com.github.aselab" %% "scala-activerecord" % "0.2.4-SNAPSHOT" withSources (),
         "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.4-SNAPSHOT" withSources (),
