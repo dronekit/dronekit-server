@@ -1,5 +1,5 @@
 package com.geeksville.json
 
 object `package` {
-  val GeeksvilleFormats = Seq(UUIDSerializer)
+  val GeeksvilleFormats = Seq(UUIDSerializer, DateSerializer)
 }
