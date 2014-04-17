@@ -20,7 +20,10 @@
 
   <!-- See all our log msgs -->
   <logger name="com.geeksville" level="DEBUG"/>
+  <logger name="com.geeksville.dapi.auth" level="INFO"/>
+  
   <logger name="org.scalatra" level="DEBUG"/>
+  <logger name="org.scalatra.auth" level="INFO"/>
   
   <!-- But ignore debug msgs from others -->
   <root level="info">

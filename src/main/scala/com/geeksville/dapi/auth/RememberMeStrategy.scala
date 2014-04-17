@@ -45,7 +45,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
     // Note: I was using the less expensive getUserIdFromToken here - but that isn't good enough.  If the user has changed
     // their password we want remember me to say the token should be ignored
     val probablyGood = getUserFromToken(tokenVal).isDefined
-    logger.info(s"RememberMeStrategy: determining isValid: $probablyGood")
+    logger.debug(s"RememberMeStrategy: determining isValid: $probablyGood")
     probablyGood
   }
 
@@ -87,7 +87,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
     val md5 = makeMd5String(u, expireMsec)
     val s = u.login + ":" + expireMsec + ":" + md5
 
-    logger.warn(s"Generated token $s")
+    logger.debug(s"Generated token $s")
     encoder.encodeToString(s.getBytes)
   }
 
@@ -130,7 +130,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
             logger.error(s"Bad token for $u - deny! (hack attempt or user changed psw)")
             None
           } else {
-            logger.warn(s"$login has good token")
+            logger.debug(s"$login has good token")
             Some(u)
           }
         }.orElse {
@@ -147,7 +147,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    * earlier ("foobar") and accept it if so.
    */
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse) = {
-    logger.info("RememberMeStrategy: attempting authentication")
+    logger.debug("RememberMeStrategy: attempting authentication")
     getUserFromToken(tokenVal)
   }
 

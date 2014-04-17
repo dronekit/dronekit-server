@@ -147,7 +147,7 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   private def readBytesByPath(id: String): Array[Byte] = {
     logger.debug("Asking S3 for " + id)
     Using.using(S3Client.downloadStream(id)) { s =>
-      logger.debug("Reading bytes from S3")
+      //logger.debug("Reading bytes from S3")
       val r = ByteStreams.toByteArray(s)
       logger.debug("Done reading S3 bytes, size = " + r.length)
       r

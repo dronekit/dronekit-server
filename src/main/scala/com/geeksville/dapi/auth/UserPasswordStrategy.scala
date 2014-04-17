@@ -22,7 +22,7 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
    * Determine whether the strategy should be run for the current request.
    */
   override def isValid(implicit request: HttpServletRequest) = {
-    logger.info("UserPasswordStrategy: determining isValid: " + (login != "" && password != "").toString())
+    logger.debug("UserPasswordStrategy: determining isValid: " + (login != "" && password != "").toString())
     login != "" && password != ""
   }
 
