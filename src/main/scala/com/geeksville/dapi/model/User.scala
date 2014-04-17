@@ -76,6 +76,7 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 /// We provide an initionally restricted view of users
 object UserSerializer extends CustomSerializer[User](format => (
   {
+    // FIXME - it would more elegant to just make a throw away case class object and use it for the decoding
     case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
       User(s, fullName = Some(e))
   },
@@ -90,7 +91,7 @@ object User extends DapiRecordCompanion[User] with Logging {
    */
   override def find(id: String): Option[User] = {
     this.where(_.login === id).headOption.orElse {
-      debug("Read user $id from DB")
+      debug(s"Read user $id from DB")
 
       if (id == "root") {
         // If we don't find a root account - make a new one (must be a virgin/damaged DB)
@@ -99,7 +100,7 @@ object User extends DapiRecordCompanion[User] with Logging {
         val u = create("root", psw, Some("kevin@3drobotics.com"), Some("Kevin Hester"), group = "admin")
         Some(u)
       } else {
-        debug("User $id not found in DB")
+        debug(s"User $id not found in DB")
         None
       }
     }
