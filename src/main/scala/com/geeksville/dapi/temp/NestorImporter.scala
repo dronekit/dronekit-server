@@ -29,7 +29,11 @@ class NestorImporter extends Actor with ActorLogging {
     TLogChunkDAO.tlogsRecent(maxResults).find { tlog =>
 
       val id = tlog.id
-      val wantStop = if (Mission.findByTlogId(id).isDefined || tlog.startTime.getYear > 2020) {
+      val wantStop = if (tlog.startTime.getYear > 2020) {
+        log.info(s"Bogus record $id ${tlog.startTime}")
+        TLogChunkDAO.remove(tlog)
+        false
+      } else if (Mission.findByTlogId(id).isDefined) {
         log.info(s"Skipping $id ${tlog.startTime}")
         false
       } else {
