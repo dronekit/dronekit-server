@@ -6,6 +6,7 @@ import grizzled.slf4j.Logging
 import org.scalatra.InternalServerError
 import java.net.URL
 import org.scalatra.ScalatraBase
+import java.lang.{ Integer => JInteger }
 
 /**
  * Mixin of my scalatra controller extensions
@@ -44,9 +45,20 @@ trait ControllerExtras extends ScalatraBase with Logging {
                           </html>)
   }
 
+  /// Print a log message any time we bail on a request
+  override def halt[T: Manifest](
+    status: JInteger = null,
+    body: T = (),
+    headers: Map[String, String] = Map.empty,
+    reason: String = null): Nothing = {
+    warn(s"Halt $status: $reason")
+    super.halt(status, body, headers, reason)
+  }
+
   /// syntatic sugar
   def haltUnauthorized(reason: String = null) = halt(401, reason = reason)
   def haltForbidden(reason: String = null) = halt(403, reason = reason)
+  def haltQuotaExceeded(reason: String = null) = halt(403, reason = reason)
   def haltNotFound(reason: String = null) = halt(404, reason = reason)
   def haltMethodNotAllowed(reason: String = null) = halt(405, reason = reason)
   def haltConflict(reason: String = null) = halt(409, reason = reason)
