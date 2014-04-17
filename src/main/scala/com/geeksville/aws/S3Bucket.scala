@@ -24,10 +24,9 @@ import javax.crypto.spec.SecretKeySpec
 import scala.collection.JavaConverters._
 import java.util.TimeZone
 import java.text.SimpleDateFormat
+import com.amazonaws.auth.AWSCredentials
 
-class S3Bucket(bucketName: String) {
-
-  val credentials = new ConfigCredentials
+class S3Bucket(bucketName: String, val credentials: AWSCredentials) {
   val client = new AmazonS3Client(credentials)
 
   // At startup make sure our bucket exists
