@@ -50,8 +50,7 @@ case class Vehicle(
   /// Create a new mission as a child of this vehicle (given tlog bytes)
   def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) {
     // Copy over tlog
-    val s = new ByteArrayInputStream(bytes)
-    Mission.putBytes(tlogId, s, bytes.length)
+    Mission.putBytes(tlogId, bytes)
 
     // Create mission record
     val m = Mission.create(this)
@@ -60,7 +59,7 @@ case class Vehicle(
     m.keep = true
     m.isLive = false
     m.tlogId = Some(tlogId)
-    // FIXME - regenerate summaries?
+    m.regenSummary()
     m.save()
     debug("Done with record")
   }

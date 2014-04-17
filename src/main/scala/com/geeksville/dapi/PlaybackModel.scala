@@ -116,10 +116,14 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
   }).getOrElse(Seq())
 
   private def checkTime(date: Date) = {
-    if (date.getYear < 1975) {
-      warn("Bogus timestamp in past")
+    val calendar = Calendar.getInstance
+    calendar.setTime(date)
+    val y = calendar.get(Calendar.YEAR)
+
+    if (y < 1975) {
+      warn(s"Bogus timestamp in past: $date")
       None
-    } else if (date.getYear > PlaybackModel.currentYear + 1) {
+    } else if (y > PlaybackModel.currentYear + 1) {
       warn("Bogus timestamp in future")
       None
     } else

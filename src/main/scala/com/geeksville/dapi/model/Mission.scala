@@ -20,6 +20,7 @@ import java.io.InputStream
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.PlaybackModel
 import com.amazonaws.services.s3.model.AmazonS3Exception
+import java.io.ByteArrayInputStream
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -128,21 +129,21 @@ case class Mission(
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
   def tlogBytes = try {
-    tlogId.flatMap { s => Mission.getBytes(UUID.fromString(s)) }
+    tlogId.flatMap { s => Mission.getBytes(s) }
   } catch {
     case ex: Exception =>
       error(s"S3 can't find tlog ${tlogId.get} due to $ex")
       None
   }
 
-  override def toString = s"Mission id=$id, tlog=$tlogId, summary=$summary"
+  override def toString = s"Mission id=$id, tlog=$tlogId, summary=${summary.getOrElse("(No summary)")}"
 }
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
   val mimeType = "application/vnd.mavlink.tlog"
 
   // We use a cache to avoid (slow) rereading of s3 data if we can help it
-  private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: UUID) => readBytesByPath(S3Client.tlogPrefix + key) }
+  private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: String) => readBytesByPath(S3Client.tlogPrefix + key) }
 
   private def readBytesByPath(id: String): Array[Byte] = {
     logger.debug("Asking S3 for " + id)
@@ -157,13 +158,20 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   /**
    * Get bytes from the cache or S3
    */
-  private def getBytes(id: UUID) = {
+  private def getBytes(id: String) = {
     Option(bytesCache.getUnchecked(id))
   }
 
   def putBytes(id: String, src: InputStream, srcLen: Long) {
     logger.info(s"Uploading to s3: $id")
     S3Client.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
+  }
+
+  def putBytes(id: String, bytes: Array[Byte]) {
+    val src = new ByteArrayInputStream(bytes)
+    putBytes(id, src, bytes.length)
+    // Go ahead and update our cache
+    bytesCache.put(id, bytes)
   }
 
   def create(vehicle: Vehicle) = {

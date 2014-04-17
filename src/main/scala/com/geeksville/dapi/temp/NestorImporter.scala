@@ -48,6 +48,7 @@ class NestorImporter extends Actor with ActorLogging {
         val user = User.find(userid).getOrElse {
           val u = User(userid).create
           u.save
+          log.debug("Created new user $u")
           u
         }
 
@@ -58,13 +59,17 @@ class NestorImporter extends Actor with ActorLogging {
           user.vehicles += v
           v.save
           user.save // FIXME - do I need to explicitly save?
+          log.debug("Created new vehicle $v")
           v
         }
 
         // Copy over tlog
 
         tlog.bytes.foreach { bytes =>
-          vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
+          if (bytes.size > 0)
+            vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
+          else
+            log.warning("Skipping zero length mission")
         }
         false
       }
