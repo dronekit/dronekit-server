@@ -43,7 +43,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
   protected def requireAdmin(names: String*) = {
     val r = requireLogin(names: _*)
     if (!r.isAdmin) {
-      logger.error("Hack attempt? $r is not an admin!")
+      logger.error(s"Hack attempt? $r is not an admin!")
       haltUnauthorized("Insufficient permissions")
     }
     r
