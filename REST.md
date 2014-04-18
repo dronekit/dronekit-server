@@ -16,6 +16,14 @@ Query parameter example:
 `
 http://nestor.3dr.com/api/v1/mission?api_key=myappid.myappkey
 `
+## Standard query arguments
+
+All of the following endpoints support the following query strings:
+
+        queryParam[Option[Int]]("page_offset").description("If paging, the record # to start with (use 0 at start)"),
+        queryParam[Option[Int]]("page_size").description("If paging, the # of records in the page"),
+        queryParam[Option[String]]("order_by").description("To get sorted response, the field name to sort on"),
+        queryParam[Option[String]]("order_dir").description("If sorting, the optional direction.  either asc or desc")))
 
 ## /user
 
