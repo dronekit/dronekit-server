@@ -12,6 +12,7 @@ import com.geeksville.akka.MockAkka
 import akka.actor.Props
 import com.geeksville.threescale.ThreeActor
 import scala.collection.JavaConverters._
+import java.util.concurrent.TimeoutException
 
 object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
@@ -59,14 +60,20 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
     val req = AuthRequest(apiKey, service, metrics)
 
     implicit val timeout = Timeout(5 seconds)
-    val future = threeActor ? req
-    val result = Await.result(future, timeout.duration).asInstanceOf[AuthorizeResponse]
+    val future = ask(threeActor, req).mapTo[AuthorizeResponse]
 
-    // FIXME - if threescale is too slow show an error msg in logs and just let the user go
-    if (!result.success) {
-      warn(s"3scale denied $req due to ${result.getReason}")
-      haltQuotaExceeded("Quota exceeded: " + result.getReason)
-    } else
-      debug(s"3scale said okay to $req, plan ${result.getPlan}")
+    try {
+      val result = Await.result(future, timeout.duration)
+
+      // FIXME - if threescale is too slow show an error msg in logs and just let the user go
+      if (!result.success) {
+        warn(s"3scale denied $req due to ${result.getReason}")
+        haltQuotaExceeded("Quota exceeded: " + result.getReason)
+      } else
+        debug(s"3scale said okay to $req, plan ${result.getPlan}")
+    } catch {
+      case ex: TimeoutException =>
+        error(s"Threescale is DOWN - allowing transaction...")
+    }
   }
 }
