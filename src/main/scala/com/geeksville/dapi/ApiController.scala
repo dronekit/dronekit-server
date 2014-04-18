@@ -147,15 +147,25 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     (apiOperation[List[T]]("get")
       summary s"Show all $aNames"
       notes s"Shows all the $aNames. You can search it too."
-      parameter queryParam[Option[String]]("name").description("A name to search for"))
+      parameters (
+        queryParam[Option[Int]]("page_offset").description("If paging, the record # to start with (use 0 at start)"),
+        queryParam[Option[Int]]("page_size").description("If paging, the # of records in the page"),
+        queryParam[Option[String]]("order_by").description("To get sorted response, the field name to sort on"),
+        queryParam[Option[String]]("order_dir").description("If sorting, the optional direction.  either asc or desc")))
 
   /*
    * Retrieve a list of instances
-   * FIXME - support sql query operations
    */
   get("/", operation(getOp)) {
     requireReadAllAccess()
-    companion.getAll
+    getAll
+  }
+
+  /**
+   * Using the current query parameters, return all matching records (paging and ordering is supported as well
+   */
+  protected def getAll(): List[T] = {
+    haltMethodNotAllowed()
   }
 
   private val findByIdOp =

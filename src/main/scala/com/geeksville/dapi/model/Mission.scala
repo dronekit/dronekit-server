@@ -21,6 +21,7 @@ import grizzled.slf4j.Logging
 import com.geeksville.dapi.PlaybackModel
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import java.io.ByteArrayInputStream
+import com.github.aselab.activerecord.ActiveRecord
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -183,6 +184,8 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   }
 
   def findByTlogId(id: String): Option[Mission] = {
-    this.where(_.tlogId === id).headOption
+    collection.where(_.tlogId === id).headOption
   }
+
+  override def collection = super.collection.includes(_.summary)
 }

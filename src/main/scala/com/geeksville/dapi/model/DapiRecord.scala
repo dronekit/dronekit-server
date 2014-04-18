@@ -20,13 +20,14 @@ abstract class DapiRecord extends ActiveRecord with Datestamps
 trait CRUDOperations[T] {
   /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
   def find(id: String): Option[T]
-
-  def getAll: Seq[T]
 }
 
 trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] with CRUDOperations[T] {
   /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
-  def find(id: String): Option[T] = this.where(_.id === id.toLong).headOption
+  def find(id: String): Option[T] = collection.where(_.id === id.toLong).headOption
 
-  def getAll = this.toList
+  /**
+   * Return a top level view of this collection (subclasses might change this method to make it prefetch associated tables (see Mission)
+   */
+  def collection: ActiveRecord.Relation1[T, T] = this.companionToRelation(this)
 }
