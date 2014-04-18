@@ -76,12 +76,12 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
 
   /// A MAV_TYPE vehicle code
   var vehicleType: Option[Int] = None
+  var autopilotType: Option[Int] = None
 
   var maxAltitude = 0.0
   var maxGroundSpeed = 0.0
   var maxAirSpeed = 0.0
   var maxG = 0.0
-  var autopilotType = "TBD"
   var gcsType = "TBD"
 
   private val waypointOpt = ArrayBuffer[Option[Waypoint]]()
@@ -122,7 +122,8 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
     messages.filter { m => m.time >= s.time && m.time <= e.time }
   }).getOrElse(Seq())
 
-  def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, vehicleTypeName, autopilotType, gcsType, ownerId, flightDuration)
+  def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG,
+    vehicleTypeName, humanAutopilotType.getOrElse("unknown"), gcsType, ownerId, flightDuration)
 
   def modeChanges = modeChangeMsgs.map { m =>
     val code = m.msg.asInstanceOf[msg_heartbeat].custom_mode.toInt
@@ -172,6 +173,7 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
         // We don't care about the heartbeats from the GCS
         if (typ != MAV_TYPE.MAV_TYPE_GCS) {
           vehicleType = Some(typ)
+          autopilotType = Some(msg.autopilot)
           if (modeChangeMsgs.isEmpty || modeChangeMsgs.last.msg.asInstanceOf[msg_heartbeat].custom_mode != msg.custom_mode)
             modeChangeMsgs = modeChangeMsgs :+ raw
         }

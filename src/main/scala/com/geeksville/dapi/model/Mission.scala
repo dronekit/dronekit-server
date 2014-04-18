@@ -115,6 +115,7 @@ case class Mission(
         s.create
         s.mission := this
         s.save
+        vehicle.updateFromMission(m)
         this.save
         warn("Regen completed")
       }

@@ -183,6 +183,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         s.mission := m
         s.save()
         m.save()
+
+        vehicle.updateFromMission(this)
       }
       missionOpt = None
     }

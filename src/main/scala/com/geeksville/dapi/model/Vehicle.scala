@@ -9,6 +9,7 @@ import com.github.aselab.activerecord.dsl._
 import grizzled.slf4j.Logging
 import java.io.ByteArrayInputStream
 import com.geeksville.dapi.AccessCode
+import com.geeksville.flight.ParametersReadOnlyModel
 
 /**
  * A vehicle model
@@ -62,6 +63,19 @@ case class Vehicle(
     m.regenSummary()
     m.save()
     debug("Done with record")
+  }
+
+  /**
+   * Reverse engineer vehicle data from a recent mission upload
+   */
+  def updateFromMission(m: ParametersReadOnlyModel) {
+    if (!vehicleType.isDefined || !autopilotType.isDefined) {
+      vehicleType = m.humanVehicleType
+      autopilotType = m.humanAutopilotType
+      save
+      debug(s"Updated $this based on mission data")
+    } else
+      debug(s"$this was already up-to-date")
   }
 }
 
