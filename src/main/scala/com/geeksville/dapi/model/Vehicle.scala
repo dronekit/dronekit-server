@@ -10,6 +10,7 @@ import grizzled.slf4j.Logging
 import java.io.ByteArrayInputStream
 import com.geeksville.dapi.AccessCode
 import com.geeksville.flight.ParametersReadOnlyModel
+import com.geeksville.flight.LiveOrPlaybackModel
 
 /**
  * A vehicle model
@@ -68,7 +69,7 @@ case class Vehicle(
   /**
    * Reverse engineer vehicle data from a recent mission upload
    */
-  def updateFromMission(m: ParametersReadOnlyModel) {
+  def updateFromMission(m: LiveOrPlaybackModel) {
     if (!vehicleType.isDefined || !autopilotType.isDefined) {
       vehicleType = m.humanVehicleType
       autopilotType = m.humanAutopilotType

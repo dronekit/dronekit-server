@@ -36,6 +36,7 @@ import java.util.Calendar
 import grizzled.slf4j.Logging
 import org.json4s.JsonAST.JObject
 import com.geeksville.json.GeoJSON
+import com.geeksville.flight.LiveOrPlaybackModel
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -45,7 +46,8 @@ case class TimestampedLocation(time: Long, loc: Location)
  * Can be used on one TLogChunk or a series of chunks.
  * DO NOT DEPEND on any web services in this class (will move to common someday?)
  */
-class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Logging {
+class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with ParametersReadOnlyModel with Logging {
+  import LiveOrPlaybackModel._
 
   /**
    * a seq of usec_time -> location
@@ -62,18 +64,12 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
   var messages: scala.collection.Seq[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
 
-  var startOfFlightMessage: Option[TimestampedMessage] = None
-  var endOfFlightMessage: Option[TimestampedMessage] = None
-
   var numMessages = 0
 
   /// A MAV_TYPE vehicle code
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  var maxAltitude = 0.0
-  var maxGroundSpeed = 0.0
-  var maxAirSpeed = 0.0
   var maxG = 0.0
   var gcsType = "TBD"
 
@@ -96,10 +92,10 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
    * duration of flying portion in seconds
    */
   def flightDuration = (for {
-    s <- startOfFlightMessage
-    e <- endOfFlightMessage
+    s <- startOfFlightTime
+    e <- endOfFlightTime
   } yield {
-    val r = e.timeSeconds - s.timeSeconds
+    val r = (e - s) / 1e6
     debug(s"Calculated flight duration of $r")
     r
   }).orElse {
@@ -109,10 +105,10 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
 
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
-    s <- startOfFlightMessage
-    e <- endOfFlightMessage
+    s <- startOfFlightTime
+    e <- endOfFlightTime
   } yield {
-    messages.filter { m => m.time >= s.time && m.time <= e.time }
+    messages.filter { m => m.time >= s && m.time <= e }
   }).getOrElse(Seq())
 
   private def checkTime(date: Date) = {
@@ -158,21 +154,18 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
       firstMessage = Some(raw)
     lastMessage = Some(raw)
 
+    // First update any standard live/delayed model stuff
+    val msg = raw.msg
+    if (updateModel.isDefinedAt(msg))
+      updateModel.apply(msg)
+
     // Update useful summary information as we read
-    raw.msg match {
+    msg match {
       case m: msg_global_position_int if useGlobalPosition =>
         addPosition(raw, VehicleSimulator.decodePosition(m))
       case m: msg_gps_raw_int =>
         VehicleSimulator.decodePosition(m).foreach { l => addPosition(raw, l) }
-      case m: msg_vfr_hud =>
-        maxAirSpeed = math.max(m.airspeed, maxAirSpeed)
-        maxGroundSpeed = math.max(m.groundspeed, maxGroundSpeed)
 
-        if (m.throttle > 0) {
-          if (!startOfFlightMessage.isDefined)
-            startOfFlightMessage = Some(raw)
-          endOfFlightMessage = Some(raw) // Currently we just use the last place the throttle was on - FIXME
-        }
       case m: msg_mission_item =>
         val wp = Waypoint(m)
         // We fill any missing positions with None
@@ -188,6 +181,14 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel with Lo
           if (modeChangeMsgs.isEmpty || modeChangeMsgs.last.msg.asInstanceOf[msg_heartbeat].custom_mode != msg.custom_mode)
             modeChangeMsgs = modeChangeMsgs :+ raw
         }
+      /*
+      case 
+        {
+time: 1397577366611000,
+msg: "MAVLINK_MSG_ID_STATUSTEXT : severity=1 text=ArduCopter V3.1.2 (ddd4d881)"
+},
+* 
+*/
 
       case msg: msg_param_value =>
         // We fill any missing positions with None

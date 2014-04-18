@@ -43,6 +43,7 @@ import org.mavlink.messages.ardupilotmega.msg_vfr_hud
 import de.micromata.opengis.kml.v_2_2_0.Folder
 import de.micromata.opengis.kml.v_2_2_0.Container
 import org.mavlink.messages.MAV_TYPE
+import com.geeksville.flight.LiveOrPlaybackModel
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -52,7 +53,8 @@ case class TimestampedLocation(time: Long, loc: Location)
  * Can be used on one TLogChunk or a series of chunks.
  * DO NOT DEPEND on any web services in this class (will move to common someday?)
  */
-class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
+class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with ParametersReadOnlyModel {
+  import LiveOrPlaybackModel._
 
   /**
    * a seq of usec_time -> location
@@ -78,9 +80,6 @@ class PlaybackModel extends WaypointsForMap with ParametersReadOnlyModel {
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  var maxAltitude = 0.0
-  var maxGroundSpeed = 0.0
-  var maxAirSpeed = 0.0
   var maxG = 0.0
   var gcsType = "TBD"
 
