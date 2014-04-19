@@ -139,7 +139,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   }
 
   def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), stopTime.map(TimestampedMessage.usecsToDate),
-    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration)
+    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, softwareVersion = buildVersion, softwareGit = buildGit)
 
   private def startMission(msg: StartMissionMsg) = blocking {
     assert(!tlogId.isDefined)
