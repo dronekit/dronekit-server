@@ -10,6 +10,15 @@ import com.geeksville.flight.MsgModeChanged
 import akka.actor.ActorRef
 import scala.collection.mutable.HashMap
 import akka.actor.Terminated
+import org.scalatra.atmosphere._
+import org.json4s._
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
+import com.geeksville.akka.NamedActorClient
+import akka.actor.Props
+import com.geeksville.akka.MockAkka
+import akka.actor.ActorContext
+import akka.actor.ActorRefFactory
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -24,9 +33,15 @@ import akka.actor.Terminated
  *
  * LiveVehicleActors send messages to this actor, and the REST atmosphere reader stuff listens for publishes from this actor.
  *
+ * FIXME - make different atmosphere endpoints for different regions - pair each endpoint with the SpaceSupervisor
+ * responsible for that region.  For the time being I just use one region for the whole planet
  */
 class SpaceSupervisor extends Actor with ActorLogging {
-  val eventStream = new EventStream
+  import context._
+
+  private val eventStream = new EventStream
+
+  private implicit val formats = DefaultFormats
 
   /**
    * The LiveVehicleActors we are monitoring
@@ -38,10 +53,28 @@ class SpaceSupervisor extends Actor with ActorLogging {
   private def senderMission = actorToMission(sender).id
   private def senderVehicle = actorToMission(sender).vehicleId.get
 
+  /**
+   * FIXME - not sure if I should be publishing directly to atmosphere in this actor, but for now...
+   */
+  private def updateAtmosphere(o: JValue) {
+    val route = "/api/v1/mission/live"
+    AtmosphereClient.broadcast(route, JsonMessage(o))
+  }
+
+  private def publishUpdate(o: Product) {
+    publishEvent(o) // Tell any interested subscribers
+    val v = Extraction.decompose(o)
+    updateAtmosphere(v)
+  }
+
   override def receive = {
+
+    //
+    // Messages from LiveVehicleActors appear below
+    //
+
     case Terminated(a) =>
       log.error(s"Unexpected death of a LiveVehicle, republishing...")
-      context.unwatch(a)
       actorToMission.remove(a).foreach { m =>
         publishEvent(MissionStop(m))
       }
@@ -49,37 +82,37 @@ class SpaceSupervisor extends Actor with ActorLogging {
     case x: MissionStart =>
       log.debug(s"Received start on $x")
       actorToMission(sender) = x.mission
-      context.watch(sender)
+      watch(sender)
       publishEvent(x)
 
     case x: MissionStop =>
       log.debug(s"Received stop on $x")
-      context.unwatch(sender)
+      unwatch(sender)
       actorToMission.remove(sender)
       publishEvent(x)
 
     case l: Location =>
       log.debug(s"Received: $l")
-      publishEvent(LocationUpdate(senderMission, senderVehicle, l))
+      publishUpdate(LocationUpdate(senderMission, senderVehicle, l))
 
     case StatusText(str, severe) =>
       log.debug(s"Received text: $str")
-      publishEvent(TextUpdate(senderMission, senderVehicle, str))
+      publishUpdate(TextUpdate(senderMission, senderVehicle, str))
 
     case MsgModeChanged(mode) =>
       log.debug(s"Received mode: $mode")
-      publishEvent(ModeUpdate(senderMission, senderVehicle, mode))
+      publishUpdate(ModeUpdate(senderMission, senderVehicle, mode))
   }
 }
 
 object SpaceSupervisor {
+  private implicit val context: ActorRefFactory = MockAkka.system
+  private val actors = new NamedActorClient("space")
 
   /**
    * Find the supervisor responsible for a region of space
    *
    * FIXME - add grid identifer param
    */
-  def find() = {
-
-  }
+  def find(name: String = "world") = actors.getOrCreate(name, Props(new SpaceSupervisor))
 }

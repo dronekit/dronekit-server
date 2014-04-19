@@ -164,6 +164,10 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     m.keep = msg.keep
     m.isLive = true
     m.save()
+
+    // Find the space controller for our location
+    val space = SpaceSupervisor.find()
+    eventStream.subscribe(space, (x: Any) => true) // HUGE FIXME - we should subscribe only to the messages we care about
     publishEvent(MissionStart(m))
     log.debug(s"wrote Mission: $m")
   }

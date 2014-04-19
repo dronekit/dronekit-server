@@ -72,6 +72,7 @@ object NestorBuild extends Build {
 
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
+        "org.scalatra" %% "scalatra-atmosphere" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test" withSources (),
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
@@ -98,6 +99,7 @@ object NestorBuild extends Build {
         // Instead use the json4s standalone version - I have to use force() here because it seems that 3.2.5 or later breaks swagger autodoc generation
         "org.json4s" %% "json4s-native" % "3.2.9-SNAPSHOT",
         "org.json4s" %% "json4s-core" % "3.2.9-SNAPSHOT",
+        "org.json4s" %% "json4s-jackson" % "3.2.9-SNAPSHOT", // NEEDED FOR Atmosphere
         // We want the version from logback
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
 
@@ -115,7 +117,8 @@ object NestorBuild extends Build {
         
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
         "com.google.guava" % "guava" % "14.0-rc2",
-        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container"),
+        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container",
+        "org.eclipse.jetty" % "jetty-websocket" % "8.1.10.v20130312" % "container"), // For Atmosphere
         //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "compile;container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
 
       /* no longer works?/needed?

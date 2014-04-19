@@ -32,6 +32,7 @@ import com.geeksville.dapi.auth.SessionsController
 import com.geeksville.dapi.AdminController
 import com.geeksville.akka.EventStreamDebugger
 import com.geeksville.threescale.ThreeActor
+import org.scalatra.atmosphere.ActorSystemKey
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -43,6 +44,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     Global.setConfig()
 
     super.init(context)
+
+    // Let atmosphere find akka here...
+    context(ActorSystemKey) = system
 
     // start a console so we can browse the H2 database
     // FIXME - do this someplace else, and only in developer mode
