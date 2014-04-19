@@ -37,7 +37,11 @@ case class MissionSummary(
   maxG: Double = 0.0,
   flightDuration: Option[Double] = None,
   latitude: Option[Double] = None,
-  longitude: Option[Double] = None) extends DapiRecord {
+  longitude: Option[Double] = None,
+  // Autopilot software version #
+  var softwareVersion: Option[String] = None,
+  // Autopilot software version #
+  var softwareGit: Option[String] = None) extends DapiRecord {
 
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]

@@ -129,7 +129,7 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   def summary = {
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
     MissionSummary(startTime.flatMap(checkTime), endTime.flatMap(checkTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
-      endPosition.map(_.lat), endPosition.map(_.lon))
+      endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
   }
 
   def modeChanges = modeChangeMsgs.map { m =>
@@ -181,15 +181,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
           if (modeChangeMsgs.isEmpty || modeChangeMsgs.last.msg.asInstanceOf[msg_heartbeat].custom_mode != msg.custom_mode)
             modeChangeMsgs = modeChangeMsgs :+ raw
         }
-      /*
-      case 
-        {
-time: 1397577366611000,
-msg: "MAVLINK_MSG_ID_STATUSTEXT : severity=1 text=ArduCopter V3.1.2 (ddd4d881)"
-},
-* 
-*/
-
       case msg: msg_param_value =>
         // We fill any missing positions with None
         while (parameters.size < msg.param_index + 1)

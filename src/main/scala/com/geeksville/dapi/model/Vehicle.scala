@@ -34,8 +34,6 @@ case class Vehicle(
   // To add new definitions to the file, please submit a github pull-request.
   var autopilotType: Option[String] = None,
 
-  // Autopilot software version #
-  var softwareVersion: Option[String] = None,
   var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
   var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
