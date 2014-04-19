@@ -37,6 +37,7 @@ case class VehicleDisconnected()
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
+
   private val msgLogThrottle = new Throttled(5000)
 
   /// Our LogBinaryMavlink actor
@@ -163,6 +164,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     m.keep = msg.keep
     m.isLive = true
     m.save()
+    publishEvent(MissionStart(m))
     log.debug(s"wrote Mission: $m")
   }
 
@@ -185,6 +187,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         m.save()
 
         vehicle.updateFromMission(this)
+        publishEvent(MissionStop(m))
       }
       missionOpt = None
     }
