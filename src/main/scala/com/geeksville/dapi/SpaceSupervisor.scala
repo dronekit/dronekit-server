@@ -11,7 +11,7 @@ import akka.actor.ActorRef
 import scala.collection.mutable.HashMap
 import akka.actor.Terminated
 import org.scalatra.atmosphere._
-import org.json4s._
+import org.json4s.DefaultFormats
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import com.geeksville.akka.NamedActorClient
@@ -19,6 +19,8 @@ import akka.actor.Props
 import com.geeksville.akka.MockAkka
 import akka.actor.ActorContext
 import akka.actor.ActorRefFactory
+import com.geeksville.scalatra.AtmosphereTools
+import org.json4s.Extraction
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -58,7 +60,7 @@ class SpaceSupervisor extends Actor with ActorLogging {
    */
   private def updateAtmosphere(o: JValue) {
     val route = "/api/v1/mission/live"
-    AtmosphereClient.broadcast(route, JsonMessage(o))
+    AtmosphereTools.broadcast(route, "live", o)
   }
 
   private def publishUpdate(o: Product) {

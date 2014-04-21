@@ -30,7 +30,7 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
   override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer
 
   atmosphere("/live") {
-    new AtmosphereLive()
+    new AtmosphereLive(tryLogin())
   }
 
   /**

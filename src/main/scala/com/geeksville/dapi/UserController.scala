@@ -17,7 +17,7 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
   /**
    * Until a compelling use-case can be made we only allow admins to list all users
    */
-  protected def requireReadAllAccess() = {
+  protected override def requireReadAllAccess() = {
     requireAdmin()
 
     super.requireReadAllAccess()

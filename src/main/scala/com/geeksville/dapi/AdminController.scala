@@ -13,11 +13,12 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.xml.Elem
+import org.scalatra.atmosphere._
 
 /**
  * Special admin operations
  */
-class AdminController extends DroneHubStack {
+class AdminController extends DroneHubStack with AtmosphereSupport {
 
   def system = MockAkka.system
 
@@ -32,6 +33,10 @@ class AdminController extends DroneHubStack {
   before() {
     requireAdmin()
     requireServiceAuth("admin")
+  }
+
+  atmosphere("/log") {
+    new AtmosphereLive(tryLogin())
   }
 
   get("/import/:count") {

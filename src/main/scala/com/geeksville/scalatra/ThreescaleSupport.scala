@@ -69,8 +69,9 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
       if (!result.success) {
         warn(s"3scale denied $req due to ${result.getReason}")
         haltQuotaExceeded("Quota exceeded: " + result.getReason)
-      } else
-        debug(s"3scale said okay to $req, plan ${result.getPlan}")
+      } else {
+        //debug(s"3scale said okay to $req, plan ${result.getPlan}")
+      }
     } catch {
       case ex: TimeoutException =>
         error(s"Threescale is DOWN - allowing transaction...")
