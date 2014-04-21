@@ -14,6 +14,15 @@ case class UserJson(password: String, email: Option[String] = None, fullName: Op
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
 
+  /**
+   * Until a compelling use-case can be made we only allow admins to list all users
+   */
+  protected def requireReadAllAccess() = {
+    requireAdmin()
+
+    super.requireReadAllAccess()
+  }
+
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
   put("/:id") {
 
