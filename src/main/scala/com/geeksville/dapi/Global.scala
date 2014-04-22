@@ -17,6 +17,8 @@ object Global {
     else
       println(s"No config override file found.  You should probably create $configOverride")
 
-    MockAkka.configOverride = Some(ConfigFactory.load())
+    val cfg = ConfigFactory.load()
+    MockAkka.configOverride = Some(cfg)
+    //println(cfg.getString("dapi.threescale.serviceId"))
   }
 }
