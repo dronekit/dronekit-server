@@ -15,13 +15,14 @@ import com.geeksville.util.Using._
 import scala.collection.JavaConverters._
 import org.apache.http.impl.client.DefaultHttpClient
 import org.json4s.native.JsonMethods._
-import com.ridemission.rest.JObject
+import org.json4s.JsonAST.JObject
 
 class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org") {
   private val httpclient = new DefaultHttpClient()
   // val myhttps = new Protocol("https", new MySSLSocketFactory(), 443);
 
-  private val targetHost = new HttpHost("api.mailgun.net", 443, "https");
+  val monitor = true
+  private val targetHost = new HttpHost(if (monitor) "***REMOVED***.my.apitools.com" else "api.mailgun.net", 443, "https");
   httpclient.getCredentialsProvider.setCredentials(
     new AuthScope(targetHost.getHostName(), targetHost.getPort()),
     new UsernamePasswordCredentials("api", "***REMOVED***"));
@@ -48,13 +49,14 @@ class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.
 
       val response = httpclient.execute(targetHost, transaction)
 
-      System.out.println(response.getStatusLine())
       val entity = response.getEntity()
-      // do something useful with the response body
-      // and ensure it is fully consumed
+
       val msg = EntityUtils.toString(entity)
       EntityUtils.consume(entity)
-      System.out.println(msg)
+
+      if (response.getStatusLine.getStatusCode != 200)
+        throw new Exception("Mailgun failure: " + response.getStatusLine())
+
       parse(msg).asInstanceOf[JObject]
     } finally {
       transaction.releaseConnection()
