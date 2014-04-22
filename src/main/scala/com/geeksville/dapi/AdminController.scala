@@ -36,7 +36,7 @@ class AdminController extends DroneHubStack with AtmosphereSupport {
   }
 
   atmosphere("/log") {
-    new AtmosphereLive(tryLogin())
+    new AdminLive(tryLogin())
   }
 
   get("/import/:count") {

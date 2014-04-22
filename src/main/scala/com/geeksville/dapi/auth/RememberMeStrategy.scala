@@ -31,7 +31,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    * Grab the value of the rememberMe cookie token.
    */
   private def tokenVal = {
-    app.cookies.get(COOKIE_KEY) match {
+    Option(app.cookies).flatMap(_.get(COOKIE_KEY)) match {
       case Some(token) => token
       case None => ""
     }
@@ -111,6 +111,11 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
           None
         } else
           Some(login, e, md5)
+
+      case "" =>
+        logger.trace(s"No token found...")
+        None
+
       case _ =>
         logger.error(s"HACK ATTEMPT: malformed token: $t")
         None
@@ -168,9 +173,12 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    */
   override def afterAuthenticate(winningStrategy: String, user: User)(implicit request: HttpServletRequest, response: HttpServletResponse) = {
     if (winningStrategy == "RememberMe" || shouldUseCookies) {
-      logger.info("rememberMe: setting cookie")
+      logger.trace("rememberMe: setting cookie")
       val token = makeToken(user)
-      app.cookies.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))
+      Option(app.cookies) match {
+        case Some(c) => c.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))
+        case None => logger.error(s"Can't set cookie on $request") // It seems like the atmosphere paths are broken for cookies
+      }
     }
   }
 

@@ -7,6 +7,8 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.core.OutputStreamAppender
 import java.io.ByteArrayOutputStream
 import org.json4s.JsonAST.JString
+import com.geeksville.akka.MockAkka
+import scala.concurrent.ExecutionContext
 
 class AtmosphereLogAppender extends OutputStreamAppender[ILoggingEvent] {
   private val stream = new ByteArrayOutputStream() {
@@ -20,7 +22,8 @@ class AtmosphereLogAppender extends OutputStreamAppender[ILoggingEvent] {
 
       val route = "/api/v1/admin/log"
 
-      import scala.concurrent.ExecutionContext.Implicits.global
+      // Yuck FIXME - must be a nicer way to find execution context
+      implicit val context: ExecutionContext = MockAkka.system.dispatcher
       AtmosphereTools.broadcast(route, "log", JString(str))
       r
     }

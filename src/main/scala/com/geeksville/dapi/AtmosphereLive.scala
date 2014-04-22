@@ -11,6 +11,7 @@ import com.geeksville.dapi.model.User
  */
 class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient with Logging {
 
+  println("Creating atmo client!")
   def receive = {
     case Connected =>
       info(s"Atmosphere $uuid connected as $user")
@@ -32,6 +33,8 @@ class AtmosphereLive(user: Option[User]) extends PlatformAtmosphereClient(user) 
 }
 
 class AdminLive(user: Option[User]) extends PlatformAtmosphereClient(user) {
+  // An extra check to make sure we never accidentally create this atmosphere (with secret log msgs) for non admins
+
   if (!user.isDefined)
     throw new Exception("Not logged in")
 
