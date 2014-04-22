@@ -7,6 +7,7 @@ import akka.actor.Props
 import com.geeksville.apiproxy.APIConstants
 import com.geeksville.akka.TCPListenerActor
 import java.io.File
+import com.geeksville.akka.MockAkka
 
 object Global {
   def setConfig() {
@@ -15,5 +16,7 @@ object Global {
       System.setProperty("config.file", configOverride.toString)
     else
       println(s"No config override file found.  You should probably create $configOverride")
+
+    MockAkka.configOverride = Some(ConfigFactory.load())
   }
 }
