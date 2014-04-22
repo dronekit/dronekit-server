@@ -118,7 +118,7 @@ object NestorBuild extends Build {
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
         "com.google.guava" % "guava" % "14.0-rc2",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container",
-        "org.eclipse.jetty" % "jetty-websocket" % "8.1.10.v20130312" % "container"), // For Atmosphere
+        "org.eclipse.jetty" % "jetty-websocket" % "8.1.10.v20130312" % "compile;container"), // For Atmosphere
         //"org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "compile;container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))),
 
       /* no longer works?/needed?
