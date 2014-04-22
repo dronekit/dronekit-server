@@ -107,9 +107,8 @@ object NestorBuild extends Build {
         "com.novus" %% "salat" % "1.9.5",
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
         
-        
-        //"org.apache.httpcomponents" % "httpclient" % "4.1" % "test", // We need to force this version of http client to keep newer aws libs working
-        //"org.apache.httpcomponents" % "httpcore" % "4.1" % "test",         
+        "org.apache.httpcomponents" % "httpclient" % "4.2.6", 
+        //"org.apache.httpcomponents" % "httpcore" % "4.2.6",         
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",
         //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",    
