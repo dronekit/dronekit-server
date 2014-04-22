@@ -23,9 +23,12 @@ class AtmosphereLogAppender extends OutputStreamAppender[ILoggingEvent] {
       val route = "/api/v1/admin/log"
 
       // Yuck FIXME - must be a nicer way to find execution context
-      implicit val context: ExecutionContext = MockAkka.system.dispatcher
-      AtmosphereTools.broadcast(route, "log", JString(str))
-      r
+      // Also a nicer way to see if we've created our akka context
+      if (MockAkka.configOverride.isDefined) {
+        implicit val context: ExecutionContext = MockAkka.system.dispatcher
+        AtmosphereTools.broadcast(route, "log", JString(str))
+        r
+      }
     }
   }
 
