@@ -33,7 +33,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
   /// Subclasses can call this method to ensure that the request is aborted if the user is not logged in
   protected def requireLogin(names: String*) = tryLogin(names: _*).getOrElse {
-    logger.error("Aborting request: user not logged in")
+    logger.debug("Aborting request: user not logged in")
     haltUnauthorized("You are not logged in")
   }
 
