@@ -186,7 +186,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   protected def findById(implicit request: HttpServletRequest) = {
     val id = params("id")
-    val r = companion.find(id).getOrElse(haltNotFound())
+    val r = companion.find(id).getOrElse(haltNotFound(s"$id not found"))
 
     requireReadAccess(r)
   }
