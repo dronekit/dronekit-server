@@ -70,8 +70,10 @@ abstract class GCSActor extends Actor with ActorLogging {
   protected def sendToVehicle(e: Envelope)
 
   private def checkLoggedIn() {
-    if (!userOpt.isDefined)
+    if (!userOpt.isDefined) {
+      log.error("HACK ATTEMPT: client not logged in")
       throw new Exception("Not logged-in")
+    }
   }
 
   /// Helper function for making user visible messages
@@ -94,7 +96,7 @@ abstract class GCSActor extends Actor with ActorLogging {
         val uuid = UUID.fromString(msg.vehicleUUID)
         val vehicle = getOrCreateVehicle(uuid)
 
-        val actor = vehicleActors.getOrCreate(uuid.toString, Props(new LiveVehicleActor(vehicle, msg.canAcceptCommands)))
+        val actor = LiveVehicleActor.find(vehicle, msg.canAcceptCommands)
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
         actor ! VehicleConnected()
 
@@ -196,15 +198,13 @@ abstract class GCSActor extends Actor with ActorLogging {
 
   // Tell our vehicles we've lost the link
   override def postStop() {
+    log.info("Shutting down GCSActor")
     vehicles.values.foreach(_ ! VehicleDisconnected())
     super.postStop()
   }
 }
 
 object GCSActor {
-  // Actors are named based on their globally unique vehicle ID
-  private val vehicleActors = new NamedActorClient("vehicles")
-
   /**
    * convert raw bytes to a mavlink packet object
    * FIXME: merge this with the (not yet written) replacement for the java glue

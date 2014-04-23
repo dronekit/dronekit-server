@@ -21,6 +21,9 @@ import java.util.UUID
 import com.geeksville.dapi.model.MissionSummary
 import com.geeksville.mavlink.TimestampedMessage
 import com.geeksville.util.Throttled
+import com.geeksville.akka.NamedActorClient
+import akka.actor.ActorRefFactory
+import com.geeksville.akka.MockAkka
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -84,8 +87,11 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       self ! PoisonPill
 
     case msg: StartMissionMsg =>
+      log.debug(s"Handling $msg")
       startMission(msg)
+
     case msg: StopMissionMsg =>
+      log.debug(s"Handling $msg")
       stopMission(msg.notes)
 
     case msg: TimestampedMessage =>
@@ -104,8 +110,10 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         stopTime = Some(msg.time)
       }
 
-      // Update our live model
-      self ! msg.msg
+      // Update our live model (be careful here to not requeue the message, but rather handle it in this same callback
+      // to preserve order
+      if (receive.isDefinedAt(msg.msg))
+        receive(msg.msg)
   }
 
   /**
@@ -173,6 +181,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   }
 
   private def stopMission(notes: Option[String] = None) {
+    log.debug("Stopping mission")
+
     // Close the tlog and upload to s3
     tloggerOpt.foreach { a =>
       a ! PoisonPill
@@ -196,4 +206,17 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       missionOpt = None
     }
   }
+}
+
+object LiveVehicleActor {
+  private implicit val context: ActorRefFactory = MockAkka.system
+  private val actors = new NamedActorClient("live")
+
+  /**
+   * Find the supervisor responsible for a region of space
+   *
+   * FIXME - add grid identifer param
+   */
+  def find(vehicle: Vehicle, canAcceptCommands: Boolean) = actors.getOrCreate(vehicle.uuid.toString, Props(new LiveVehicleActor(vehicle, canAcceptCommands)))
+
 }

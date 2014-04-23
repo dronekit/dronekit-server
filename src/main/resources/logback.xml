@@ -5,7 +5,7 @@
     <withJansi>true</withJansi>
     <encoder>
       <!-- removed to make log shorter: %d{HH:mm:ss.SSS} [%thread] -->
-      <pattern>%d{mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+      <pattern>%d{mm:ss.SSS} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
     </encoder>
 
     <!--  
@@ -33,8 +33,11 @@
   <logger name="org.scalatra" level="DEBUG"/>
   <logger name="org.scalatra.auth" level="INFO"/>
   
+  <logger name="activerecord" level="INFO"/>
+  <logger name="org.eclipse" level="INFO"/>
+  
   <!-- But ignore debug msgs from others -->
-  <root level="info">
+  <root level="debug">
     <appender-ref ref="STDOUT" />
     <appender-ref ref="atmosphere" /> 
   </root>

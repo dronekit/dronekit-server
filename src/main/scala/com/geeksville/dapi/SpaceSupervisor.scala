@@ -21,6 +21,9 @@ import akka.actor.ActorContext
 import akka.actor.ActorRefFactory
 import com.geeksville.scalatra.AtmosphereTools
 import org.json4s.Extraction
+import org.mavlink.messages.MAVLinkMessage
+import com.geeksville.mavlink.MsgArmChanged
+import com.geeksville.mavlink.MsgSystemStatusChanged
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -52,21 +55,26 @@ class SpaceSupervisor extends Actor with ActorLogging {
 
   protected def publishEvent(a: Any) { eventStream.publish(a) }
 
-  private def senderMission = actorToMission(sender).id
+  // private def senderMission = actorToMission(sender).id
   private def senderVehicle = actorToMission(sender).vehicleId.get
+
+  private def withMission(cb: Long => Unit) {
+    actorToMission.get(sender).map { m => cb(m.id) }.getOrElse { log.warning(s"Ignoring from $sender") }
+  }
 
   /**
    * FIXME - not sure if I should be publishing directly to atmosphere in this actor, but for now...
    */
-  private def updateAtmosphere(o: JValue) {
+  private def updateAtmosphere(typ: String, o: JValue) {
     val route = "/api/v1/mission/live"
-    AtmosphereTools.broadcast(route, "live", o)
+    AtmosphereTools.broadcast(route, typ, o)
   }
 
-  private def publishUpdate(o: Product) {
+  private def publishUpdate(typ: String, o: Product) {
+    log.debug(s"Publishing space $typ, $o")
     publishEvent(o) // Tell any interested subscribers
     val v = Extraction.decompose(o)
-    updateAtmosphere(v)
+    updateAtmosphere(typ, v)
   }
 
   override def receive = {
@@ -95,20 +103,32 @@ class SpaceSupervisor extends Actor with ActorLogging {
 
     case l: Location =>
       log.debug(s"Received: $l")
-      publishUpdate(LocationUpdate(senderMission, senderVehicle, l))
+      withMission { senderMission =>
+        publishUpdate("loc", LocationUpdate(senderMission, senderVehicle, l))
+      }
 
     case StatusText(str, severe) =>
       log.debug(s"Received text: $str")
-      publishUpdate(TextUpdate(senderMission, senderVehicle, str))
+      withMission { senderMission =>
+        publishUpdate("text", TextUpdate(senderMission, senderVehicle, str))
+      }
 
-    case MsgModeChanged(mode) =>
-      log.debug(s"Received mode: $mode")
-      publishUpdate(ModeUpdate(senderMission, senderVehicle, mode))
+    case x: MsgArmChanged =>
+      publishUpdate("arm", x)
+
+    case x: MsgSystemStatusChanged =>
+      publishUpdate("sysstat", x)
+
+    case x: Product =>
+      publishUpdate("mystery", x)
+
+    case x: MAVLinkMessage =>
+    // Silently ignore to prevent logspam BIG FIXME - should not even publish this to us...
   }
 }
 
 object SpaceSupervisor {
-  private implicit val context: ActorRefFactory = MockAkka.system
+  private implicit def context: ActorRefFactory = MockAkka.system
   private val actors = new NamedActorClient("space")
 
   /**
