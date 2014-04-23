@@ -6,19 +6,16 @@ import akka.actor.Actor
 import com.geeksville.akka.EventStream
 import com.geeksville.mavlink.MsgSystemStatusChanged
 import akka.actor.ActorRef
+import com.geeksville.dapi.model.Vehicle
+import com.geeksville.dapi.model.MissionSummary
 
 // Note: we only send full mission objects at start and end because they might be large and expensive to send over RPC
 case class MissionStart(mission: Mission)
 case class MissionStop(mission: Mission)
 
 // Only SpaceSupervisor sends the following messages
-trait MissionUpdateMsg {
-  def missionId: Long
-  def vehicleId: Long
-}
-case class LocationUpdate(missionId: Long, vehicleId: Long, location: Location) extends MissionUpdateMsg
-case class ModeUpdate(missionId: Long, vehicleId: Long, mode: String) extends MissionUpdateMsg
-case class TextUpdate(missionId: Long, vehicleId: Long, message: String) extends MissionUpdateMsg
+case class SpaceEnvelope(missionId: Long, payload: Option[Product])
+case class SpaceSummary(vehicle: Option[Vehicle], mission: Option[MissionSummary])
 
 /**
  * The following messages are published by vehicles (not space supervisor)

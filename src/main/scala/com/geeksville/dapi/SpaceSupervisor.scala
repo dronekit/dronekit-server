@@ -24,6 +24,12 @@ import org.json4s.Extraction
 import org.mavlink.messages.MAVLinkMessage
 import com.geeksville.mavlink.MsgArmChanged
 import com.geeksville.mavlink.MsgSystemStatusChanged
+import com.github.aselab.activerecord.dsl._
+import com.geeksville.dapi.model.Vehicle
+import com.geeksville.dapi.model.MissionSummary
+import com.geeksville.flight.MsgRcChannelsChanged
+import com.geeksville.flight.MsgServoOutputChanged
+import com.geeksville.flight.MsgSysStatusChanged
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -70,11 +76,14 @@ class SpaceSupervisor extends Actor with ActorLogging {
     AtmosphereTools.broadcast(route, typ, o)
   }
 
-  private def publishUpdate(typ: String, o: Product) {
-    log.debug(s"Publishing space $typ, $o")
-    publishEvent(o) // Tell any interested subscribers
-    val v = Extraction.decompose(o)
-    updateAtmosphere(typ, v)
+  private def publishUpdate(typ: String, p: Product = null) {
+    withMission { senderMission =>
+      log.debug(s"Publishing space $typ, $p")
+      val o = SpaceEnvelope(senderMission, Option(p))
+      publishEvent(o) // Tell any interested subscribers
+      val v = Extraction.decompose(o)
+      updateAtmosphere(typ, v)
+    }
   }
 
   override def receive = {
@@ -93,31 +102,30 @@ class SpaceSupervisor extends Actor with ActorLogging {
       log.debug(s"Received start on $x")
       actorToMission(sender) = x.mission
       watch(sender)
-      publishEvent(x)
+      publishUpdate("start", SpaceSummary(x.mission.vehicle, x.mission.summary))
 
     case x: MissionStop =>
       log.debug(s"Received stop on $x")
       unwatch(sender)
       actorToMission.remove(sender)
-      publishEvent(x)
+      publishUpdate("stop")
 
     case l: Location =>
-      log.debug(s"Received: $l")
-      withMission { senderMission =>
-        publishUpdate("loc", LocationUpdate(senderMission, senderVehicle, l))
-      }
+      publishUpdate("loc", l)
 
-    case StatusText(str, severe) =>
-      log.debug(s"Received text: $str")
-      withMission { senderMission =>
-        publishUpdate("text", TextUpdate(senderMission, senderVehicle, str))
-      }
+    case l: StatusText =>
+      publishUpdate("text", l)
 
-    case x: MsgArmChanged =>
-      publishUpdate("arm", x)
+    case l: MsgArmChanged =>
+      publishUpdate("arm", l)
 
-    case x: MsgSystemStatusChanged =>
-      publishUpdate("sysstat", x)
+    case l: MsgSystemStatusChanged =>
+      publishUpdate("sysstat", l)
+
+    case MsgSysStatusChanged =>
+    case MsgRcChannelsChanged =>
+    case x: MsgServoOutputChanged =>
+    // Silently ignore to prevent logspam BIG FIXME - should not even publish this to us...
 
     case x: Product =>
       publishUpdate("mystery", x)

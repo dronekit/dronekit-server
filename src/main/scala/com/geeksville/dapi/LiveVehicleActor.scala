@@ -92,6 +92,10 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
 
     case msg: StopMissionMsg =>
       log.debug(s"Handling $msg")
+
+      // Update user preferences on keeping this tlog at all
+      missionOpt.foreach(_.keep = msg.keep)
+
       stopMission(msg.notes)
 
     case msg: TimestampedMessage =>
@@ -136,14 +140,18 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   /**
    * We modify the actor to copy to S3 after the file is closed
    */
-  private class TlogToS3Actor extends LogBinaryMavlink(LogBinaryMavlink.getFilename(), deleteIfBoring = false, wantImprovedFilename = false) {
+  private class TlogToS3Actor(mission: Mission) extends LogBinaryMavlink(LogBinaryMavlink.getFilename(), deleteIfBoring = false, wantImprovedFilename = false) {
     override protected def onFileClose() {
-      log.debug(s"Copying to s3: $tlogId")
-      // Copy to S3
-      val src = new BufferedInputStream(new FileInputStream(file), 8192)
-      Mission.putBytes(tlogId.get.toString, src, file.length())
+      if (mission.keep) {
+        log.debug(s"Copying to s3: $tlogId")
+        // Copy to S3
+        val src = new BufferedInputStream(new FileInputStream(file), 8192)
+        Mission.putBytes(tlogId.get.toString, src, file.length())
+      } else
+        log.warning("Mission marked as no-keep - not copying to S3")
+
       tlogId = None
-      // FIXME - delete the local copy once things seem to work
+      file.delete()
     }
   }
 
@@ -156,12 +164,13 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     log.debug(s"Starting tlog $tlogId")
 
     val f = LogBinaryMavlink.getFilename() // FIXME - create in temp directory instead
-    tloggerOpt = Some(context.actorOf(Props(new TlogToS3Actor), "tlogger"))
 
     val m = Mission.create(vehicle)
     missionOpt = Some(m)
     startTime = None
     m.notes = msg.notes
+
+    tloggerOpt = Some(context.actorOf(Props(new TlogToS3Actor(m)), "tlogger"))
 
     // Pull privacy from vehicle if not specified
     var viewPriv = msg.viewPrivacy.getOrElse(AccessCode.DEFAULT).id
@@ -191,17 +200,23 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
 
     missionOpt.foreach { m =>
       blocking {
-        log.debug("Saving mission")
         m.isLive = false
         m.tlogId = tlogId.map(_.toString)
         val s = summary
         s.create
         s.mission := m
         s.save()
-        m.save()
 
         vehicle.updateFromMission(this)
         publishEvent(MissionStop(m))
+
+        if (m.keep) {
+          log.debug("Saving mission")
+          m.save()
+        } else {
+          log.warning("No-keep mission, deleting")
+          m.delete()
+        }
       }
       missionOpt = None
     }
