@@ -114,6 +114,11 @@ object NestorBuild extends Build {
         //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",    
         "commons-codec" % "commons-codec" % "1.6",
         
+        // For loggly logging (not working - instead just use syslog)
+        //"ch.qos.logback.contrib" % "logback-jackson" % "0.1.2" % "runtime",
+        //"ch.qos.logback.contrib" % "logback-json-classic" % "0.1.2" % "runtime",
+        //"org.logback-extensions" % "logback-ext-loggly" % "0.1.2" % "runtime",
+
         "com.google.code.findbugs" % "jsr305" % "2.0.1",
         "com.google.guava" % "guava" % "14.0-rc2",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "compile;container",
