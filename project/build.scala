@@ -23,6 +23,7 @@ import Wro4jKeys._
 import sbtassembly.Plugin._
 import AssemblyKeys._ // put this at the top of the file
 // import com.typesafe.sbt.SbtAtmos.{ Atmos, atmosSettings, traceAkka }
+import scalabuff.ScalaBuffPlugin._
 
 object NestorBuild extends Build {
   val Organization = "com.geeksville"
@@ -47,7 +48,10 @@ object NestorBuild extends Build {
   }
 
   lazy val common = Project(id = "gcommon",
-    base = file("arduleader/common"))
+    base = file("arduleader/common"),
+    settings = Project.defaultSettings ++ scalabuffSettings ++ Seq(
+      scalabuffVersion in ScalaBuff := "1.3.7"
+    )).configs(ScalaBuff)
 
   lazy val threeAkka = Project(id = "three-akka",
     base = file("3scale-akka"))
@@ -77,7 +81,7 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test" withSources (),
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
-        
+
         "xml-apis" % "xml-apis" % "2.0.2", // Needed to fix old dependency in xom (used by 3scale)
 
         // scala-activerecord support
@@ -91,7 +95,7 @@ object NestorBuild extends Build {
 
         "org.mindrot" % "jbcrypt" % "0.3m", // For password encryption
 
-        // For swagger - FIXME, the swagger folks are apparently importing the log4j12 lib, which they should not do - causes multiple 
+        // For swagger - FIXME, the swagger folks are apparently importing the log4j12 lib, which they should not do - causes multiple
         // bindings for logging
         "org.scalatra" %% "scalatra-swagger" % ScalatraVersion exclude ("org.slf4j", "slf4j-log4j12"),
 
@@ -106,14 +110,14 @@ object NestorBuild extends Build {
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
-        
-        "org.apache.httpcomponents" % "httpclient" % "4.2.6", 
-        //"org.apache.httpcomponents" % "httpcore" % "4.2.6",         
+
+        "org.apache.httpcomponents" % "httpclient" % "4.2.6",
+        //"org.apache.httpcomponents" % "httpcore" % "4.2.6",
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",
-        //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",    
+        //"commons-logging" % "commons-logging" % "1.1.3" % "compile;container",
         "commons-codec" % "commons-codec" % "1.6",
-        
+
         // For loggly logging (not working - instead just use syslog)
         //"ch.qos.logback.contrib" % "logback-jackson" % "0.1.2" % "runtime",
         //"ch.qos.logback.contrib" % "logback-json-classic" % "0.1.2" % "runtime",
@@ -127,11 +131,11 @@ object NestorBuild extends Build {
 
       /* no longer works?/needed?
       warPostProcess in Compile <<= (target) map {
-        (target) => { 
+        (target) => {
           () =>
           val webapp = target / "webapp"
 	  val libs = webapp / "WEB-INF" / "lib"
-          val notWar = Seq("javax.servlet-3.0.0.v201112011016.jar", "jetty-webapp-8.1.8.v20121106.jar", 
+          val notWar = Seq("javax.servlet-3.0.0.v201112011016.jar", "jetty-webapp-8.1.8.v20121106.jar",
 	    "jetty-server-8.1.8.v20121106.jar", "jetty-servlet-8.1.8.v20121106.jar")
           notWar.foreach { f =>
 	  IO.delete(libs / f ) }
