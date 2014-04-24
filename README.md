@@ -1,6 +1,9 @@
-# APIHub 
+# APIHub
 
-Copyright 2013 Kevin Hester
+Build Status: [![Dependency Status](https://www.codeship.io/projects/6b33c470-ae1f-0131-dd5f-06fd12e6a611/status)](https://www.codeship.io/projects/18692)
+
+
+Copyright 2014 3D Robotics
 
 Under a TBD license
 
