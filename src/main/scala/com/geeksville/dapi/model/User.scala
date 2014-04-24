@@ -11,6 +11,7 @@ import com.geeksville.dapi.AccessCode
 import org.json4s.CustomSerializer
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
+import com.geeksville.util.Gravatar
 
 case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -31,6 +32,17 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
    */
   @Length(max = 40)
   var groupId: String = ""
+
+  /**
+   * A URL of a small jpg for this user
+   */
+  def avatarImageURL = email.map(Gravatar.avatarImageUrl)
+
+  /**
+   * A URL that can be shown to the user if they want to view more details on an avatar.
+   * Currently goes to gravatar.  Once we have a user profile URL in MDS we can return that instead.
+   */
+  def profileURL = email.map(Gravatar.profileUrl)
 
   /**
    * All the vehicles this user owns
@@ -82,7 +94,7 @@ object UserSerializer extends CustomSerializer[User](format => (
   },
   {
     case u: User =>
-      ("login" -> u.login) ~ ("fullName" -> u.fullName) ~ ("isAdmin" -> u.isAdmin)
+      ("login" -> u.login) ~ ("fullName" -> u.fullName) ~ ("isAdmin" -> u.isAdmin) ~ ("avatarImage" -> u.avatarImageURL) ~ ("profileURL" -> u.profileURL)
   }))
 
 object User extends DapiRecordCompanion[User] with Logging {
