@@ -1,1 +1,1 @@
--J-agentlib:TakipiAgent -jvm-debug 8000
+ -jvm-debug 8000
