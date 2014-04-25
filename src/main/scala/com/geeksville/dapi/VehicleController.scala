@@ -56,7 +56,9 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   private val addMissionInfo =
     (apiOperation[String]("addMission")
       summary s"Add a new mission (as a tlog, bog or log)"
+      consumes (Mission.mimeType)
       parameters (
+        bodyParam[Array[Byte]],
         pathParam[String]("id").description(s"Id of $aName to be appended")))
 
   post("/:id/missions", operation(addMissionInfo)) {

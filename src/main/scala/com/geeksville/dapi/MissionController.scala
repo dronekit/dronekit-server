@@ -29,7 +29,8 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
   // For now we just pull fields out using active record
   override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer
 
-  atmosphere("/live") {
+  private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
+  atmosphere("/live", operation(liveOp)) {
     new AtmosphereLive(tryLogin())
   }
 

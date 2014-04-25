@@ -20,7 +20,9 @@ import org.json4s.JsonAST.JObject
  */
 class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with SwaggerSupport {
 
-  override protected val applicationName = Some(aName)
+  // This override is necessary for the swagger docgen to make correct paths
+  override protected val applicationName = Some("api/v1/" + aName)
+
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."
 
   /// Utility glue to make easy documentation boilerplate
@@ -94,6 +96,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
       (apiOperation[String]("set" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
         parameters (
+          bodyParam[R],
           pathParam[String]("id").description(s"Id of $aName to be changed"),
           bodyParam[R](name).description(s"New value for the $name")))
 
@@ -168,7 +171,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     haltMethodNotAllowed()
   }
 
-  private val findByIdOp =
+  private lazy val findByIdOp =
     (apiOperation[T]("findById")
       summary "Find by id"
       parameters (
@@ -191,17 +194,18 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     requireReadAccess(r)
   }
 
-  private val createByIdOp =
+  private lazy val createByIdOp =
     (apiOperation[String]("createById")
       summary "Create by id"
       parameters (
+        bodyParam[T],
         pathParam[String]("id").description(s"Id of $aName that needs to be created")))
 
   post("/:id", operation(createByIdOp)) {
     haltNotFound()
   }
 
-  private val deleteByIdOp =
+  private lazy val deleteByIdOp =
     (apiOperation[String]("deleteById")
       summary "Delete by id"
       parameters (

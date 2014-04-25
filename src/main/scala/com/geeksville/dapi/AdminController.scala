@@ -14,11 +14,17 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.xml.Elem
 import org.scalatra.atmosphere._
+import org.scalatra.swagger.SwaggerSupport
+import org.scalatra.swagger.Swagger
 
 /**
  * Special admin operations
  */
-class AdminController extends DroneHubStack with AtmosphereSupport {
+class AdminController(implicit val swagger: Swagger) extends DroneHubStack with AtmosphereSupport with SwaggerSupport {
+
+  // This override is necessary for the swagger docgen to make correct paths
+  override protected val applicationName = Some("api/v1/admin")
+  protected lazy val applicationDescription = s"Adminstrator API operations."
 
   def system = MockAkka.system
 
@@ -35,41 +41,51 @@ class AdminController extends DroneHubStack with AtmosphereSupport {
     requireServiceAuth("admin")
   }
 
-  atmosphere("/log") {
+  private lazy val logOp = apiOperation[AtmosphereClient]("log") summary "An atmosphere endpoint container server log messages"
+  atmosphere("/log", operation(logOp)) {
     new AdminLive(tryLogin())
   }
 
-  get("/import/:count") {
+  private lazy val importOp =
+    (apiOperation[String]("import")
+      summary "Migrate flights from the old droneshare"
+      parameters (
+        pathParam[Int]("count").description(s"Number of old flights to import")))
+
+  get("/import/:count", operation(importOp)) {
     nestorImport ! DoImport(params("count").toInt)
     "started import"
   }
 
-  get("/sim/huge") {
+  private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
+
+  get("/sim/huge", operation(simOp)) {
     simClient ! RunTest(host, "bigtest")
     "started sim"
   }
 
-  get("/sim/full") {
+  get("/sim/full", operation(simOp)) {
     simClient ! RunTest(host, "test")
   }
 
-  get("/sim/quick") {
+  get("/sim/quick", operation(simOp)) {
     simClient ! RunTest(host, "quick")
     "started sim"
   }
 
   // FIXME -very dangerous remove before production
-  get("/db/reset") {
+  get("/db/reset", operation(apiOperation[String]("dbReset") summary "Reseed the DB")) {
     Tables.reset
     "DB Reset completed"
   }
 
+  // Intentionallt not documented
   get("/db/create") {
     Tables.create
     "DB created"
   }
 
-  get("/akka") {
+  get("/akka", operation(apiOperation[String]("akka") summary "akka debugging information")) {
     implicit val timeout = Timeout(5 seconds)
 
     akkaReflect ! AkkaReflector.PollMsg

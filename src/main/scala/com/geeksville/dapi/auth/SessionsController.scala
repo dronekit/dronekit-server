@@ -7,8 +7,15 @@ import org.json4s.Formats
 import org.json4s.DefaultFormats
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.json.ActiveRecordSerializer
+import org.scalatra.swagger.SwaggerSupport
+import org.scalatra.swagger.Swagger
+import com.geeksville.dapi.model.User
+import org.scalatra.swagger.StringResponseMessage
 
-class SessionsController extends DroneHubStack {
+class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with SwaggerSupport {
+
+  override protected val applicationName = Some("api/v1/auth")
+  protected lazy val applicationDescription = s"Session operations (login, logout, etc...)"
 
   // Before every action runs, set the content type to be in JSON format.
   before() {
@@ -52,7 +59,13 @@ class SessionsController extends DroneHubStack {
     Extraction.decompose(user)
   }
 
-  post("/login") {
+  private lazy val loginOp = (
+    apiOperation[User]("login") summary "POST your login parameters to this URL"
+    parameters (
+      queryParam[String]("login").description("The loginName for the account"),
+      queryParam[String]("password").description("The password for the account")))
+
+  post("/login", operation(loginOp)) {
     doLogin()
   }
 
@@ -61,17 +74,23 @@ class SessionsController extends DroneHubStack {
     doLogin()
   }
 
+  private lazy val userOp = (apiOperation[User]("user")
+    summary "Return the user object"
+    responseMessages (
+      StringResponseMessage(401, "if user is not logged in")))
+
   /**
    * Return the user-object if we are logged in, else 401
    */
-  get("/user") {
+  get("/user", operation(userOp)) {
     requireLogin()
     user
   }
 
+  private lazy val logoutOp = apiOperation[String]("logout") summary "Logout the current user"
   // Never do this in a real app. State changes should never happen as a result of a GET request. However, this does
   // make it easier to illustrate the logout code.
-  post("/logout") {
+  post("/logout", operation(logoutOp)) {
     scentry.logout()
 
     // NOT USING HTML
