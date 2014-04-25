@@ -7,7 +7,8 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.ApiInfo
 
 class ResourcesApp(implicit val swagger: Swagger) extends DroneHubStack with NativeSwaggerBase {
-  implicit override val jsonFormats: Formats = DefaultFormats
+  // It is very important that we use the json formats for swagger (they have a bunch of custom serializers)
+  implicit override val jsonFormats: Formats = super[NativeSwaggerBase].jsonFormats
 }
 
 class ApiSwagger extends Swagger("1.0", "1", ApiInfo("DroneAPIHub", "Central drone server", "TBD", "kevinh@geeksville.com", "TBD", "TBD"))
