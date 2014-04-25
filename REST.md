@@ -80,6 +80,17 @@ If you do not support cookies, you'll need to attach login & password as query p
 
 Various private admin functions sit here.
 
+# /admin/sim
+
+There is a fairly extensive vehicle simulator.
+
+GET http://localhost:8080/api/v1/admin/sim/std/KEEP/NUMVEHICLES/NUMSECS?api_key=eb34bd67.megadroneshare
+
+Where:
+* KEEP is true/false for keeping the missions after the run is over
+* NUMVEHICLES is the number of sim vehicles to create
+* NUMSECS is the number of seconds to keep those vehicles running
+
 # TODO
 
 * http://localhost:8080/view/5n72bt make it work using only the mission URL

@@ -5,7 +5,6 @@ import akka.actor.Props
 import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.dapi.temp.NestorImporter
 import com.geeksville.dapi.temp.DoImport
-import com.geeksville.dapi.test.RunTest
 import com.geeksville.dapi.model.Tables
 import com.geeksville.akka.AkkaReflector
 import scala.concurrent.Await
@@ -16,6 +15,7 @@ import scala.xml.Elem
 import org.scalatra.atmosphere._
 import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
+import com.geeksville.dapi.test.PlaybackGCSClient
 
 /**
  * Special admin operations
@@ -26,15 +26,13 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   override protected val applicationName = Some("api/v1/admin")
   protected lazy val applicationDescription = s"Adminstrator API operations."
 
-  def system = MockAkka.system
-
-  lazy val simClient = system.actorOf(Props(new SimGCSClient), "simClient")
+  lazy val system = MockAkka.system
 
   lazy val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
 
   lazy val akkaReflect = system.actorOf(Props(new AkkaReflector), "akkaReflect")
 
-  def host = multiParams("host").headOption.getOrElse("localhost")
+  def host() = multiParams("host").headOption.getOrElse("localhost")
 
   before() {
     requireAdmin()
@@ -60,16 +58,24 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
 
   get("/sim/huge", operation(simOp)) {
-    simClient ! RunTest(host, "bigtest")
+    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(host)))
+    simClient ! PlaybackGCSClient.RunTest("bigtest")
     "started sim"
   }
 
   get("/sim/full", operation(simOp)) {
-    simClient ! RunTest(host, "test")
+    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(host)))
+    simClient ! PlaybackGCSClient.RunTest("test")
+    "started sim"
   }
 
-  get("/sim/quick", operation(simOp)) {
-    simClient ! RunTest(host, "quick")
+  get("/sim/std/:keep/:numVehicles/:numSecs", operation(simOp)) {
+    val keep = params("keep").toBoolean
+    val numVehicles = params("numVehicles").toInt
+    val numSecs = params("numSecs").toInt
+    val h = host
+    lazy val simClient = system.actorOf(Props(new SimGCSClient(h, keep)))
+    simClient ! SimGCSClient.RunTest(numVehicles, numSecs)
     "started sim"
   }
 
