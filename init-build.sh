@@ -14,7 +14,7 @@ cd json4s
 sbt publishLocal
 cd ..
 
-git clone git@github.com:geeksville/scalatra.git
+git clone -b 2.3.x_2.10 git@github.com:geeksville/scalatra.git
 cd scalatra
 sbt publishLocal
 cd ..
