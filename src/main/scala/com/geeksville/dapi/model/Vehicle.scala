@@ -68,13 +68,23 @@ case class Vehicle(
    * Reverse engineer vehicle data from a recent mission upload
    */
   def updateFromMission(m: LiveOrPlaybackModel) {
-    if (!vehicleType.isDefined || !autopilotType.isDefined) {
+    var dirty = false
+
+    if (!vehicleType.isDefined && m.humanVehicleType.isDefined) {
       vehicleType = m.humanVehicleType
+      dirty = true
+    }
+
+    if (!autopilotType.isDefined && m.humanAutopilotType.isDefined) {
       autopilotType = m.humanAutopilotType
+      dirty = true
+    }
+
+    if (dirty) {
       save
       debug(s"Updated $this based on mission data")
     } else
-      debug(s"$this was already up-to-date")
+      trace(s"$this was already up-to-date")
   }
 }
 
