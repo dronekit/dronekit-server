@@ -77,6 +77,8 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     val interval = numSeconds.toDouble / numPoints
     private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
 
+    sendMavlink(makeStatusText("Starting sim vehicle"))
+
     // Start our sim
     scheduleNext()
 

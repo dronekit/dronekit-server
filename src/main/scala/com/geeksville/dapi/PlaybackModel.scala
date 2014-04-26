@@ -54,9 +54,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
    */
   val positions = ArrayBuffer[TimestampedLocation]()
 
-  private var firstMessage: Option[TimestampedMessage] = None
-  private var lastMessage: Option[TimestampedMessage] = None
-
   /// First found position
   var startPosition: Option[Location] = None
   var endPosition: Option[Location] = None
@@ -83,11 +80,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   // Currently I only use GPS pos, because we don't properly adjust alt offsets (it seems like m.alt is not corrected for MSL)
   val useGlobalPosition = false
 
-  // Summary data
-
-  def startTime = firstMessage.map(_.timeAsDate)
-  def endTime = lastMessage.map(_.timeAsDate)
-
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
     s <- startOfFlightTime
@@ -113,7 +105,9 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
 
   def summary = {
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
-    MissionSummary(startTime.flatMap(checkTime), endTime.flatMap(checkTime), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
+    MissionSummary(startTime.flatMap { t => checkTime(new Date(t / 1000)) },
+      currentTime.flatMap { t => checkTime(new Date(t / 1000)) },
+      maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
       endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
   }
 
@@ -135,9 +129,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
 
   private def loadMessage(raw: TimestampedMessage) {
     numMessages += 1
-    if (!firstMessage.isDefined)
-      firstMessage = Some(raw)
-    lastMessage = Some(raw)
 
     // First update any standard live/delayed model stuff
     val msg = raw.msg

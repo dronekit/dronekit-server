@@ -38,6 +38,7 @@ import java.net.URI
 import java.net.URL
 import org.scalatra.servlet.FileUploadSupport
 import com.google.common.io.ByteStreams
+import java.util.Date
 
 case class MessageJson(time: Long, msg: String)
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
@@ -311,8 +312,8 @@ class DeviceServlet extends NestorStack with Logging with FileUploadSupport /* w
       None // Not enough records to be interesting
     else {
       for { l1 <- model.startPosition; l2 <- model.endPosition } yield {
-        val start = model.startTime
-        val end = model.endTime
+        val start = new Date(model.startTime.getOrElse(0L) / 1000)
+        val end = new Date(model.currentTime.getOrElse(0L) / 1000)
 
         val chunk = TLogChunk(start, end, toMongoLoc(l1), toMongoLoc(l2),
           model.numMessages, model.summary(ownerId))

@@ -52,12 +52,6 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   /// The mission we are creating
   private var missionOpt: Option[Mission] = None
 
-  /// Start time for current mission in usecs
-  private var startTime: Option[Long] = None
-
-  /// Stop time for current mission in usecs
-  private var stopTime: Option[Long] = None
-
   private var gcsActor: Option[ActorRef] = None
 
   // Since we are on a server, we don't want to inadvertently spam the vehicle
@@ -99,20 +93,12 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       stopMission(msg.notes)
 
     case msg: TimestampedMessage =>
-      msgLogThrottle.withIgnoreCount { numIgnored: Int =>
-        log.debug(s"Receive ${msg.msg} (and $numIgnored others)")
-      }
 
       // Log to the file
       tloggerOpt.foreach { _ ! msg }
 
-      // Update start/stop times
-      if (missionOpt.isDefined) {
-        if (!startTime.isDefined)
-          startTime = Some(msg.time)
-
-        stopTime = Some(msg.time)
-      }
+      // Let our vehicle model update current time
+      super.onReceive(msg)
 
       // Update our live model (be careful here to not requeue the message, but rather handle it in this same callback
       // to preserve order
@@ -155,7 +141,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     }
   }
 
-  def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), stopTime.map(TimestampedMessage.usecsToDate),
+  def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), currentTime.map(TimestampedMessage.usecsToDate),
     maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, softwareVersion = buildVersion, softwareGit = buildGit)
 
   private def startMission(msg: StartMissionMsg) = blocking {

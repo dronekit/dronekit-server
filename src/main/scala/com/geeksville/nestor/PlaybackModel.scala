@@ -44,6 +44,7 @@ import de.micromata.opengis.kml.v_2_2_0.Folder
 import de.micromata.opengis.kml.v_2_2_0.Container
 import org.mavlink.messages.MAV_TYPE
 import com.geeksville.flight.LiveOrPlaybackModel
+import java.util.Date
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -93,11 +94,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   // Currently I only use GPS pos, because we don't properly adjust alt offsets (it seems like m.alt is not corrected for MSL)
   val useGlobalPosition = false
 
-  // Summary data
-
-  def startTime = firstMessage.get.timeAsDate
-  def endTime = lastMessage.get.timeAsDate
-
   /**
    * duration of flying portion in seconds
    */
@@ -121,7 +117,8 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
     messages.filter { m => m.time >= s.time && m.time <= e.time }
   }).getOrElse(Seq())
 
-  def summary(ownerId: String) = MissionSummary(startTime, endTime, maxAltitude, maxGroundSpeed, maxAirSpeed, maxG,
+  def summary(ownerId: String) = MissionSummary(new Date(startTime.getOrElse(0L) / 1000),
+    new Date(currentTime.getOrElse(0L) / 1000), maxAltitude, maxGroundSpeed, maxAirSpeed, maxG,
     vehicleTypeName, humanAutopilotType.getOrElse("unknown"), gcsType, ownerId, flightDuration)
 
   def modeChanges = modeChangeMsgs.map { m =>
