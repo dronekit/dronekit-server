@@ -1,5 +1,6 @@
-echo "This script will deploy to ec2; to prepare for running this script, make sure"
-echo "you've done a clean build: sbt clean compile stage"
+echo "This script will deploy to ec2"
+
+sbt assembly
 
 export EC2_HOSTNAME=nestor.3dr.com
 
@@ -22,7 +23,5 @@ git tag -a $TAGNAME -m deployed
 git push --tags
 
 echo
-echo "Starting new version FIXME, this does not work you'll need to"
-echo run S98nestor-startup manually
-
-# ./ssh-ec2 sudo /etc/rc2.d/S98nestor-startup
+echo "Starting new version...."
+./ssh-ec2 /etc/rc2.d/S98nestor-startup
