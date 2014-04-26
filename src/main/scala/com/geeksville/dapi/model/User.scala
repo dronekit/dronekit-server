@@ -72,6 +72,7 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
       // A new password has been requested
       logger.warn(s"Saving $this with new password")
       hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+      password = null
     }
 
     if (hashedPassword == null) {
