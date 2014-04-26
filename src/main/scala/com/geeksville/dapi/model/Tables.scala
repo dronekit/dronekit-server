@@ -10,6 +10,15 @@ object Tables extends ActiveRecordTables with ScalatraSupport {
   val missionSummaries = table[MissionSummary]
   val users = table[User]
 
+  override def loadConfig(config: Map[String, Any]) = new DefaultConfig(overrideSettings = config) {
+    override def cleanup = {
+      super.cleanup
+
+      // Bug in scala active record - they are forgetting to shutdown the connection pool
+      pool.shutdown()
+    }
+  }
+
   override def initialize(config: Map[String, Any]) {
     super.initialize(config)
 
