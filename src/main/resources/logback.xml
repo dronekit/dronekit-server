@@ -27,7 +27,7 @@
   <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
     <syslogHost>localhost</syslogHost>
     <facility>USER</facility>
-    <suffixPattern>%d{mm:ss.SSS} %-5level %logger{36} %X{akkaSource} - %msg%n</suffixPattern>
+    <suffixPattern>%logger{36} - %msg</suffixPattern>
   </appender>
     
   <!-- A logger that appears to admins over atmosphere/javascript -->
