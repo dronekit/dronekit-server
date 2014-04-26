@@ -1,5 +1,6 @@
 echo "This script will deploy to ec2"
 
+set -e
 sbt assembly
 
 export EC2_HOSTNAME=nestor.3dr.com
