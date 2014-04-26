@@ -79,26 +79,26 @@ class MissionController(implicit swagger: Swagger) extends ActiveRecordControlle
     contentType = "application/vnd.google-earth.kml+xml"
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
-    getModel(o).toKMLBytes(uriBase)
+    new KMLFactory(getModel(o)).toKMLBytes(uriBase)
   }
 
   roField("messages.kmz") { (o) =>
     contentType = "application/vnd.google-earth.kmz"
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
-    getModel(o).toKMZBytes(uriBase, false)
+    new KMLFactory(getModel(o)).toKMZBytes(uriBase, false)
   }
 
   roField("messages.gmaps.kmz") { (o) =>
     contentType = "application/vnd.google-earth.kmz"
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
-    getModel(o).toKMZBytes(uriBase, true)
+    new KMLFactory(getModel(o)).toKMZBytes(uriBase, true)
   }
 
   roField("messages.geo.json") { (o) =>
     // FIXME - we should pull our static content (icons etc... from a cdn)
-    getModel(o).toGeoJSON(uriBase)
+    new GeoJSONFactory(getModel(o)).toGeoJSON()
   }
 
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
