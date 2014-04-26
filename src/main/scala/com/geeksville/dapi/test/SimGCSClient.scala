@@ -29,6 +29,8 @@ import grizzled.slf4j.Logging
 import akka.actor.ActorSystem
 import scala.util.Random
 import com.geeksville.flight.Location
+import com.geeksville.flight.HeartbeatSender
+import org.mavlink.messages.MAV_TYPE
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
@@ -58,7 +60,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     super.postStop()
   }
 
-  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with VehicleSimulator {
+  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with HeartbeatSender {
     case object SimNext
     val interfaceNum = 0
     val isControllable = false
@@ -76,6 +78,9 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
 
     val interval = numSeconds.toDouble / numPoints
     private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
+
+    // We are not a GCS - pretend to be a quad
+    vehicleTypeCode = MAV_TYPE.MAV_TYPE_QUADROTOR
 
     sendMavlink(makeStatusText("Starting sim vehicle"))
 
@@ -99,6 +104,13 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
         else {
           sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100)))
           sendMavlink(makePosition(curLoc))
+          if (random.nextInt(100) < 2)
+            sendMavlink(makeStatusText("Random status text msg!"))
+
+          // Fake up some mode changes
+          if (random.nextInt(100) < 5)
+            gcsCustomMode = random.nextInt(5) + 1
+
           numRemaining -= 1
           scheduleNext()
         }
