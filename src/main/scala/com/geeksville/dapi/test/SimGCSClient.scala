@@ -31,6 +31,8 @@ import scala.util.Random
 import com.geeksville.flight.Location
 import com.geeksville.flight.HeartbeatSender
 import org.mavlink.messages.MAV_TYPE
+import org.mavlink.messages.MAV_MODE_FLAG
+import org.mavlink.messages.MAV_AUTOPILOT
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
@@ -60,7 +62,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     super.postStop()
   }
 
-  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with HeartbeatSender {
+  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with VehicleSimulator with HeartbeatSender {
     case object SimNext
     val interfaceNum = 0
     val isControllable = false
@@ -73,7 +75,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     var numRemaining = numPoints
 
     val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte))
-    log.info("Created sim vehicle $systemID: $uuid")
+    log.info(s"Created sim vehicle $systemId: $uuid")
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
 
     val interval = numSeconds.toDouble / numPoints
@@ -81,6 +83,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
 
     // We are not a GCS - pretend to be a quad
     vehicleTypeCode = MAV_TYPE.MAV_TYPE_QUADROTOR
+    autopilotCode = MAV_AUTOPILOT.MAV_AUTOPILOT_ARDUPILOTMEGA
 
     sendMavlink(makeStatusText("Starting sim vehicle"))
 
@@ -108,8 +111,11 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
             sendMavlink(makeStatusText("Random status text msg!"))
 
           // Fake up some mode changes
-          if (random.nextInt(100) < 5)
+          if (random.nextInt(100) < 5) {
+            log.debug("Faking a mode change")
             gcsCustomMode = random.nextInt(5) + 1
+            gcsBaseMode = (if (random.nextBoolean()) MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED else 0) | MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED
+          }
 
           numRemaining -= 1
           scheduleNext()

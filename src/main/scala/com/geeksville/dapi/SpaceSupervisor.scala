@@ -129,6 +129,9 @@ class SpaceSupervisor extends Actor with ActorLogging {
     case l: MsgArmChanged =>
       publishUpdate("arm", l)
 
+    case l: MsgModeChanged =>
+      publishUpdate("mode", l)
+
     case l: MsgSystemStatusChanged =>
       publishUpdate("sysstat", l)
 
