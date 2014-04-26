@@ -41,7 +41,7 @@ case class VehicleDisconnected()
  */
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
 
-  private val msgLogThrottle = new Throttled(5000)
+  import LiveVehicleActor._
 
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
@@ -226,6 +226,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
 object LiveVehicleActor {
   private implicit val context: ActorRefFactory = MockAkka.system
   private val actors = new NamedActorClient("live")
+
+  private val msgLogThrottle = new Throttled(5000)
 
   /**
    * Find the supervisor responsible for a region of space

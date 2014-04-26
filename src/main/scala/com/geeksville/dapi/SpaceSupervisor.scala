@@ -30,6 +30,7 @@ import com.geeksville.dapi.model.MissionSummary
 import com.geeksville.flight.MsgRcChannelsChanged
 import com.geeksville.flight.MsgServoOutputChanged
 import com.geeksville.flight.MsgSysStatusChanged
+import com.geeksville.util.Throttled
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -50,6 +51,8 @@ import com.geeksville.flight.MsgSysStatusChanged
 class SpaceSupervisor extends Actor with ActorLogging {
   import context._
 
+  private val msgLogThrottle = new Throttled(5000)
+
   private val eventStream = new EventStream
 
   private implicit val formats = DefaultFormats
@@ -64,8 +67,11 @@ class SpaceSupervisor extends Actor with ActorLogging {
   // private def senderMission = actorToMission(sender).id
   private def senderVehicle = actorToMission(sender).vehicleId.get
 
-  private def withMission(cb: Long => Unit) {
-    actorToMission.get(sender).map { m => cb(m.id) }.getOrElse { log.warning(s"Ignoring from $sender") }
+  private def withMission(preferredSender: Option[ActorRef])(cb: Long => Unit) {
+    val s = preferredSender.getOrElse(sender)
+    actorToMission.get(s).map { m => cb(m.id) }.getOrElse {
+      log.warning(s"Ignoring from $s")
+    }
   }
 
   /**
@@ -76,9 +82,13 @@ class SpaceSupervisor extends Actor with ActorLogging {
     AtmosphereTools.broadcast(route, typ, o)
   }
 
-  private def publishUpdate(typ: String, p: Product = null) {
-    withMission { senderMission =>
-      log.debug(s"Publishing space $typ, $p")
+  private def publishUpdate(typ: String, p: Product = null, preferredSender: Option[ActorRef] = None) {
+    withMission(preferredSender) { senderMission =>
+
+      msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+        log.debug(s"Published space $typ, $p (and $numIgnored others)")
+      }
+
       val o = SpaceEnvelope(senderMission, Option(p))
       publishEvent(o) // Tell any interested subscribers
       val v = Extraction.decompose(o)
@@ -95,20 +105,20 @@ class SpaceSupervisor extends Actor with ActorLogging {
     case Terminated(a) =>
       log.error(s"Unexpected death of a LiveVehicle, republishing...")
       actorToMission.remove(a).foreach { m =>
-        publishEvent(MissionStop(m))
+        publishUpdate("stop", preferredSender = Some(a))
       }
 
-    case x: MissionStart =>
-      log.debug(s"Received start on $x")
-      actorToMission(sender) = x.mission
+    case MissionStart(mission) =>
+      log.debug(s"Received start of $mission from $sender")
+      actorToMission(sender) = mission
       watch(sender)
-      publishUpdate("start", SpaceSummary(x.mission.vehicle, x.mission.summary))
+      publishUpdate("start", SpaceSummary(mission.vehicle, mission.summary))
 
-    case x: MissionStop =>
-      log.debug(s"Received stop on $x")
+    case MissionStop(mission) =>
+      log.debug(s"Received stop of $mission")
       unwatch(sender)
-      actorToMission.remove(sender)
       publishUpdate("stop")
+      actorToMission.remove(sender)
 
     case l: Location =>
       publishUpdate("loc", l)

@@ -95,7 +95,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
         if (numRemaining == 0)
           self ! PoisonPill
         else {
-          sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10))
+          sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100)))
           sendMavlink(makePosition(curLoc))
           numRemaining -= 1
           scheduleNext()
