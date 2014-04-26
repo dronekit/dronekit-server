@@ -88,21 +88,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   def startTime = firstMessage.map(_.timeAsDate)
   def endTime = lastMessage.map(_.timeAsDate)
 
-  /**
-   * duration of flying portion in seconds
-   */
-  def flightDuration = (for {
-    s <- startOfFlightTime
-    e <- endOfFlightTime
-  } yield {
-    val r = (e - s) / 1e6
-    debug(s"Calculated flight duration of $r")
-    r
-  }).orElse {
-    warn("Can't find duration for flight")
-    None
-  }
-
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
     s <- startOfFlightTime

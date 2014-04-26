@@ -101,7 +101,7 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   /**
    * duration of flying portion in seconds
    */
-  def flightDuration = (for {
+  override def flightDuration = (for {
     s <- startOfFlightMessage
     e <- endOfFlightMessage
   } yield {
