@@ -196,7 +196,7 @@ class PlaybackGCSClient(host: String) extends Actor with ActorLogging {
     val groundControlId = 253 // FIXME
     MavlinkEventBus.subscribe(tlog, groundControlId)
 
-    val uploader = LiveUploader.create(context, APIProxyActor.testAccount, isLive = false)
+    val uploader = LiveUploader.create(context, APIProxyActor.testAccount, host, isLive = false)
 
     // Wait for the uploader to start (so it is subscribed) before starting the tlog reader
     // FIXME - make this into a waitStarted utility...
