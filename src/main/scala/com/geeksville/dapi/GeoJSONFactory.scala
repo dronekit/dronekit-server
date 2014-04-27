@@ -11,13 +11,16 @@ class GeoJSONFactory(model: PlaybackModel) {
 
     val bbox = new BoundingBox
 
+    // Symbol names documented here: https://www.mapbox.com/maki/
     val wpts = waypointsForMap.map { wp =>
       bbox.addPoint(wp.location)
 
       if (wp.isHome)
         makeMarker(wp.location, "Home", symbol = Some("building"))
-      else
-        makeMarker(wp.location, "Waypoint #" + wp.seq, symbol = Some("marker"))
+      else {
+        val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
+        makeMarker(wp.location, "Waypoint #" + wp.seq, symbol = Some(symbol))
+      }
     }
 
     // State for advancing modes
@@ -42,7 +45,7 @@ class GeoJSONFactory(model: PlaybackModel) {
 
       if (crossedModeChange) {
         val newModeName = nextMode.get._2
-        modeMarkers = makeMarker(p.loc, newModeName, symbol = Some("marker")) :: modeMarkers
+        modeMarkers = makeMarker(p.loc, newModeName, symbol = Some("bar")) :: modeMarkers
         advanceMode()
       }
 

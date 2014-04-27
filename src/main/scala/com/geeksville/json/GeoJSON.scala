@@ -57,6 +57,9 @@ object GeoJSON {
     ("type" -> "Feature") ~ ("geometry" -> geo) ~ ("properties" -> properties)
   }
 
+  /**
+   * color such as "#ff4444"
+   */
   def makeMarker(coords: Location, title: String, color: Option[String] = None, size: String = "medium", symbol: Option[String] = None) = {
     val geo = makePoint(coords)
     var ps = ("marker-size" -> size) ~ ("title" -> title) ~ ("marker-color" -> color) ~ ("marker-symbol" -> symbol)
