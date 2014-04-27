@@ -33,6 +33,7 @@ import com.geeksville.dapi.AdminController
 import com.geeksville.akka.EventStreamDebugger
 import com.geeksville.threescale.ThreeActor
 import org.scalatra.atmosphere.ActorSystemKey
+import com.geeksville.dapi.model.Migration
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -47,6 +48,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Let atmosphere find akka here...
     context(ActorSystemKey) = system
+
+    Migration.update()
 
     // start a console so we can browse the H2 database
     // FIXME - do this someplace else, and only in developer mode

@@ -5,6 +5,7 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.scalatra._
 
 object Tables extends ActiveRecordTables with ScalatraSupport {
+  val migration = table[Migration]
   val vehicles = table[Vehicle]
   val missions = table[Mission]
   val missionSummaries = table[MissionSummary]
