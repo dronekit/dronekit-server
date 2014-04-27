@@ -6,11 +6,15 @@ import org.slf4j.LoggerFactory
 import com.geeksville.dapi.model.User
 import com.geeksville.scalatra.ControllerExtras
 import org.scalatra.auth.strategy.BasicAuthSupport
+import java.util.Date
 
 trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with BasicAuthSupport[User] with ControllerExtras {
   self: ScalatraBase =>
 
-  protected def fromSession = { case id: String => User.find(id).get }
+  protected def fromSession = {
+    case id: String =>
+      User.find(id).get
+  }
   protected def toSession = { case usr: User => usr.login }
 
   val realm = "Drone"
@@ -27,7 +31,12 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
    */
   protected def tryLogin(names: String*) = {
     val r = scentry.authenticate(names: _*)
-    // val r = basicAuth()
+    r.foreach { u =>
+      // FIXME - we really need a scheme to cache all these db objects
+      u.lastLoginAddr = request.getRemoteAddr
+      u.lastLoginDate = new Date
+      u.save
+    }
     r
   }
 

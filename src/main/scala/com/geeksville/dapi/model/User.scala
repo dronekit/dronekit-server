@@ -12,6 +12,7 @@ import org.json4s.CustomSerializer
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import com.geeksville.util.Gravatar
+import java.util.Date
 
 case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -32,6 +33,12 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
    */
   @Length(max = 40)
   var groupId: String = ""
+
+  /// Date of last login
+  var lastLoginDate: Date = _
+
+  @Length(max = 18) /// IP address of last client login
+  var lastLoginAddr: String = _
 
   /**
    * A URL of a small jpg for this user
