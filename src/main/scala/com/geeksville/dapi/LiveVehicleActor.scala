@@ -24,6 +24,7 @@ import com.geeksville.util.Throttled
 import com.geeksville.akka.NamedActorClient
 import akka.actor.ActorRefFactory
 import com.geeksville.akka.MockAkka
+import org.mavlink.messages.ardupilotmega.msg_heartbeat
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -58,6 +59,13 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   this.listenOnly = !canAcceptCommands
   autoWaypointDownload = false
   autoParameterDownload = false
+
+  /**
+   * We always claim to be a ground controller (FIXME, find a better way to pick a number)
+   * 255 is mission planner
+   * 253 is andropilot
+   */
+  override def systemId = 252
 
   override def onReceive = mReceive.orElse(super.onReceive)
 
@@ -118,10 +126,20 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     }
 
     assert(msg != null)
-    if (listenOnly)
-      throw new Exception(s"$vehicle can not accept $msg")
-    else
-      gcsActor.foreach(_ ! SendMavlinkToVehicle(msg))
+
+    // Some messages we never want to send to the client
+    val isBlacklist = msg match {
+      case x: msg_heartbeat => // We assume the local GCS is sending this - no need to waste bandwidth
+        true
+      case _ =>
+        false
+    }
+    if (!isBlacklist) {
+      if (listenOnly)
+        throw new Exception(s"$vehicle can not accept $msg")
+      else
+        gcsActor.foreach(_ ! SendMavlinkToVehicle(msg))
+    }
   }
 
   /**
