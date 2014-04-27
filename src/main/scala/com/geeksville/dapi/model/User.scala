@@ -110,7 +110,7 @@ object User extends DapiRecordCompanion[User] with Logging {
    * Find a user (creating the root acct if necessary)
    */
   override def find(id: String): Option[User] = {
-    this.where(_.login === id).headOption.orElse {
+    this.where(_.login === id.toLowerCase).headOption.orElse {
       debug(s"Read user $id from DB")
 
       if (id == "root") {
@@ -127,7 +127,7 @@ object User extends DapiRecordCompanion[User] with Logging {
   }
 
   def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
-    val u = User(login, email, fullName)
+    val u = User(login.toLowerCase, email, fullName)
     u.password = password
     u.groupId = group
     u.lastLoginAddr = "unknown"
