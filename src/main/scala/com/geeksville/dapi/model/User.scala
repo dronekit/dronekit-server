@@ -20,7 +20,7 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
    * If null we assume invalid
    */
   @Transient
-  @Length(min = 8, max = 40)
+  @Length(min = 0, max = 40)
   var password: String = _
 
   /**
@@ -127,10 +127,12 @@ object User extends DapiRecordCompanion[User] with Logging {
   }
 
   def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
-    val u = User(login, email, fullName).create
+    val u = User(login, email, fullName)
     u.password = password
     u.groupId = group
-    u.save() // FIXME - do I need to save?
+    u.lastLoginAddr = "unknown"
+    u.lastLoginDate = new Date()
+    u.create
     u
   }
 }

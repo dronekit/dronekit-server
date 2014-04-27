@@ -22,7 +22,7 @@ case class Migration(var currentVersion: Int) extends DapiRecord with Logging {
 object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
   val requiredVersion = 1
-  val dbWipeVersion = 1
+  val dbWipeVersion = 3
 
   def update() {
     val curver = try {
@@ -39,7 +39,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     }
 
     val dbVer = find()
-    dbVer.currentVersion = requiredVersion
+    dbVer.currentVersion = math.max(requiredVersion, dbWipeVersion)
     dbVer.save
   }
 

@@ -186,7 +186,7 @@ abstract class GCSActor extends Actor with ActorLogging {
       } catch {
         case ex: Exception =>
           // Always send a response - even if we had an exception
-          log.error(s"Server bug: $ex")
+          log.error(ex, s"Server bug: $ex")
           LoginResponseMsg(LoginResponseMsg.ResponseCode.SERVER_FAULT, createMessage(ex.getMessage))
       }
       log.debug(s"Sending login response: $response")
