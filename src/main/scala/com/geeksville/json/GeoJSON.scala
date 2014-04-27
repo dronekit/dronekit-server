@@ -64,4 +64,31 @@ object GeoJSON {
     val props: JObject = ps
     makeFeature(geo, props)
   }
+
+  class BoundingBox {
+    case class LatLngAlt(var lat: Double, var lon: Double, var alt: Double)
+    var southWest = LatLngAlt(Double.MaxValue, Double.MaxValue, Double.MaxValue)
+    var northEast = LatLngAlt(Double.MinValue, Double.MinValue, Double.MinValue)
+
+    def range = Seq(southWest.lon, southWest.lat, southWest.alt,
+      northEast.lon, northEast.lat, northEast.alt)
+
+    def toJSON: JObject = ("bbox" -> range)
+
+    /// Expand the bounding box to include the specified point
+    def addPoint(l: Location) {
+      southWest.lat = math.min(l.lat, southWest.lat)
+      southWest.lon = math.min(l.lon, southWest.lon)
+      southWest.alt = math.min(l.alt.getOrElse(0.0), southWest.alt)
+
+      northEast.lat = math.max(l.lat, northEast.lat)
+      northEast.lon = math.max(l.lon, northEast.lon)
+      northEast.alt = math.max(l.alt.getOrElse(0.0), northEast.alt)
+    }
+  }
+
+  def addBoundingBox(src: JObject, bbox: BoundingBox) = {
+
+    src ~ bbox.toJSON
+  }
 }

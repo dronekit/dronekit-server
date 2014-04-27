@@ -58,13 +58,15 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
 
   get("/sim/huge", operation(simOp)) {
-    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(host)))
+    val h = host
+    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
     simClient ! PlaybackGCSClient.RunTest("bigtest")
     "started sim"
   }
 
   get("/sim/full", operation(simOp)) {
-    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(host)))
+    val h = host
+    lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
     simClient ! PlaybackGCSClient.RunTest("test")
     "started sim"
   }

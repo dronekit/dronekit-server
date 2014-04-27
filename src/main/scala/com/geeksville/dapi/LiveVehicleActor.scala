@@ -117,8 +117,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       case SendYoungest(x) => x
     }
 
+    assert(msg != null)
     if (listenOnly)
-      throw new Exception(s"$vehicle can not accept $m")
+      throw new Exception(s"$vehicle can not accept $msg")
     else
       gcsActor.foreach(_ ! SendMavlinkToVehicle(msg))
   }
