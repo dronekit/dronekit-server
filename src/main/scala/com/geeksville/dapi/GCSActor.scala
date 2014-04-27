@@ -140,11 +140,12 @@ abstract class GCSActor extends Actor with ActorLogging {
       currentMission = None
 
     case msg: LoginMsg =>
-      startTime = msg.startTime
-      val found = User.find(msg.username)
-      val response = msg.code match {
-        case LoginRequestCode.LOGIN =>
-          try {
+      val response = try {
+        startTime = msg.startTime
+        val found = User.find(msg.username)
+        msg.code match {
+          case LoginRequestCode.LOGIN =>
+
             if (!found.isDefined) {
               log.error(s"Bad username " + msg.username)
               LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username or password"))
@@ -157,38 +158,37 @@ abstract class GCSActor extends Actor with ActorLogging {
               log.info(s"Logged in " + msg.username)
               LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
             }
-          } catch {
-            case ex: Exception =>
-              // Always send a response - even if we had an exception
-              log.error(s"Server bug: $ex")
-              LoginResponseMsg(LoginResponseMsg.ResponseCode.SERVER_FAULT, createMessage(ex.toString))
-          }
 
-        case LoginRequestCode.CHECK_USERNAME =>
-          log.info(s"Checking username for " + msg.username + " available=" + !found.isDefined)
-          LoginResponseMsg(if (found.isDefined)
-            LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE
-          else
-            LoginResponseMsg.ResponseCode.OK)
+          case LoginRequestCode.CHECK_USERNAME =>
+            log.info(s"Checking username for " + msg.username + " available=" + !found.isDefined)
+            LoginResponseMsg(if (found.isDefined)
+              LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE
+            else
+              LoginResponseMsg.ResponseCode.OK)
 
-        case LoginRequestCode.CREATE =>
-          if (found.isDefined) {
-            log.error(s"Username unavailable: " + msg.username)
-            LoginResponseMsg(LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE)
-          } else {
-            // Create new user and login
+          case LoginRequestCode.CREATE =>
+            if (found.isDefined) {
+              log.error(s"Username unavailable: " + msg.username)
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE)
+            } else {
+              // Create new user and login
 
-            val u = User.create(msg.username, msg.password.get, msg.email, None)
-            userOpt = Some(u)
+              val u = User.create(msg.username, msg.password.get, msg.email, None)
+              userOpt = Some(u)
 
-            log.info(s"Created user " + msg.username)
-            LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
-          }
+              log.info(s"Created user " + msg.username)
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+            }
 
-        case _ =>
-          throw new Exception("Unexpected login request: " + msg.code)
+          case _ =>
+            throw new Exception("Unexpected login request: " + msg.code)
+        }
+      } catch {
+        case ex: Exception =>
+          // Always send a response - even if we had an exception
+          log.error(s"Server bug: $ex")
+          LoginResponseMsg(LoginResponseMsg.ResponseCode.SERVER_FAULT, createMessage(ex.getMessage))
       }
-
       log.debug(s"Sending login response: $response")
       sendToVehicle(Envelope(loginResponse = Some(response)))
 
