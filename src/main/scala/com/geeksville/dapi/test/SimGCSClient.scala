@@ -33,6 +33,7 @@ import com.geeksville.flight.HeartbeatSender
 import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_MODE_FLAG
 import org.mavlink.messages.MAV_AUTOPILOT
+import java.net.NetworkInterface
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
@@ -62,6 +63,13 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     super.postStop()
   }
 
+  private def getMachineId = {
+    val iface = NetworkInterface.getNetworkInterfaces.nextElement
+    val addr = iface.getHardwareAddress
+    log.warning(s"Using $iface: ${addr.mkString(":")}")
+    addr
+  }
+
   private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with VehicleSimulator with HeartbeatSender {
     case object SimNext
     val interfaceNum = 0
@@ -74,7 +82,7 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
 
     var numRemaining = numPoints
 
-    val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte))
+    val uuid = UUID.nameUUIDFromBytes(getMachineId :+ systemId.toByte :+ SimGCSClient.nextGeneration.toByte)
     log.info(s"Created sim vehicle $systemId: $uuid")
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
 
@@ -223,4 +231,13 @@ class PlaybackGCSClient(host: String) extends Actor with ActorLogging {
 object SimGCSClient extends Logging {
   case class RunTest(numVehicles: Int, numSeconds: Int)
 
+  /// We use this to ensure each new run of the simulator picks a different set of UUIDs - but we want to always start from
+  /// the same set so the DB doesn't fill with a zilliong records
+  private var generation = 0
+
+  def nextGeneration() = {
+    val r = generation
+    generation += 1
+    r
+  }
 }
