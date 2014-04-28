@@ -35,10 +35,10 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   var groupId: String = ""
 
   /// Date of last login
-  var lastLoginDate: Date = _
+  var lastLoginDate: Date = new Date()
 
   @Length(max = 18) /// IP address of last client login
-  var lastLoginAddr: String = _
+  var lastLoginAddr: String = "unknown"
 
   /**
    * A URL of a small jpg for this user
@@ -126,13 +126,13 @@ object User extends DapiRecordCompanion[User] with Logging {
     }
   }
 
-  def create(login: String, password: String, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
+  def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
     val u = User(login.toLowerCase, email, fullName)
     u.password = password
     u.groupId = group
-    u.lastLoginAddr = "unknown"
-    u.lastLoginDate = new Date()
     u.create
+    u.save
+    debug(s"Created new user $u")
     u
   }
 }

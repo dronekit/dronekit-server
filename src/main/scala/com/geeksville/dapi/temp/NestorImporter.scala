@@ -46,9 +46,7 @@ class NestorImporter extends Actor with ActorLogging {
         if (userid.isEmpty)
           userid = "anonymous"
         val user = User.find(userid).getOrElse {
-          val u = User(userid).create
-          u.save
-          log.debug("Created new user $u")
+          val u = User.create(userid)
           u
         }
 
@@ -59,7 +57,7 @@ class NestorImporter extends Actor with ActorLogging {
           user.vehicles += v
           v.save
           user.save // FIXME - do I need to explicitly save?
-          log.debug("Created new vehicle $v")
+          log.debug(s"Created new vehicle $v")
           v
         }
 
