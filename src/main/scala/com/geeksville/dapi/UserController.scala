@@ -8,8 +8,7 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.User
 import org.json4s.JsonAST.JObject
 import org.json4s._
-
-case class UserJson(password: String, email: Option[String] = None, fullName: Option[String] = None)
+import com.geeksville.dapi.model.UserJson
 
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
@@ -36,7 +35,7 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
       haltConflict()
 
     val u = parsedBody.extract[UserJson]
-    User.create(id, u.password, u.email, u.fullName)
+    User.create(id, u.password.get, u.email, u.fullName)
   }
 }
 

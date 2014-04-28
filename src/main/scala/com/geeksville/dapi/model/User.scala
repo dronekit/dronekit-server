@@ -11,6 +11,7 @@ import com.geeksville.dapi.AccessCode
 import org.json4s.CustomSerializer
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
+import org.json4s._
 import com.geeksville.util.Gravatar
 import java.util.Date
 
@@ -39,6 +40,10 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
 
   @Length(max = 18) /// IP address of last client login
   var lastLoginAddr: String = "unknown"
+
+  // For vehicles and missions
+  var defaultViewPrivacy: Int = AccessCode.DEFAULT_VALUE
+  var defaultControlPrivacy: Int = AccessCode.DEFAULT_VALUE
 
   /**
    * A URL of a small jpg for this user
@@ -93,16 +98,25 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   override def toString() = s"User:$login(group = $groupId)"
 }
 
+case class UserJson(login: String, password: Option[String], email: Option[String] = None, fullName: Option[String] = None)
+
 /// We provide an initionally restricted view of users
-object UserSerializer extends CustomSerializer[User](format => (
+object UserSerializer extends CustomSerializer[User](implicit format => (
   {
-    // FIXME - it would more elegant to just make a throw away case class object and use it for the decoding
-    case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
-      User(s, fullName = Some(e))
+    // more elegant to just make a throw away case class object and use it for the decoding
+    //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+    case x: JValue =>
+      val r = x.extract[UserJson]
+      User(r.login, r.email, r.fullName)
   },
   {
     case u: User =>
-      ("login" -> u.login) ~ ("fullName" -> u.fullName) ~ ("isAdmin" -> u.isAdmin) ~ ("avatarImage" -> u.avatarImageURL) ~ ("profileURL" -> u.profileURL)
+      ("login" -> u.login) ~
+        ("fullName" -> u.fullName) ~
+        ("isAdmin" -> u.isAdmin) ~
+        ("avatarImage" -> u.avatarImageURL) ~
+        ("profileURL" -> u.profileURL) ~
+        ("vehicles" -> u.vehicles.map(_.id))
   }))
 
 object User extends DapiRecordCompanion[User] with Logging {

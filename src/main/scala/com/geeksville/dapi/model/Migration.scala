@@ -22,7 +22,7 @@ case class Migration(var currentVersion: Int) extends DapiRecord with Logging {
 object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
   val requiredVersion = 1
-  val dbWipeVersion = 3
+  val dbWipeVersion = 4
 
   def update() {
     val curver = try {
