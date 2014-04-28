@@ -93,7 +93,7 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     "DB created"
   }
 
-  get("/akka", operation(apiOperation[String]("akka") summary "akka debugging information")) {
+  get("/debugInfo", operation(apiOperation[String]("akka") summary "akka debugging information")) {
     implicit val timeout = Timeout(5 seconds)
 
     akkaReflect ! AkkaReflector.PollMsg
