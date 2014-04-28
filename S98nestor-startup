@@ -5,4 +5,4 @@ DIR=/home/$UNAME
 # Allow java to open low numbered ports
 sudo setcap 'cap_net_bind_service=+ep' /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
 cd $DIR
-sudo -u $UNAME -b sh -c "sudo PORT=80 java -jar $DIR/apihub-assembly-0.2.0-SNAPSHOT.jar -Drun.mode=prod </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
+sudo -u $UNAME -b sh -c "PORT=80 java -javaagent:$DIR/newrelic/newrelic.jar -jar $DIR/apihub-assembly-0.2.0-SNAPSHOT.jar -Drun.mode=prod </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
