@@ -26,9 +26,6 @@ case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolea
 
 class MissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) with AtmosphereSupport {
 
-  // For now we just pull fields out using active record
-  override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer
-
   private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
   atmosphere("/live", operation(liveOp)) {
     new AtmosphereLive(tryLogin())

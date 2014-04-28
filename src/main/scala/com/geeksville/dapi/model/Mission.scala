@@ -22,6 +22,9 @@ import com.geeksville.dapi.PlaybackModel
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import java.io.ByteArrayInputStream
 import com.github.aselab.activerecord.ActiveRecord
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
+import org.json4s._
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -144,6 +147,40 @@ case class Mission(
 
   override def toString = s"Mission id=$id, tlog=$tlogId, summary=${summary.getOrElse("(No summary)")}"
 }
+
+/// Don't show the clients that we are keeping some stuff in 'summary'
+case class MissionJson(
+  id: Long,
+  notes: Option[String],
+  isLive: Boolean,
+  viewPrivacy: Int,
+  vehicleId: Option[Long],
+  maxAlt: Double,
+  maxGroundspeed: Double,
+  maxAirspeed: Double,
+  maxG: Double,
+  latitude: Option[Double],
+  longitude: Option[Double],
+  softwareVersion: Option[String],
+  softwareGit: Option[String],
+  createdOn: Date,
+  updatedOn: Date)
+
+/// We provide an initionally restricted view of users
+object MissionSerializer extends CustomSerializer[Mission](implicit format => (
+  {
+    // more elegant to just make a throw away case class object and use it for the decoding
+    //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+    case x: JValue =>
+      throw new Exception
+  },
+  {
+    case u: Mission =>
+      val m = MissionJson(u.id, u.notes, u.isLive, u.viewPrivacy, u.vehicleId, u.summary.maxAlt,
+        u.summary.maxGroundSpeed, u.summary.maxAirSpeed, u.summary.maxG, u.summary.latitude,
+        u.summary.longitude, u.summary.softwareVersion, u.summary.softwareGit, u.createdOn, u.updatedOn)
+      Extraction.decompose(m)
+  }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
   val mimeType = "application/vnd.mavlink.tlog"
