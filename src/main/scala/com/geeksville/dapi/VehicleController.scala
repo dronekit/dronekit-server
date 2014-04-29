@@ -16,9 +16,6 @@ import com.geeksville.json.ActiveRecordSerializer
 @MultipartConfig(maxFileSize = 1024 * 1024)
 class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) with FileUploadSupport {
 
-  // For now we just pull fields out using active record
-  override implicit protected lazy val jsonFormats: Formats = super.jsonFormats + new ActiveRecordSerializer
-
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */

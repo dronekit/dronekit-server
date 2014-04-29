@@ -11,6 +11,10 @@ import java.io.ByteArrayInputStream
 import com.geeksville.dapi.AccessCode
 import com.geeksville.flight.ParametersReadOnlyModel
 import com.geeksville.flight.LiveOrPlaybackModel
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
+import org.json4s._
+import java.util.Date
 
 /**
  * A vehicle model
@@ -87,6 +91,34 @@ case class Vehicle(
       trace(s"$this was already up-to-date")
   }
 }
+
+case class VehicleJson(
+  id: Long,
+  name: String,
+  viewPrivacy: AccessCode.EnumVal,
+  controlPrivacy: AccessCode.EnumVal,
+  missions: Iterable[Long],
+  createdOn: Date,
+  updatedOn: Date)
+
+/// We provide an initionally restricted view of users
+object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
+  {
+    // more elegant to just make a throw away case class object and use it for the decoding
+    //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+    case x: JValue =>
+      throw new Exception("not yet implemented")
+  },
+  {
+    case u: Vehicle =>
+      val m = VehicleJson(u.id, u.name,
+        AccessCode.valueOf(u.viewPrivacy),
+        AccessCode.valueOf(u.controlPrivacy),
+        u.missions.map(_.id),
+        u.createdOn,
+        u.updatedOn)
+      Extraction.decompose(m)
+  }))
 
 object Vehicle extends DapiRecordCompanion[Vehicle] {
   /**
