@@ -15,7 +15,7 @@ case class MissionStop(mission: Mission)
 
 // Only SpaceSupervisor sends the following messages
 case class SpaceEnvelope(missionId: Long, payload: Option[Product])
-case class SpaceSummary(vehicle: Option[Vehicle], mission: Option[MissionSummary])
+case class SpaceSummary(vehicle: Option[Vehicle], mission: Mission)
 
 /**
  * The following messages are published by vehicles (not space supervisor)

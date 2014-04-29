@@ -33,6 +33,8 @@ import com.geeksville.flight.MsgSysStatusChanged
 import com.geeksville.util.Throttled
 import com.geeksville.akka.DebuggableActor
 import com.geeksville.util.RingBuffer
+import com.geeksville.json.GeeksvilleFormats
+import com.geeksville.dapi.model.DroneModelFormats
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -58,7 +60,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
   private val eventStream = new EventStream
 
-  private implicit val formats = DefaultFormats
+  private implicit val formats = DefaultFormats ++ GeeksvilleFormats ++ DroneModelFormats
 
   // FIXME - we need to add a periodic MissionUpdate message.  Also we need to only keep the
   // last maxVehicles arround
@@ -69,7 +71,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   val maxStoppedMissions = 20
 
   /// We keep the last N messages from each vehicle (for reply to new clients)
-  val maxRecordsPerVehicle = 5
+  val maxRecordsPerVehicle = 20
 
   private case class AtmosphereUpdate(typ: String, payload: JValue)
 
@@ -83,20 +85,20 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
    */
   private class MissionHistory(val missionId: Long) {
     private var vehicle: Option[Vehicle] = None
-    private var mission: Option[MissionSummary] = None
+    private var mission: Option[Mission] = None
     private val history = new RingBuffer[AtmosphereUpdate](maxRecordsPerVehicle)
 
     def numMessages = history.size
 
     def addStart(m: SpaceSummary) {
-      mission = m.mission
+      mission = Some(m.mission)
       vehicle = m.vehicle
     }
 
     def addStop(mopt: Option[SpaceSummary]) {
       mopt.foreach { m =>
         // Update with latest data
-        mission = m.mission
+        mission = Some(m.mission)
         vehicle = m.vehicle
       }
       recentMissions += this // We will be getting removed from our collection soon
@@ -110,7 +112,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     def updates = {
       // Always include a start msg if we can
       val summary = mission.map { m =>
-        AtmosphereUpdate("start", Extraction.decompose(SpaceSummary(vehicle, mission)))
+        AtmosphereUpdate("start", Extraction.decompose(SpaceSummary(vehicle, m)))
       }
 
       summary ++ history
@@ -167,7 +169,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     publishUpdate("stop", preferredSender = aref)
 
     // Move the mission to recent flights
-    val summary = mopt.map { mission => SpaceSummary(mission.vehicle, mission.summary) }
+    val summary = mopt.map { mission => SpaceSummary(mission.vehicle, mission) }
     actorToMission.remove(aref).foreach { info =>
       info.addStop(summary)
     }
@@ -185,7 +187,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       allMissions.foreach { info =>
         log.warning(s"Resending from $info")
         info.updates.foreach { u =>
-          log.warning(s"Resending $u")
+          //log.debug(s"Resending $u")
           AtmosphereTools.sendTo(dest, u.typ, u.payload)
         }
       }
@@ -201,7 +203,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     case MissionStart(mission) =>
       log.debug(s"Received start of $mission from $sender")
       val info = new MissionHistory(mission.id)
-      val summary = SpaceSummary(mission.vehicle, mission.summary)
+      val summary = SpaceSummary(mission.vehicle, mission)
       info.addStart(summary)
       actorToMission(sender) = info
       watch(sender)
