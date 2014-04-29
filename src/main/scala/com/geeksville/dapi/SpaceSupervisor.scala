@@ -99,7 +99,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     }
   }
 
-  override def receive = {
+  def receive = {
 
     //
     // Messages from LiveVehicleActors appear below
@@ -143,7 +143,8 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     case x: MsgServoOutputChanged =>
     // Silently ignore to prevent logspam BIG FIXME - should not even publish this to us...
 
-    case x: Product =>
+    // This catches our debug msg stuff if we don't filter our check to only listen to expected senders
+    case x: Product if actorToMission.contains(sender) =>
       publishUpdate("mystery", x)
 
     case x: MAVLinkMessage =>
