@@ -95,6 +95,10 @@ case class Vehicle(
 case class VehicleJson(
   id: Long,
   name: String,
+  userId: Option[Long],
+  manufacturer: Option[String],
+  vehicleType: Option[String],
+  autopilotType: Option[String],
   viewPrivacy: AccessCode.EnumVal,
   controlPrivacy: AccessCode.EnumVal,
   missions: Iterable[Long],
@@ -111,7 +115,10 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
   },
   {
     case u: Vehicle =>
-      val m = VehicleJson(u.id, u.name,
+      val m = VehicleJson(u.id, u.name, u.userId,
+        u.manufacturer,
+        u.vehicleType,
+        u.autopilotType,
         AccessCode.valueOf(u.viewPrivacy),
         AccessCode.valueOf(u.controlPrivacy),
         u.missions.map(_.id),
