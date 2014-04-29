@@ -159,6 +159,7 @@ case class MissionJson(
   maxGroundspeed: Double,
   maxAirspeed: Double,
   maxG: Double,
+  flightDuration: Option[Double],
   latitude: Option[Double],
   longitude: Option[Double],
   softwareVersion: Option[String],
@@ -177,7 +178,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   {
     case u: Mission =>
       val m = MissionJson(u.id, u.notes, u.isLive, AccessCode.valueOf(u.viewPrivacy), u.vehicleId, u.summary.maxAlt,
-        u.summary.maxGroundSpeed, u.summary.maxAirSpeed, u.summary.maxG, u.summary.latitude,
+        u.summary.maxGroundSpeed, u.summary.maxAirSpeed, u.summary.maxG, u.summary.flightDuration, u.summary.latitude,
         u.summary.longitude, u.summary.softwareVersion, u.summary.softwareGit, u.createdOn, u.updatedOn)
       Extraction.decompose(m)
   }))

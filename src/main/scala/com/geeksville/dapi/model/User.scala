@@ -98,7 +98,8 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   override def toString() = s"User:$login(group = $groupId)"
 }
 
-case class UserJson(login: String, password: Option[String], email: Option[String] = None, fullName: Option[String] = None)
+case class UserJson(login: String,
+  password: Option[String] = None, email: Option[String] = None, fullName: Option[String] = None)
 
 /// We provide an initionally restricted view of users
 object UserSerializer extends CustomSerializer[User](implicit format => (

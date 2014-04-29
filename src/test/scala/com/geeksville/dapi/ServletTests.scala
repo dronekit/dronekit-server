@@ -19,6 +19,7 @@ import org.scalatra.test.Client
 import com.geeksville.dapi.auth.SessionsController
 import org.scalatest.GivenWhenThen
 import scala.util.Random
+import com.geeksville.dapi.model.UserJson
 
 /**
  * These tests are temporarily disabled - by adding an argument to the constructor.
