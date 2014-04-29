@@ -153,7 +153,7 @@ case class MissionJson(
   id: Long,
   notes: Option[String],
   isLive: Boolean,
-  viewPrivacy: Int,
+  viewPrivacy: AccessCode.EnumVal,
   vehicleId: Option[Long],
   maxAlt: Double,
   maxGroundspeed: Double,
@@ -172,11 +172,11 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
     case x: JValue =>
-      throw new Exception
+      throw new Exception("not yet implemented")
   },
   {
     case u: Mission =>
-      val m = MissionJson(u.id, u.notes, u.isLive, u.viewPrivacy, u.vehicleId, u.summary.maxAlt,
+      val m = MissionJson(u.id, u.notes, u.isLive, AccessCode.valueOf(u.viewPrivacy), u.vehicleId, u.summary.maxAlt,
         u.summary.maxGroundSpeed, u.summary.maxAirSpeed, u.summary.maxG, u.summary.latitude,
         u.summary.longitude, u.summary.softwareVersion, u.summary.softwareGit, u.createdOn, u.updatedOn)
       Extraction.decompose(m)
