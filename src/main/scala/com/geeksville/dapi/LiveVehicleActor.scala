@@ -60,6 +60,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   autoWaypointDownload = false
   autoParameterDownload = false
 
+  override def toString = s"LiveVehicle: $vehicle"
+
   /**
    * We always claim to be a ground controller (FIXME, find a better way to pick a number)
    * 255 is mission planner

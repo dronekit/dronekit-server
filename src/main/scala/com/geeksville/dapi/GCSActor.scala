@@ -17,6 +17,7 @@ import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.model.User
 import java.util.UUID
 import com.geeksville.util.Throttled
+import com.geeksville.akka.DebuggableActor
 
 /// All messages after connection are identified by this tuple
 case class VehicleBinding(interface: Int, sysId: Int)
@@ -32,7 +33,7 @@ case class SendMavlinkToVehicle(msg: MAVLinkMessage)
  *
  * FIXME - use a state machine to track logged in state vs not
  */
-abstract class GCSActor extends Actor with ActorLogging {
+abstract class GCSActor extends DebuggableActor with ActorLogging {
   import GCSActor._
 
   private val msgLogThrottle = new Throttled(5000)
@@ -48,6 +49,8 @@ abstract class GCSActor extends Actor with ActorLogging {
   private var currentMission: Option[StartMissionMsg] = None
 
   private def user = userOpt.get
+
+  override def toString = s"GCSActor with ${vehicles.size} vehicles"
 
   private def getVehicle(uuid: UUID) = {
     // Vehicle.find(uuid.toString)
@@ -191,9 +194,6 @@ abstract class GCSActor extends Actor with ActorLogging {
       }
       log.debug(s"Sending login response: $response")
       sendToVehicle(Envelope(loginResponse = Some(response)))
-
-    case x @ _ =>
-      log.warning(s"Ignoring $x" + x.getClass())
   }
 
   // Tell our vehicles we've lost the link

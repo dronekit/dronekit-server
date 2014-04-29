@@ -31,6 +31,7 @@ import com.geeksville.flight.MsgRcChannelsChanged
 import com.geeksville.flight.MsgServoOutputChanged
 import com.geeksville.flight.MsgSysStatusChanged
 import com.geeksville.util.Throttled
+import com.geeksville.akka.DebuggableActor
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -48,7 +49,7 @@ import com.geeksville.util.Throttled
  * FIXME - make different atmosphere endpoints for different regions - pair each endpoint with the SpaceSupervisor
  * responsible for that region.  For the time being I just use one region for the whole planet
  */
-class SpaceSupervisor extends Actor with ActorLogging {
+class SpaceSupervisor extends DebuggableActor with ActorLogging {
   import context._
 
   private val msgLogThrottle = new Throttled(5000)
@@ -73,6 +74,8 @@ class SpaceSupervisor extends Actor with ActorLogging {
       log.warning(s"Ignoring from $s")
     }
   }
+
+  override def toString = s"SpaceSupervisor: {actorToMission.size} vehicles"
 
   /**
    * FIXME - not sure if I should be publishing directly to atmosphere in this actor, but for now...

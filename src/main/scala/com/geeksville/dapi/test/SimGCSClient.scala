@@ -34,11 +34,12 @@ import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_MODE_FLAG
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.net.NetworkInterface
+import com.geeksville.akka.DebuggableActor
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
  */
-class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging {
+class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with ActorLogging {
   import context._
 
   private val webapi = new GCSHooksImpl(host)
@@ -70,19 +71,20 @@ class SimGCSClient(host: String, keep: Boolean) extends Actor with ActorLogging 
     addr
   }
 
-  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends Actor with ActorLogging with VehicleSimulator with HeartbeatSender {
+  private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender {
     case object SimNext
     val interfaceNum = 0
     val isControllable = false
 
+    val generation = SimGCSClient.nextGeneration
     val center = (21.2966980, -157.8480360)
-    val lineAngle = random.nextDouble % (math.Pi * 2)
+    val lineAngle = generation * random.nextDouble % (math.Pi * 2)
     val maxLen = 0.5 // in degrees
     val maxAlt = 100
 
     var numRemaining = numPoints
 
-    val uuid = UUID.nameUUIDFromBytes(getMachineId :+ systemId.toByte :+ SimGCSClient.nextGeneration.toByte)
+    val uuid = UUID.nameUUIDFromBytes(getMachineId :+ systemId.toByte :+ generation.toByte)
     log.info(s"Created sim vehicle $systemId: $uuid")
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
 
@@ -177,7 +179,7 @@ object PlaybackGCSClient {
   case class RunTest(name: String)
 }
 
-class PlaybackGCSClient(host: String) extends Actor with ActorLogging {
+class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging {
   def receive = {
     case PlaybackGCSClient.RunTest(name) =>
       log.error("Running test")
