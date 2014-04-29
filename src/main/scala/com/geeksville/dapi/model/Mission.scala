@@ -155,10 +155,12 @@ case class MissionJson(
   isLive: Boolean,
   viewPrivacy: AccessCode.EnumVal,
   vehicleId: Option[Long],
-  maxAlt: Double,
-  maxGroundspeed: Double,
-  maxAirspeed: Double,
-  maxG: Double,
+
+  // From summary
+  maxAlt: Option[Double],
+  maxGroundspeed: Option[Double],
+  maxAirspeed: Option[Double],
+  maxG: Option[Double],
   flightDuration: Option[Double],
   latitude: Option[Double],
   longitude: Option[Double],
@@ -177,9 +179,18 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   },
   {
     case u: Mission =>
-      val m = MissionJson(u.id, u.notes, u.isLive, AccessCode.valueOf(u.viewPrivacy), u.vehicleId, u.summary.maxAlt,
-        u.summary.maxGroundSpeed, u.summary.maxAirSpeed, u.summary.maxG, u.summary.flightDuration, u.summary.latitude,
-        u.summary.longitude, u.summary.softwareVersion, u.summary.softwareGit, u.createdOn, u.updatedOn)
+      val s = u.summary.headOption
+      val m = MissionJson(u.id, u.notes, u.isLive, AccessCode.valueOf(u.viewPrivacy), u.vehicleId,
+        s.map(_.maxAlt),
+        s.map(_.maxGroundSpeed),
+        s.map(_.maxAirSpeed),
+        s.map(_.maxG),
+        s.flatMap(_.flightDuration),
+        s.flatMap(_.latitude),
+        s.flatMap(_.longitude),
+        s.flatMap(_.softwareVersion),
+        s.flatMap(_.softwareGit),
+        u.createdOn, u.updatedOn)
       Extraction.decompose(m)
   }))
 

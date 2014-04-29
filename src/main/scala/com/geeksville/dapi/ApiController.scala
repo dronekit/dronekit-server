@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest
 import org.json4s.JsonAST.JObject
 import javax.servlet.http.HttpServletResponse
 import java.util.Date
+import org.json4s.Extraction
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -27,7 +28,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."
 
-  val Expire = new Date().toString
+  private val expire = new Date().toString
 
   /// Utility glue to make easy documentation boilerplate
   def aNames = aName + "s"
@@ -44,8 +45,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Used to prevent caching
    */
   def applyNoCache(response: HttpServletResponse) {
-    response.addHeader("Expires", Expire)
-    response.addHeader("Last-Modified", Expire)
+    response.addHeader("Expires", expire)
+    response.addHeader("Last-Modified", expire)
     response.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
     response.addHeader("Pragma", "no-cache")
   }
@@ -176,7 +177,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   get("/", operation(getOp)) {
     requireReadAllAccess()
-    getAll
+    val r = getAll
+    // We do the json conversion here - so that it happens inside of our try/catch block
+    Extraction.decompose(r)
   }
 
   /**
