@@ -16,4 +16,9 @@ object AtmosphereTools {
     val o = ("type" -> typ) ~ ("data" -> data)
     AtmosphereClient.broadcast(route, JsonMessage(o))
   }
+
+  def sendTo(dest: AtmosphereClient, typ: String, data: JValue)(implicit context: ExecutionContext) {
+    val o = ("type" -> typ) ~ ("data" -> data)
+    dest.send(JsonMessage(o))
+  }
 }

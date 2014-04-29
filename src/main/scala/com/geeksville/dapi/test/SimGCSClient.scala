@@ -82,6 +82,10 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     val maxLen = 0.5 // in degrees
     val maxAlt = 100
 
+    // 20-40sec per each path down the line
+    val secondsPerLoop = 20.0 + random.nextDouble / 20
+    val numLoops = numSeconds / secondsPerLoop
+
     var numRemaining = numPoints
 
     val uuid = UUID.nameUUIDFromBytes(getMachineId :+ systemId.toByte :+ generation.toByte)
@@ -102,8 +106,8 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
     /// A fake current position
     def curLoc = {
-      val pos = numRemaining.toDouble / numPoints
-      val len = maxLen * pos
+      val pos = (numPoints.toDouble - numRemaining.toDouble) / numPoints
+      val len = (maxLen / numLoops) * pos
 
       Location(center._1 + len * math.cos(lineAngle),
         center._2 + len * math.sin(lineAngle),

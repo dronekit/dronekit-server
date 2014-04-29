@@ -10,11 +10,16 @@ import com.geeksville.dapi.model.User
  * if the user is logged in they will be provided.
  */
 class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient with Logging {
-
   println("Creating atmo client!")
+
+  protected def onConnect() {
+    info(s"Atmosphere $uuid connected as $user")
+  }
+
   def receive = {
     case Connected =>
-      info(s"Atmosphere $uuid connected as $user")
+      onConnect()
+
     case Disconnected(disconnector, Some(error)) =>
       info(s"Atmosphere Disconnected $disconnector")
     case Error(Some(ex)) =>
@@ -30,6 +35,15 @@ class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient 
  * This is used for clients that are showing live vehicle traffic
  */
 class AtmosphereLive(user: Option[User]) extends PlatformAtmosphereClient(user) {
+  val mySpace = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
+  // user location
+
+  override def onConnect() {
+    super.onConnect()
+
+    // Ask for any old msgs
+    mySpace ! SpaceSupervisor.SendToAtmosphereMessage(this)
+  }
 }
 
 class AdminLive(user: Option[User]) extends PlatformAtmosphereClient(user) {

@@ -32,6 +32,7 @@ import com.geeksville.flight.MsgServoOutputChanged
 import com.geeksville.flight.MsgSysStatusChanged
 import com.geeksville.util.Throttled
 import com.geeksville.akka.DebuggableActor
+import com.geeksville.util.RingBuffer
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -51,6 +52,7 @@ import com.geeksville.akka.DebuggableActor
  */
 class SpaceSupervisor extends DebuggableActor with ActorLogging {
   import context._
+  import SpaceSupervisor._
 
   private val msgLogThrottle = new Throttled(5000)
 
@@ -58,24 +60,85 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
   private implicit val formats = DefaultFormats
 
+  // FIXME - we need to add a periodic MissionUpdate message.  Also we need to only keep the
+  // last maxVehicles arround
+  /// We only show the most recent X vehicles in our region
+  //val maxLiveMissions = 20
+
+  // How many recent missions should we keep
+  val maxStoppedMissions = 20
+
+  /// We keep the last N messages from each vehicle (for reply to new clients)
+  val maxRecordsPerVehicle = 5
+
+  private case class AtmosphereUpdate(typ: String, payload: JValue)
+
+  private val recentMissions = new RingBuffer[MissionHistory](maxStoppedMissions)
+
+  // Send live and then ended flights
+  private def allMissions = actorToMission.values ++ recentMissions
+
+  /**
+   * This is the state we keep for each vehicle connection.
+   */
+  private class MissionHistory(val missionId: Long) {
+    private var vehicle: Option[Vehicle] = None
+    private var mission: Option[MissionSummary] = None
+    private val history = new RingBuffer[AtmosphereUpdate](maxRecordsPerVehicle)
+
+    def numMessages = history.size
+
+    def addStart(m: SpaceSummary) {
+      mission = m.mission
+      vehicle = m.vehicle
+    }
+
+    def addStop(mopt: Option[SpaceSummary]) {
+      mopt.foreach { m =>
+        // Update with latest data
+        mission = m.mission
+        vehicle = m.vehicle
+      }
+      recentMissions += this // We will be getting removed from our collection soon
+    }
+
+    def addUpdate(u: AtmosphereUpdate) {
+      history += u
+    }
+
+    /// Get a suitable set of update messages which are suitable to send to a client
+    def updates = {
+      // Always include a start msg if we can
+      val summary = mission.map { m =>
+        AtmosphereUpdate("start", Extraction.decompose(SpaceSummary(vehicle, mission)))
+      }
+
+      summary ++ history
+    }
+  }
+
   /**
    * The LiveVehicleActors we are monitoring
    */
-  private val actorToMission = HashMap[ActorRef, Mission]()
+  private val actorToMission = HashMap[ActorRef, MissionHistory]()
 
   protected def publishEvent(a: Any) { eventStream.publish(a) }
 
   // private def senderMission = actorToMission(sender).id
-  private def senderVehicle = actorToMission(sender).vehicleId.get
+  // private def senderVehicle = actorToMission(sender).vehicleId.get
 
-  private def withMission(preferredSender: Option[ActorRef])(cb: Long => Unit) {
-    val s = preferredSender.getOrElse(sender)
-    actorToMission.get(s).map { m => cb(m.id) }.getOrElse {
+  private def withMission(s: ActorRef)(cb: MissionHistory => Unit) {
+    actorToMission.get(s).map { m => cb(m) }.getOrElse {
       log.warning(s"Ignoring from $s")
     }
   }
 
-  override def toString = s"SpaceSupervisor: {actorToMission.size} vehicles"
+  override def toString = {
+    val numLive = actorToMission.size
+    val numRecent = recentMissions.size
+    val nummsg = allMissions.foldLeft(0)((c, info) => c + info.numMessages)
+    s"SpaceSupervisor: $numLive live, $numRecent recent, $nummsg messages"
+  }
 
   /**
    * FIXME - not sure if I should be publishing directly to atmosphere in this actor, but for now...
@@ -85,21 +148,47 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     AtmosphereTools.broadcast(route, typ, o)
   }
 
-  private def publishUpdate(typ: String, p: Product = null, preferredSender: Option[ActorRef] = None) {
+  private def publishUpdate(typ: String, p: Product = null, preferredSender: ActorRef = sender) {
     withMission(preferredSender) { senderMission =>
 
       msgLogThrottle.withIgnoreCount { numIgnored: Int =>
         log.debug(s"Published space $typ, $p (and $numIgnored others)")
       }
 
-      val o = SpaceEnvelope(senderMission, Option(p))
+      val o = SpaceEnvelope(senderMission.missionId, Option(p))
       publishEvent(o) // Tell any interested subscribers
       val v = Extraction.decompose(o)
+      senderMission.addUpdate(AtmosphereUpdate(typ, v))
       updateAtmosphere(typ, v)
     }
   }
 
+  private def handleStop(aref: ActorRef, mopt: Option[Mission]) {
+    publishUpdate("stop", preferredSender = aref)
+
+    // Move the mission to recent flights
+    val summary = mopt.map { mission => SpaceSummary(mission.vehicle, mission.summary) }
+    actorToMission.remove(aref).foreach { info =>
+      info.addStop(summary)
+    }
+  }
+
   def receive = {
+
+    //
+    // Messages from REST endpoints appear below
+    //
+
+    case SendToAtmosphereMessage(dest) =>
+      log.warning(s"Resending to new client $dest")
+
+      allMissions.foreach { info =>
+        log.warning(s"Resending from $info")
+        info.updates.foreach { u =>
+          log.warning(s"Resending $u")
+          AtmosphereTools.sendTo(dest, u.typ, u.payload)
+        }
+      }
 
     //
     // Messages from LiveVehicleActors appear below
@@ -107,21 +196,21 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
     case Terminated(a) =>
       log.error(s"Unexpected death of a LiveVehicle, republishing...")
-      actorToMission.remove(a).foreach { m =>
-        publishUpdate("stop", preferredSender = Some(a))
-      }
+      handleStop(a, None)
 
     case MissionStart(mission) =>
       log.debug(s"Received start of $mission from $sender")
-      actorToMission(sender) = mission
+      val info = new MissionHistory(mission.id)
+      val summary = SpaceSummary(mission.vehicle, mission.summary)
+      info.addStart(summary)
+      actorToMission(sender) = info
       watch(sender)
-      publishUpdate("start", SpaceSummary(mission.vehicle, mission.summary))
+      publishUpdate("start", summary)
 
     case MissionStop(mission) =>
       log.debug(s"Received stop of $mission")
       unwatch(sender)
-      publishUpdate("stop")
-      actorToMission.remove(sender)
+      handleStop(sender, Some(mission))
 
     case l: Location =>
       publishUpdate("loc", l)
@@ -155,6 +244,9 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 object SpaceSupervisor {
   private implicit def context: ActorRefFactory = MockAkka.system
   private val actors = new NamedActorClient("space")
+
+  /// Resend any old messages to this new client
+  case class SendToAtmosphereMessage(dest: AtmosphereLive)
 
   /**
    * Find the supervisor responsible for a region of space
