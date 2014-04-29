@@ -11,6 +11,8 @@ import com.geeksville.dapi.model.CRUDOperations
 import com.geeksville.json.GeeksvilleFormats
 import javax.servlet.http.HttpServletRequest
 import org.json4s.JsonAST.JObject
+import javax.servlet.http.HttpServletResponse
+import java.util.Date
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -25,6 +27,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."
 
+  val Expire = new Date().toString
+
   /// Utility glue to make easy documentation boilerplate
   def aNames = aName + "s"
   def aCamel = URLUtil.capitalize(aName)
@@ -33,6 +37,17 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   // Before every action runs, set the content type to be in JSON format.
   before() {
     contentType = formats("json")
+    applyNoCache(response)
+  }
+
+  /**
+   * Used to prevent caching
+   */
+  def applyNoCache(response: HttpServletResponse) {
+    response.addHeader("Expires", Expire)
+    response.addHeader("Last-Modified", Expire)
+    response.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+    response.addHeader("Pragma", "no-cache")
   }
 
   protected def requireReadAllAccess() = {
