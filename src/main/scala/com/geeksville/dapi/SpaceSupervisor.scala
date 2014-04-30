@@ -22,6 +22,7 @@ import akka.actor.ActorRefFactory
 import com.geeksville.scalatra.AtmosphereTools
 import org.json4s.Extraction
 import org.mavlink.messages.MAVLinkMessage
+import org.mavlink.messages.ardupilotmega.msg_attitude
 import com.geeksville.mavlink.MsgArmChanged
 import com.geeksville.mavlink.MsgSystemStatusChanged
 import com.github.aselab.activerecord.dsl._
@@ -35,6 +36,9 @@ import com.geeksville.akka.DebuggableActor
 import com.geeksville.util.RingBuffer
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
+
+/// for json encoding
+private case class Attitude(roll: Double, pitch: Double, yaw: Double)
 
 /**
  * This actor is responsible for keeping a model of current and recent flights in its region of space.
@@ -238,6 +242,11 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     // This catches our debug msg stuff if we don't filter our check to only listen to expected senders
     case x: Product if actorToMission.contains(sender) =>
       publishUpdate("mystery", x)
+
+    case x: msg_attitude =>
+      import com.geeksville.util.MathTools._
+      val att = Attitude(toDeg(x.pitch), toDeg(x.yaw), toDeg(x.roll))
+      publishUpdate("att", att)
 
     case x: MAVLinkMessage =>
     // Silently ignore to prevent logspam BIG FIXME - should not even publish this to us...
