@@ -35,7 +35,7 @@ class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient 
  * This is used for clients that are showing live vehicle traffic
  */
 class AtmosphereLive(user: Option[User]) extends PlatformAtmosphereClient(user) {
-  val mySpace = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
+  def mySpace = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
   // user location
 
   override def onConnect() {

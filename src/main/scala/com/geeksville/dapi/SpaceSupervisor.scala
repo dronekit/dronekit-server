@@ -71,7 +71,8 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   val maxStoppedMissions = 20
 
   /// We keep the last N messages from each vehicle (for reply to new clients)
-  val maxRecordsPerVehicle = 20
+  /// 20 is too many - it swamps slow web app startup - perhaps we can revisit once FE has been optimized
+  val maxRecordsPerVehicle = 5
 
   private case class AtmosphereUpdate(typ: String, payload: JValue)
 
@@ -182,10 +183,10 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     //
 
     case SendToAtmosphereMessage(dest) =>
-      log.warning(s"Resending to new client $dest")
+      log.info(s"Resending to new client $dest")
 
       allMissions.foreach { info =>
-        log.warning(s"Resending from $info")
+        //log.debug(s"Resending from $info")
         info.updates.foreach { u =>
           //log.debug(s"Resending $u")
           AtmosphereTools.sendTo(dest, u.typ, u.payload)
