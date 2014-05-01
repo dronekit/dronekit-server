@@ -43,7 +43,7 @@
   <logger name="com.geeksville.dapi.auth" level="INFO"/>
   
   <logger name="org.scalatra" level="DEBUG"/>
-  <logger name="org.scalatra.auth" level="INFO"/>
+  <logger name="org.scalatra.auth" level="DEBUG"/>
   
   <logger name="activerecord" level="INFO"/>
   <logger name="org.eclipse" level="INFO"/>
