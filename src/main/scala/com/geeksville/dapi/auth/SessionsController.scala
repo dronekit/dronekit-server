@@ -63,7 +63,9 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     apiOperation[User]("login") summary "POST your login parameters to this URL"
     parameters (
       formParam[String]("login").description("The loginName for the account"),
-      formParam[String]("password").description("The password for the account")))
+      formParam[String]("password").description("The password for the account"))
+      responseMessages (
+        StringResponseMessage(403, "login attempt failed")))
 
   post("/login", operation(loginOp)) {
     doLogin()

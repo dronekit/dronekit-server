@@ -67,7 +67,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     scentry.unauthenticated {
       // DISABLED - we expect to talk only to JSON clients - so no redirecting to login pages.
       scentry.strategies("Password").unauthenticated()
-      scentry.strategies("Basic").unauthenticated()
+      //scentry.strategies("Basic").unauthenticated()
     }
   }
 
