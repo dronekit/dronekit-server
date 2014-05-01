@@ -76,6 +76,24 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     doLogin()
   }
 
+  post("/pwreset") {
+    requireLogin().beginPasswordReset()
+    "Password reset started"
+  }
+
+  /**
+   * This URL is used to confirm password reset email acknowledgement.  If someone starts a password
+   * reset we will send the user an email that asks them to visit this link.
+   */
+  post("pwreset/:login/:token") {
+    val u = User.find(params("login")).getOrElse(haltNotFound())
+    val token = params("token")
+    val newPassword = "FIXME"
+
+    // The body is expected to contain the new user password
+    throw new Exception("not yet implemented")
+  }
+
   private lazy val userOp = (apiOperation[User]("user")
     summary "Return the user object"
     responseMessages (

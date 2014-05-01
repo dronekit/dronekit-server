@@ -14,6 +14,7 @@ import org.json4s.JsonDSL._
 import org.json4s._
 import com.geeksville.util.Gravatar
 import java.util.Date
+import scala.util.Random
 
 case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -44,6 +45,15 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
   // For vehicles and missions
   var defaultViewPrivacy: Int = AccessCode.DEFAULT_VALUE
   var defaultControlPrivacy: Int = AccessCode.DEFAULT_VALUE
+
+  // User has confirmed their email
+  var emailVerified = false
+
+  /// If set this token can be used tempoarily by confirmPasswordReset
+  var passwordResetToken: Option[Long] = None
+
+  /// If set this was the time the password reset started (used to ignore 'too old' reset tokens)
+  var passwordResetDate: Option[Date] = None
 
   /**
    * A URL of a small jpg for this user
@@ -76,6 +86,28 @@ case class User(@Required @Unique login: String, email: Option[String] = None, f
       // logger.warn(s"Checking password $test againsted hashed version $hashedPassword")
       BCrypt.checkpw(test, hashedPassword)
     }
+  }
+
+  /**
+   * Start a password reset session by picking a reset token and sending an email to the user
+   * that contains that token (later submitted to MDS via a webform, then MDS does a post that
+   */
+  def beginPasswordReset() {
+    passwordResetToken = Some(User.random.nextLong)
+    passwordResetDate = Some(new Date)
+    save()
+
+    // FIXME - send email
+    throw new Exception("not yet implemented")
+  }
+
+  /**
+   * Update the password if the token is correct.
+   * @return false for failure
+   */
+  def confirmPasswordReset(token: String, newPassword: String) = {
+    throw new Exception("not yet implemented")
+    false
   }
 
   override def beforeSave() {
@@ -121,6 +153,9 @@ object UserSerializer extends CustomSerializer[User](implicit format => (
   }))
 
 object User extends DapiRecordCompanion[User] with Logging {
+
+  private val random = new Random(System.currentTimeMillis)
+
   /**
    * Find a user (creating the root acct if necessary)
    */
