@@ -66,8 +66,8 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     // Set the callback for what to do if a user is not authenticated
     scentry.unauthenticated {
       // DISABLED - we expect to talk only to JSON clients - so no redirecting to login pages.
-      // scentry.strategies("Password").unauthenticated()
-      //scentry.strategies("Basic").unauthenticated()
+      scentry.strategies("Password").unauthenticated()
+      scentry.strategies("Basic").unauthenticated()
     }
   }
 

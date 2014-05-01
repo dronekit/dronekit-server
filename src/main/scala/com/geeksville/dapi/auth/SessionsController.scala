@@ -27,7 +27,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
     // If not already authed, try to auth implicitly using their cookie
     if (!isAuthenticated) {
-      scentry.authenticate("RememberMe")
+      scentry.authenticate("Remember")
     }
   }
 
@@ -42,10 +42,10 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     */
 
   private def doLogin() = {
-    scentry.authenticate()
+    val user = scentry.authenticate("Password")
 
     // User just tried to login - if login has failed tell them they can't access the site
-    if (!isAuthenticated)
+    if (!user.isDefined)
       haltForbidden("Invalid login")
     /*
     If we were using HTML this is what we would give
@@ -62,8 +62,8 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   private lazy val loginOp = (
     apiOperation[User]("login") summary "POST your login parameters to this URL"
     parameters (
-      queryParam[String]("login").description("The loginName for the account"),
-      queryParam[String]("password").description("The password for the account")))
+      formParam[String]("login").description("The loginName for the account"),
+      formParam[String]("password").description("The password for the account")))
 
   post("/login", operation(loginOp)) {
     doLogin()

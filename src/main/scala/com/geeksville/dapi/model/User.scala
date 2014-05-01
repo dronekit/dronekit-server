@@ -126,9 +126,9 @@ object User extends DapiRecordCompanion[User] with Logging {
    */
   override def find(id: String): Option[User] = {
     this.where(_.login === id.toLowerCase).headOption.orElse {
-      debug(s"Read user $id from DB")
-
       if (id == "root") {
+        debug(s"Seeding $id user")
+
         // If we don't find a root account - make a new one (must be a virgin/damaged DB)
         // FIXME - choose a random initial password and print it to the log
         val psw = "fish4403"
