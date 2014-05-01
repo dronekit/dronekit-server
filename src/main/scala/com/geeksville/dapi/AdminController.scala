@@ -16,11 +16,12 @@ import org.scalatra.atmosphere._
 import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.test.PlaybackGCSClient
+import org.scalatra.CorsSupport
 
 /**
  * Special admin operations
  */
-class AdminController(implicit val swagger: Swagger) extends DroneHubStack with AtmosphereSupport with SwaggerSupport {
+class AdminController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with AtmosphereSupport with SwaggerSupport {
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/admin")
@@ -41,7 +42,12 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
 
   private lazy val logOp = apiOperation[AtmosphereClient]("log") summary "An atmosphere endpoint container server log messages"
   atmosphere("/log", operation(logOp)) {
-    new AdminLive(tryLogin())
+    try {
+      new AdminLive(tryLogin())
+    } catch {
+      case ex: Exception =>
+        haltUnauthorized(ex.getMessage)
+    }
   }
 
   private lazy val importOp =
@@ -50,28 +56,28 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
       parameters (
         pathParam[Int]("count").description(s"Number of old flights to import")))
 
-  get("/import/:count", operation(importOp)) {
+  post("/import/:count", operation(importOp)) {
     nestorImport ! DoImport(params("count").toInt)
     "started import"
   }
 
   private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
 
-  get("/sim/huge", operation(simOp)) {
+  post("/sim/huge", operation(simOp)) {
     val h = host
     lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
     simClient ! PlaybackGCSClient.RunTest("bigtest")
     "started sim"
   }
 
-  get("/sim/full", operation(simOp)) {
+  post("/sim/full", operation(simOp)) {
     val h = host
     lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
     simClient ! PlaybackGCSClient.RunTest("test")
     "started sim"
   }
 
-  get("/sim/std/:keep/:numVehicles/:numSecs", operation(simOp)) {
+  post("/sim/std/:keep/:numVehicles/:numSecs", operation(simOp)) {
     val keep = params("keep").toBoolean
     val numVehicles = params("numVehicles").toInt
     val numSecs = params("numSecs").toInt
@@ -82,13 +88,13 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   }
 
   // FIXME -very dangerous remove before production
-  get("/db/reset", operation(apiOperation[String]("dbReset") summary "Reseed the DB")) {
+  post("/db/reset", operation(apiOperation[String]("dbReset") summary "Reseed the DB")) {
     Tables.reset
     "DB Reset completed"
   }
 
   // Intentionallt not documented
-  get("/db/create") {
+  post("/db/create") {
     Tables.create
     "DB created"
   }

@@ -7,6 +7,7 @@ import org.scalatra.InternalServerError
 import java.net.URL
 import org.scalatra.ScalatraBase
 import java.lang.{ Integer => JInteger }
+import org.scalatra.HaltException
 
 /**
  * Mixin of my scalatra controller extensions
@@ -66,3 +67,4 @@ trait ControllerExtras extends ScalatraBase with Logging {
   def haltNotImplemented(reason: String = null) = halt(501, reason = reason)
   def haltInternalServerError(reason: String = null) = halt(500, reason = reason)
 }
+

@@ -13,6 +13,7 @@ import org.json4s.DefaultFormats
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ThreescaleSupport
+import org.scalatra.CorsSupport
 
 abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with AuthenticationSupport with GZipSupport with NativeJsonSupport with ThreescaleSupport {
 
@@ -21,6 +22,15 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
 
   before() {
     logger.debug("Handle " + request)
+  }
+
+  /// We allow CORS requests from anywhere - FIXME - check if secure?
+  options("/*") {
+    // response.setHeader("Access-Control-Allow-Methods", "GET, POST")
+
+    Option(request.getHeader("Access-Control-Request-Headers")).foreach { h =>
+      response.setHeader("Access-Control-Allow-Headers", h)
+    }
   }
 
   /// If we are on localhost, lie and claim we are on the public server (so gmaps will work)

@@ -21,7 +21,7 @@ import org.json4s.Extraction
  * Subclasses can call roField etc... to specify handlers for particular operations
  * T is the primary type
  */
-class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with SwaggerSupport {
+class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/" + aName)
