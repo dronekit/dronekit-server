@@ -11,8 +11,9 @@ import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.User
 import org.scalatra.swagger.StringResponseMessage
+import org.scalatra.CorsSupport
 
-class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with SwaggerSupport {
+class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
   override protected val applicationName = Some("api/v1/auth")
   protected lazy val applicationDescription = s"Session operations (login, logout, etc...)"
