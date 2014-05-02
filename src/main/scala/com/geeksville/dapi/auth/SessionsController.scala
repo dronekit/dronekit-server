@@ -12,6 +12,7 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model.User
 import org.scalatra.swagger.StringResponseMessage
 import org.scalatra.CorsSupport
+import com.geeksville.dapi.model.UserJson
 
 class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
@@ -117,6 +118,30 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     // NOT USING HTML
     // redirect("/")
     JString("Logged out")
+  }
+
+  private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
+  post("/create", operation(createOp)) {
+
+    val u = parsedBody.extract[UserJson]
+
+    val id = u.login
+
+    val found = User.find(id)
+    if (found.isDefined)
+      haltConflict("login already exists")
+
+    if (!u.email.isDefined)
+      haltBadRequest("email required")
+
+    if (!u.password.isDefined)
+      haltBadRequest("insuffient password")
+
+    val r = User.create(id, u.password.get, u.email, u.fullName)
+    user = r // Mark the session that this user is logged in
+    r
   }
 
 }

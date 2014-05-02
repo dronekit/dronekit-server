@@ -16,7 +16,8 @@ import com.geeksville.util.Gravatar
 import java.util.Date
 import scala.util.Random
 
-case class User(@Required @Unique login: String, email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
+case class User(@Required @Unique login: String,
+  @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
    * A user specified password
    * If null we assume invalid

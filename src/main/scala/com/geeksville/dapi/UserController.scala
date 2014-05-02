@@ -22,20 +22,5 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
     super.requireReadAllAccess()
   }
 
-  private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
-
-  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
-  put("/:id", operation(createOp)) {
-
-    val id = params("id")
-
-    warn(s"Creating $id")
-    val found = User.find(id)
-    if (found.isDefined)
-      haltConflict()
-
-    val u = parsedBody.extract[UserJson]
-    User.create(id, u.password.get, u.email, u.fullName)
-  }
 }
 
