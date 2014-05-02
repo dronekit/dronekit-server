@@ -22,7 +22,10 @@ import java.util.Date
  * @param uuid is selected by the client on first connection
  */
 case class Vehicle(
-  @Required @Unique uuid: UUID = UUID.randomUUID(),
+  // A UUID provided by the client to represent this vehicle. NOTE: We do not ensure that
+  // for a particular UUID it only appears once in the DB.  Clients can be buggy and pick
+  // any id they want.  The unique ID for a vehicle is 'id'.
+  @Required uuid: UUID = UUID.randomUUID(),
   // A user specified name for this vehicle (i.e. my bixler)
   var name: String = "",
 
