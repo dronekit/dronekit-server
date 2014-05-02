@@ -1,6 +1,7 @@
 package com.geeksville.dapi
 
 import akka.actor.Actor
+import akka.actor.SupervisorStrategy
 import akka.actor.ActorLogging
 import com.geeksville.akka.NamedActorClient
 import akka.actor.ActorRef
@@ -51,6 +52,9 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   private def user = userOpt.get
 
   override def toString = s"GCSActor with ${vehicles.size} vehicles"
+
+  // If we encounter a problem we want to hang up on the client and have them reconnect...
+  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   private def getVehicle(uuid: UUID) = {
     // Vehicle.find(uuid.toString)
