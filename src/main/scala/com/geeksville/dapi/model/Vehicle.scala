@@ -96,17 +96,18 @@ case class Vehicle(
 }
 
 case class VehicleJson(
-  id: Long,
+  uuid: UUID,
   name: String,
-  userId: Option[Long],
-  manufacturer: Option[String],
-  vehicleType: Option[String],
-  autopilotType: Option[String],
-  viewPrivacy: AccessCode.EnumVal,
-  controlPrivacy: AccessCode.EnumVal,
-  missions: Iterable[Long],
-  createdOn: Date,
-  updatedOn: Date)
+  id: Option[Long] = None,
+  userId: Option[Long] = None,
+  manufacturer: Option[String] = None,
+  vehicleType: Option[String] = None,
+  autopilotType: Option[String] = None,
+  viewPrivacy: Option[AccessCode.EnumVal] = None,
+  controlPrivacy: Option[AccessCode.EnumVal] = None,
+  missions: Option[Iterable[Long]] = None,
+  createdOn: Option[Date] = None,
+  updatedOn: Option[Date] = None)
 
 /// We provide an initionally restricted view of users
 object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
@@ -118,15 +119,15 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
   },
   {
     case u: Vehicle =>
-      val m = VehicleJson(u.id, u.name, u.userId,
+      val m = VehicleJson(u.uuid, u.name, Some(u.id), u.userId,
         u.manufacturer,
         u.vehicleType,
         u.autopilotType,
-        AccessCode.valueOf(u.viewPrivacy),
-        AccessCode.valueOf(u.controlPrivacy),
-        u.missions.map(_.id),
-        u.createdOn,
-        u.updatedOn)
+        Some(AccessCode.valueOf(u.viewPrivacy)),
+        Some(AccessCode.valueOf(u.controlPrivacy)),
+        Some(u.missions.map(_.id)),
+        Some(u.createdOn),
+        Some(u.updatedOn))
       Extraction.decompose(m)
   }))
 
