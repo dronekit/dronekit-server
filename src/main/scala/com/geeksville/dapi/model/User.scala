@@ -128,6 +128,24 @@ case class User(@Required @Unique login: String,
     super.beforeSave()
   }
 
+  def getVehicle(uuid: UUID) = {
+    // Vehicle.find(uuid.toString)
+    debug(s"Looking for $uuid inside of $this")
+    vehicles.where(_.uuid === uuid).headOption
+  }
+
+  /**
+   * find a vehicle object for a specified UUID, associating it with our user if needed
+   */
+  def getOrCreateVehicle(uuid: UUID) = getVehicle(uuid).getOrElse {
+    warn(s"Vehicle $uuid not found in $this - creating")
+    val v = Vehicle(uuid).create
+    vehicles << v
+    v.save
+    save // FIXME - do I need to explicitly save?
+    v
+  }
+
   override def toString() = s"User:$login(group = $groupId)"
 }
 

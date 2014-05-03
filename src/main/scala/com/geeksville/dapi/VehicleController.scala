@@ -11,6 +11,7 @@ import org.scalatra.servlet.FileUploadSupport
 import javax.servlet.annotation.MultipartConfig
 import org.json4s.JsonAST.JString
 import com.geeksville.json.ActiveRecordSerializer
+import org.json4s.JsonAST.JObject
 
 /// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 @MultipartConfig(maxFileSize = 1024 * 1024)
@@ -33,6 +34,11 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
     super.requireWriteAccess(o)
   }
 
+  override protected def requireCreateAccess() = {
+    requireLogin()
+    requireServiceAuth(aName + "/create")
+  }
+
   // FIXME - make this code actually do something
   rwField[String]("mode", (v) => "FIXME", { (v, arg) => })
   //roField[Location]("location", null)
@@ -49,6 +55,11 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   // FIXME - need to use correct domain objects (Waypoints)
   //rwField[List[Location]]("waypoints", null, { (v) => })
+
+  override protected def createDynamically(payload: JObject): Any = {
+    val json = payload.extract[VehicleJson]
+    user.getOrCreateVehicle(json.uuid)
+  }
 
   private val addMissionInfo =
     (apiOperation[String]("addMission")

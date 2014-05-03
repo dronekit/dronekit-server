@@ -64,24 +64,6 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   // If we encounter a problem we want to hang up on the client and have them reconnect...
   override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
-  private def getVehicle(uuid: UUID) = {
-    // Vehicle.find(uuid.toString)
-    log.debug(s"Looking for $uuid inside of $user")
-    user.vehicles.where(_.uuid === uuid).headOption
-  }
-
-  /**
-   * find a vehicle object for a specified UUID, associating it with our user if needed
-   */
-  private def getOrCreateVehicle(uuid: UUID) = getVehicle(uuid).getOrElse {
-    log.warning(s"Vehicle $uuid not found in $user - creating")
-    val v = Vehicle(uuid).create
-    user.vehicles << v
-    v.save
-    user.save // FIXME - do I need to explicitly save?
-    v
-  }
-
   protected def sendToVehicle(e: Envelope)
 
   private def checkLoggedIn() {
@@ -109,7 +91,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
         log.warning("ignoring GCS ID")
       else {
         val uuid = UUID.fromString(msg.vehicleUUID)
-        val vehicle = getOrCreateVehicle(uuid)
+        val vehicle = user.getOrCreateVehicle(uuid)
 
         val actor = LiveVehicleActor.find(vehicle, msg.canAcceptCommands)
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor

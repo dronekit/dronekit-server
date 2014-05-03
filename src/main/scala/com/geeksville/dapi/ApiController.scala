@@ -64,6 +64,11 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     o
   }
 
+  /// Subclasses can overide to limit access for creating new records
+  protected def requireCreateAccess() = {
+    requireServiceAuth(aName + "/create")
+  }
+
   /**
    * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
    * If not allowed, override should call haltUnauthorized()
@@ -122,17 +127,26 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   put("/") {
-    createDynamically(parsedBody.extract[JObject])
+    requireCreateAccess()
+
+    val jobj = try {
+      parsedBody.extract[JObject]
+    } catch {
+      case ex: Exception =>
+        error(s"Malformed client json: $parsedBody")
+        haltBadRequest("JSON object expected")
+    }
+    createDynamically(jobj)
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to / to result in creating new objects.  implementations should return the new ID
   protected def createDynamically(payload: JObject): Any = {
-    haltMethodNotAllowed()
+    haltMethodNotAllowed("creation without IDs not allowed")
   }
 
   /// Subclasses can provide suitable behavior if they want to allow DELs to /:id to result in deleting objects
   protected def doDelete(o: T): Any = {
-    haltMethodNotAllowed()
+    haltMethodNotAllowed("deletion not allowed")
   }
 
   /// Generate an append only attribute on this rest endpoint of the form /:id/name.
