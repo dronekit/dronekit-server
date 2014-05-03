@@ -34,6 +34,8 @@ import com.geeksville.akka.EventStreamDebugger
 import com.geeksville.threescale.ThreeActor
 import org.scalatra.atmosphere.ActorSystemKey
 import com.geeksville.dapi.model.Migration
+import com.geeksville.akka.ZMQGateway
+import com.geeksville.dapi.ZMQGCSActor
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -78,6 +80,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Start up our tcp listener
     val tcpGCSActor = system.actorOf(Props(new TCPListenerActor[TCPGCSActor](APIConstants.DEFAULT_TCP_PORT)), "tcpListener")
+
+    val zmqWorkerFactory = Props[ZMQGCSActor]
+    val zmqGateway = system.actorOf(Props(new ZMQGateway(zmqWorkerFactory)), "zmqGateway")
 
     system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 

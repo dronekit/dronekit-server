@@ -230,6 +230,14 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
     vehicles.values.foreach(_ ! VehicleDisconnected())
     super.postStop()
   }
+
+  /**
+   * Given an envelope return the various populated members
+   */
+  protected def fromEnvelope(env: Envelope) = {
+    // FIXME - use the enum to more quickly find the payload we care about
+    Seq(env.mavlink, env.login, env.setVehicle, env.startMission, env.stopMission, env.note).flatten
+  }
 }
 
 object GCSActor {

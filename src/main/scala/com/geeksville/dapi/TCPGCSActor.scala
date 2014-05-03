@@ -21,9 +21,6 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
   private val listenerThread = ThreadTools.createDaemon("TCPGCS")(readerFunct)
   listenerThread.start()
 
-  // We can't meaningfully restart this actor because the old socket can not be used?  For now just die and let the client reconnect
-  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
-
   override def postStop() {
     socket.close()
 
@@ -54,8 +51,7 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
           mopt.foreach { env =>
             //log.debug(s"Got packet $env")
 
-            // FIXME - use the enum to more quickly find the payload we care about
-            Seq(env.mavlink, env.login, env.setVehicle, env.startMission, env.stopMission, env.note).flatten.foreach { m =>
+            fromEnvelope(env).foreach { m =>
               //log.debug(s"Dispatching $m")
               self ! m
             }

@@ -1,4 +1,4 @@
-package com.geeksville.dapi
+package com.geeksville.akka
 
 import akka.zeromq._
 import akka.actor.Actor
@@ -7,7 +7,6 @@ import akka.actor.ActorLogging
 import akka.serialization.SerializationExtension
 import java.lang.management.ManagementFactory
 import scala.collection.mutable.HashMap
-import com.geeksville.akka.DebuggableActor
 import akka.actor.ActorRef
 import akka.util.ByteString
 import akka.util.CompactByteString
@@ -27,13 +26,13 @@ import akka.actor.Terminated
  *
  * FIXME - kill worker actors if we haven't heard from their client in a while
  */
-class ZeroMQGateway(val workerActorFactory: Props) extends DebuggableActor with ActorLogging {
-  import ZeroMQGateway._
+class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://127.0.0.1:21233") extends DebuggableActor with ActorLogging {
+  import ZMQGateway._
 
   private val socket = ZeroMQExtension(context.system).newSocket(
     SocketType.Router,
     Listener(self),
-    Bind("tcp://127.0.0.1:21233"),
+    Bind(zmqSocket),
     HighWatermark(200),
     Linger(0))
 
@@ -75,7 +74,7 @@ class ZeroMQGateway(val workerActorFactory: Props) extends DebuggableActor with 
   }
 }
 
-object ZeroMQGateway {
+object ZMQGateway {
 
   /// An inbound message from the world of ZMQ - sent to the worker actor for this client ID
   case class FromZMQ(msg: ByteString)
