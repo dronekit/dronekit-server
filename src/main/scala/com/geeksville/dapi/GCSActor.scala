@@ -8,8 +8,6 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import scala.collection.mutable.HashMap
 import com.google.protobuf.ByteString
-import org.mavlink.MAVLinkCRC
-import org.mavlink.IMAVLinkCRC
 import org.mavlink.messages._
 import com.geeksville.mavlink.TimestampedMessage
 import com.geeksville.dapi.model.Vehicle
@@ -19,6 +17,11 @@ import com.geeksville.dapi.model.User
 import java.util.UUID
 import com.geeksville.util.Throttled
 import com.geeksville.akka.DebuggableActor
+import org.mavlink._
+import scala.collection.mutable.Queue
+import java.io.DataInputStream
+import com.geeksville.util.QueueInputStream
+import scala.collection.JavaConverters._
 
 /// All messages after connection are identified by this tuple
 case class VehicleBinding(interface: Int, sysId: Int)
@@ -36,6 +39,11 @@ case class SendMavlinkToVehicle(msg: MAVLinkMessage)
  */
 abstract class GCSActor extends DebuggableActor with ActorLogging {
   import GCSActor._
+
+  // We pump the mavlink bytes through this queue
+  private val mavlinkQueue = new Queue[java.lang.Byte]()
+  private val dataStream = new DataInputStream(new QueueInputStream(mavlinkQueue))
+  private val reader = new MAVLinkReader(dataStream, IMAVLinkMessage.MAVPROT_PACKET_START_V10)
 
   private val msgLogThrottle = new Throttled(5000)
 
@@ -118,22 +126,32 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       // If the user provided a time then use it, otherwise use our local time
       val timestamp = msg.deltaT.map(_ + startTime.get).getOrElse(System.currentTimeMillis * 1000)
 
+      // Put all payload into our input stream
       msg.packet.foreach { pRaw =>
-        val p = decodeMavlink(pRaw)
-
-        // Have our vehicle handle the message
-        val timestamped = TimestampedMessage(timestamp, p)
-        val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
-        val probablyGCS = p.sysId > 200 // Don't spam the log about GCS msgs - just send them to every vehicle
-        if (!vehicle.isDefined && !probablyGCS) {
-          msgLogThrottle.withIgnoreCount { numIgnored: Int =>
-            log.warning(s"Unknown sysId=${p.sysId} send to all: $p (and $numIgnored others)")
-          }
-
-          vehicles.values.foreach { _ ! timestamped }
-        } else
-          vehicle.foreach { _ ! timestamped }
+        //log.debug(s"Enuqueuing ${pRaw.size} bytes")
+        mavlinkQueue.enqueue(pRaw.asScala.toSeq: _*)
       }
+
+      var p: MAVLinkMessage = null
+      do {
+        p = reader.getNextMessageWithoutBlocking()
+        if (p != null) {
+          //log.debug(s"Processing $p")
+
+          // Have our vehicle handle the message
+          val timestamped = TimestampedMessage(timestamp, p)
+          val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
+          val probablyGCS = p.sysId > 200 // Don't spam the log about GCS msgs - just send them to every vehicle
+          if (!vehicle.isDefined && !probablyGCS) {
+            msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+              log.warning(s"Unknown sysId=${p.sysId} send to all: $p (and $numIgnored others)")
+            }
+
+            vehicles.values.foreach { _ ! timestamped }
+          } else
+            vehicle.foreach { _ ! timestamped }
+        }
+      } while (p != null)
 
     // For now we let each vehicle handle these msgs
     case msg: StartMissionMsg =>
@@ -213,6 +231,7 @@ object GCSActor {
    * convert raw bytes to a mavlink packet object
    * FIXME: merge this with the (not yet written) replacement for the java glue
    */
+  /* No longer used
   def decodeMavlink(bytes: ByteString) = {
     val start = bytes.byteAt(0).toInt & 0xff
     val len = bytes.byteAt(1).toInt & 0xff
@@ -249,5 +268,5 @@ object GCSActor {
 
     msg.sequence = seq
     msg
-  }
+  } */
 }
