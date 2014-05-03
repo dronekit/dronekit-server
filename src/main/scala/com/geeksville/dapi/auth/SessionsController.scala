@@ -13,6 +13,9 @@ import com.geeksville.dapi.model.User
 import org.scalatra.swagger.StringResponseMessage
 import org.scalatra.CorsSupport
 import com.geeksville.dapi.model.UserJson
+import com.geeksville.util.Using._
+import com.geeksville.mailgun.MailgunClient
+import com.geeksville.scalatra.ScalatraTools
 
 class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
@@ -122,8 +125,38 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
 
+  def sendWelcomeEmail(u: User) {
+    using(new MailgunClient()) { client =>
+      val fullname = u.fullName.getOrElse(u.login)
+      val confirmDest = "http://droneshare.appspot.com/confirm/2342255 (not yet working - no need to click)"
+
+      // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
+      val bodyText =
+        s"""
+        Dear $fullname,
+        
+        Your new account on Droneshare is now mostly ready.  The only step that remains is to confirm
+        your email address.  To confirm your email please visit the following URL:
+        
+        $confirmDest 
+        
+        Thank you for joining our beta-test.  Any feedback is always appreciated.  Please email
+        kevin@3drobotics.com.
+        
+        -Kevin
+        """
+
+      val r = client.sendTo(u.email.get, "kevin+droneshare@3drobotics.com", "Welcome to Droneshare",
+        bodyText, testing = ScalatraTools.isTesting)
+      debug("Mailgun reply: " + compact(render(r)))
+    }
+  }
+
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
   post("/create", operation(createOp)) {
+
+    // Make sure this app is allowed to create users
+    requireServiceAuth("user/create")
 
     val u = parsedBody.extract[UserJson]
 
@@ -141,6 +174,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
     val r = User.create(id, u.password.get, u.email, u.fullName)
     user = r // Mark the session that this user is logged in
+    sendWelcomeEmail(r)
     r
   }
 
