@@ -20,6 +20,9 @@ import com.geeksville.dapi.auth.SessionsController
 import org.scalatest.GivenWhenThen
 import scala.util.Random
 import com.geeksville.dapi.model.UserJson
+import com.geeksville.dapi.model.DroneModelFormats
+import com.geeksville.dapi.model.VehicleJson
+import java.util.UUID
 
 /**
  * These tests can be disabled by adding an argument to the constructor.
@@ -31,7 +34,7 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
   lazy val activeRecordTables = new ScalatraConfig().schema
 
   // Sets up automatic case class to JSON output serialization
-  protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
+  protected implicit def jsonFormats: Formats = DefaultFormats ++ DroneModelFormats ++ GeeksvilleFormats
 
   // The random ID we will use for this test session
   val uniqueSuffix = Random.alphanumeric.take(6).mkString
@@ -79,18 +82,19 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     status should equal(200)
   }
 
-  ignore("vehicle") {
-    jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
-  }
-
-  ignore("mission") {
-    jsonGet("/api/v1/mission/1")
-  }
-
   def toJSON(x: AnyRef) = {
     val r = Serialization.write(x)
     debug(s"Sending $r")
     r.getBytes
+  }
+
+  /// Do a session logged in as our test user
+  def userSession[A](f: => A): A = session {
+    post("/api/v1/session/login", loginInfo) {
+      checkStatusOk()
+    }
+
+    f
   }
 
   test("user") {
@@ -126,23 +130,21 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     }
   }
 
-  ignore("security-tlog-upload (not logged in)") {
-    post("/api/v1/vehicle/1/missions") {
-      status should equal(401)
+  test("vehicle") {
+    userSession {
+      Given("Create a new vehicle")
+      val v = VehicleJson(UUID.randomUUID, "unit-test vehicle")
+      put("/api/v1/vehicle", toJSON(v), headers = jsonHeaders) {
+        checkStatusOk()
+      }
+      And("Read vehicle")
+      jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
     }
   }
 
-  test("tlog-upload") {
-    // Set the payload
-    val name = "test.tlog"
-    val is = getClass.getResourceAsStream(name)
-    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
-    is.close()
-    val payload = BytesPart(name, bytes, Mission.mimeType)
-
-    post("/api/v1/vehicle/1/missions", loginInfo, Map("payload" -> payload)) {
-      checkStatusOk()
-      info("View URL is " + body)
+  ignore("security-tlog-upload (not logged in)") {
+    post("/api/v1/vehicle/1/missions") {
+      status should equal(401)
     }
   }
 
@@ -171,4 +173,25 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
       }
     }
   }
+
+  ignore("tlog-upload") {
+    userSession {
+      // Set the payload
+      val name = "test.tlog"
+      val is = getClass.getResourceAsStream(name)
+      val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+      is.close()
+      val payload = BytesPart(name, bytes, Mission.mimeType)
+
+      post("/api/v1/vehicle/1/missions", Iterable.empty, Map("payload" -> payload)) {
+        checkStatusOk()
+        info("View URL is " + body)
+      }
+    }
+  }
+
+  test("mission") {
+    jsonGet("/api/v1/mission")
+  }
+
 }
