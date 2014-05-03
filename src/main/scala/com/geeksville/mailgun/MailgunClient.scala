@@ -63,8 +63,14 @@ class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.
     }
   }
 
-  def sendTo(from: String, to: String, subject: String, bodyText: String, tag: String = "default") =
-    send("from" -> from, "to" -> to, "subject" -> subject, "text" -> bodyText, "o:tag" -> tag)
+  def sendTo(from: String, to: String, subject: String, bodyText: String, tag: String = "default", testing: Boolean = false) = {
+    var options = Seq("from" -> from, "to" -> to, "subject" -> subject, "text" -> bodyText, "o:tag" -> tag)
+
+    if (testing)
+      options = options :+ ("o:testmode" -> "true")
+
+    send(options: _*)
+  }
 
   /*
 public static ClientResponse SendSimpleMessage() {

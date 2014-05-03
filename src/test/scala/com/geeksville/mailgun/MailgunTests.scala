@@ -18,9 +18,9 @@ import com.geeksville.util.Using._
 
 class MailgunTests extends FunSuite with Logging with GivenWhenThen {
 
-  ignore("mailgun") {
+  test("mailgun") {
     using(new MailgunClient()) { client =>
-      val r = client.sendTo("kevin@3drobotics.com", "kevin@3drobotics.com", "Mailgun test", "This is the body")
+      val r = client.sendTo("kevin@3drobotics.com", "kevin@3drobotics.com", "Mailgun test", "This is the body", testing = true)
       println(pretty(render(r)))
     }
   }

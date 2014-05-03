@@ -9,9 +9,8 @@ import org.scalatra.json.JsonSupport
  */
 trait CustomAtmosphereSupport extends AtmosphereSupport { self: ScalatraBase with org.scalatra.SessionSupport with JsonSupport[_] =>
 
-  def isTesting = System.getProperty("run.mode", "unset") == "test"
-
   abstract override def initialize(config: ConfigT) {
+    val isTesting = ScalatraTools.isTesting
     println(s"isTesting $isTesting")
     if (!isTesting)
       super.initialize(config)
