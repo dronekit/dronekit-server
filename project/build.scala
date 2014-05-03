@@ -75,6 +75,8 @@ object NestorBuild extends Build {
       // Make "test" command work again per https://groups.google.com/forum/#!topic/scalatra-user/Mkx2lHAqQI0
 
       libraryDependencies ++= Seq(
+        "com.typesafe.akka" %% "akka-zeromq" % "2.3.0" withSources (),
+        
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-atmosphere" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
