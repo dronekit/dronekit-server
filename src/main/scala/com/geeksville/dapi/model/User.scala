@@ -141,7 +141,9 @@ object UserSerializer extends CustomSerializer[User](implicit format => (
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
     case x: JValue =>
       val r = x.extract[UserJson]
-      User(r.login, r.email, r.fullName)
+      val u = User(r.login, r.email, r.fullName)
+      r.password.foreach(u.password = _)
+      u
   },
   {
     case u: User =>

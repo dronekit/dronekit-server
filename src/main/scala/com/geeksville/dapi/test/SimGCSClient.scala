@@ -53,6 +53,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     case SimGCSClient.RunTest(numVehicles, numSeconds) =>
       log.error("Running test")
       runTest(numVehicles, numSeconds)
+      sender ! "Started background sim"
   }
 
   override def postStop() {
@@ -203,6 +204,7 @@ class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging 
    * FIXME: Don't use the old MavlinkEventBus global
    */
   private def fullTest(testname: String) {
+
     import context._
 
     log.info("Starting full test vehicle")
@@ -217,6 +219,7 @@ class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging 
     MavlinkEventBus.subscribe(tlog, groundControlId)
 
     val uploader = LiveUploader.create(context, APIProxyActor.testAccount, host, isLive = false)
+    context.watch(uploader)
 
     // Wait for the uploader to start (so it is subscribed) before starting the tlog reader
     // FIXME - make this into a waitStarted utility...
@@ -226,10 +229,14 @@ class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging 
       context.watch(tlog)
       log.debug("Waiting for tlog file to end")
       context.become {
-        case Terminated(t) =>
+        case Terminated(t) if t == tlog =>
           log.info("Tlog finished, telling uploader to exit")
           uploader ! StopMissionAndExitMsg
           context.unbecome()
+
+        case Terminated(t) if t == uploader =>
+          log.info("Simulation completed!")
+          context.sender ! s"Completed sim"
       }
 
       log.debug("Starting tlog playback")

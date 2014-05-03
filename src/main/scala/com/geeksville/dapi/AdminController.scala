@@ -17,17 +17,27 @@ import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.test.PlaybackGCSClient
 import org.scalatra.CorsSupport
+import com.geeksville.scalatra.CustomAtmosphereSupport
+import org.scalatra.AsyncResult
+import _root_.akka.actor.{ ActorRef, Actor, Props, ActorSystem }
+import _root_.akka.util.Timeout
+import _root_.akka.pattern.ask
+import org.scalatra.FutureSupport
+import org.scalatra.CorsSupport
 
 /**
  * Special admin operations
  */
-class AdminController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with AtmosphereSupport with SwaggerSupport {
+class AdminController(implicit val swagger: Swagger) extends DroneHubStack with FutureSupport with CorsSupport with CustomAtmosphereSupport with SwaggerSupport {
+
+  // Akka implicits for FutureSupport
+  lazy val system = MockAkka.system
+  protected implicit def executor = system.dispatcher
+  protected implicit val timeout = Timeout(30 * 1000)
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/admin")
   protected lazy val applicationDescription = s"Adminstrator API operations."
-
-  lazy val system = MockAkka.system
 
   lazy val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
 
@@ -63,18 +73,19 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
 
   private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
 
+  import akka.actor._
+  import akka.pattern.ask
+
   post("/sim/huge", operation(simOp)) {
     val h = host
     lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
-    simClient ! PlaybackGCSClient.RunTest("bigtest")
-    "started sim"
+    simClient ? PlaybackGCSClient.RunTest("bigtest")
   }
 
   post("/sim/full", operation(simOp)) {
     val h = host
     lazy val simClient = system.actorOf(Props(new PlaybackGCSClient(h)))
-    simClient ! PlaybackGCSClient.RunTest("test")
-    "started sim"
+    simClient ? PlaybackGCSClient.RunTest("test")
   }
 
   post("/sim/std/:keep/:numVehicles/:numSecs", operation(simOp)) {
@@ -83,8 +94,7 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     val numSecs = params("numSecs").toInt
     val h = host
     lazy val simClient = system.actorOf(Props(new SimGCSClient(h, keep)))
-    simClient ! SimGCSClient.RunTest(numVehicles, numSecs)
-    "started sim"
+    simClient ? SimGCSClient.RunTest(numVehicles, numSecs)
   }
 
   // FIXME -very dangerous remove before production
@@ -105,7 +115,6 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     akkaReflect ! AkkaReflector.PollMsg
     Thread.sleep(5000) // Super hackish way to give 5 secs for actors to reply with their ids
 
-    val future = akkaReflect ? AkkaReflector.GetHtmlMsg
-    Await.result(future, timeout.duration).asInstanceOf[Elem]
+    akkaReflect ? AkkaReflector.GetHtmlMsg
   }
 }

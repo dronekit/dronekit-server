@@ -22,10 +22,10 @@ import scala.util.Random
 import com.geeksville.dapi.model.UserJson
 
 /**
- * These tests are temporarily disabled - by adding an argument to the constructor.
+ * These tests can be disabled by adding an argument to the constructor.
  * broken with atmosphere...
  */
-class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
+class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
 
   lazy val activeRecordTables = new ScalatraConfig().schema
@@ -33,9 +33,18 @@ class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with L
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats
 
-  val jsonHeaders = Map("Accept" -> "application/json", "Content-Type" -> "application/json")
+  // The random ID we will use for this test session
+  val uniqueSuffix = Random.alphanumeric.take(6).mkString
+  val login = "test-" + uniqueSuffix
+  val password = Random.alphanumeric.take(8).mkString
 
-  val loginInfo = Map("login" -> "test-bob", "password" -> "sekrit")
+  val apiKey = "eb34bd67.megadroneshare"
+  val jsonHeaders = Map(
+    "Accept" -> "application/json",
+    "Content-Type" -> "application/json",
+    "Authorization" -> s"""DroneApi apikey="$apiKey"""")
+
+  val loginInfo = Map("login" -> login, "password" -> password)
 
   // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
   override def beforeAll() {
@@ -48,7 +57,6 @@ class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with L
   }
 
   override def afterAll() {
-    activeRecordTables.cleanup
     super.afterAll()
   }
 
@@ -56,6 +64,7 @@ class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with L
   addServlet(new UserController, "/api/v1/user/*")
   addServlet(new VehicleController, "/api/v1/vehicle/*")
   addServlet(new MissionController, "/api/v1/mission/*")
+  addServlet(new SessionsController, "/api/v1/auth/*")
 
   def jsonGet(uri: String) = {
     get(uri, headers = jsonHeaders) {
@@ -70,11 +79,11 @@ class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with L
     status should equal(200)
   }
 
-  test("vehicle") {
+  ignore("vehicle") {
     jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
   }
 
-  test("mission") {
+  ignore("mission") {
     jsonGet("/api/v1/mission/1")
   }
 
@@ -85,23 +94,39 @@ class ServletTests(disabled: Boolean) extends FunSuite with ScalatraSuite with L
   }
 
   test("user") {
-    Given("First make a new user")
-    val login = "test-" + Random.alphanumeric.take(6).mkString
-    val u = UserJson("sekrit")
-    put(s"/api/v1/user/$login", toJSON(u), headers = jsonHeaders) {
-      checkStatusOk()
+    // We want cookies for this test
+    session {
+      Given("First make a new user")
+
+      val email = s"kevin+$uniqueSuffix@3drobotics.com"
+      val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
+
+      post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
+        checkStatusOk()
+      }
+
+      Then("Make sure we can't recreate using the same ID")
+      post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
+        status should equal(409)
+      }
+
+      And("List that user")
+      jsonGet(s"/api/v1/user/$login")
+
+      And("Can't see other users")
+      // Make sure a regular user can't read other users
+      get(s"/api/v1/user/root") {
+        status should equal(401)
+      }
+
+      // They also shouldn't be allowed to list all users
+      get(s"/api/v1/user") {
+        status should equal(401)
+      }
     }
-
-    Then("FIXME - fails: Make sure we can't recreate using the same ID")
-    //put(s"/api/v1/user/$login", toJSON(u), headers = jsonHeaders) {
-    //  status should equal(409) // conflict
-    //}
-
-    And("List all users")
-    jsonGet("/api/v1/user")
   }
 
-  test("security-tlog-upload (not logged in)") {
+  ignore("security-tlog-upload (not logged in)") {
     post("/api/v1/vehicle/1/missions") {
       status should equal(401)
     }
