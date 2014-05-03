@@ -128,6 +128,12 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
 
       // Put all payload into our input stream
       msg.packet.foreach { pRaw =>
+        // Prevent client trying to crash the server by uploading an endless stream of non mavlink
+        if (mavlinkQueue.size > 512) {
+          log.error("Client sending too much crap - discarding")
+          mavlinkQueue.clear()
+        }
+
         //log.debug(s"Enuqueuing ${pRaw.size} bytes")
         mavlinkQueue.enqueue(pRaw.asScala.toSeq: _*)
       }
