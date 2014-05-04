@@ -2,6 +2,9 @@
 
 To install on a new server
 
+* Install various dependancies
+apt-get install libzmq-dev
+
 * Install MySql
 apt-get install mysql-client mysql-server
 (you will be prompted to choose a root db psw)

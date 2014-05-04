@@ -34,7 +34,8 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://1
     Listener(self),
     Bind(zmqSocket),
     HighWatermark(200),
-    Linger(0))
+    // Wait 200ms to give any last msgs a hope of getting out
+    Linger(200))
 
   private val clientIdToActor = new HashMap[String, ActorRef]()
   private val actorToClientId = new HashMap[ActorRef, ByteString]()
@@ -43,11 +44,14 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://1
     // Incoming msg from ZMQ client DEALERS
     // the first frame is the client id, third is the message
     case m: ZMQMessage =>
-      log.debug(s"Received ZMQ from client $m")
       val clientId = m.frame(0)
       val clientIdStr = clientId.utf8String
-      val delimeter = m.frame(1)
+      // val delimeter = m.frame(1)
       val payload = m.frame(2)
+
+      // FIXME - validate that the client id looks like a UUID (so we don't generate invalid actor names)
+
+      log.debug(s"Received ZMQ from $clientIdStr")
 
       // Get or create actor as needed
       val actor = clientIdToActor.getOrElseUpdate(clientIdStr, {
@@ -82,6 +86,6 @@ object ZMQGateway {
   /// An outbound message to a particular ZMQ client side DEALER (client ID will be found based on the sender
   /// ActorRef)
   case class ToZMQ(msg: ByteString) {
-    def zmqMessage(clientId: ByteString) = ZMQMessage(clientId, ByteString.empty, msg)
+    def zmqMessage(clientId: ByteString) = ZMQMessage(clientId, msg)
   }
 }
