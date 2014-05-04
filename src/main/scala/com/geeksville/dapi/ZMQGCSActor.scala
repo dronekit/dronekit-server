@@ -24,16 +24,16 @@ class ZMQGCSActor extends GCSActor {
 
     case FromZMQ(msg) =>
       val env = defaultEnvelope.mergeFrom(msg.toArray)
-      log.debug(s"Got packet $env")
+      // log.debug(s"Got packet $env")
 
       fromEnvelope(env).foreach { m =>
-        log.debug(s"Dispatching $m")
+        // log.debug(s"Dispatching $m")
         receive(m)
       }
   }
 
   override protected def sendToVehicle(e: Envelope) {
-    log.debug(s"Sending to vehicle $e")
+    // log.debug(s"Sending to vehicle $e")
     context.parent ! ToZMQ(ByteString(e.toByteArray))
   }
 

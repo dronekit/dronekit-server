@@ -73,9 +73,15 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
 
   private def mReceive: InstrumentedActor.Receiver = {
     case VehicleConnected() =>
-      log.debug("Vehicle connected")
+      log.debug(s"Vehicle connected (GCS=$sender)")
 
-      assert(!gcsActor.isDefined)
+      // It is possible for a GCS to drop a connection and then callback into a 'live' 
+      // vehicle instance.  In that case, we just mark that gcs as our new owner
+
+      gcsActor.foreach { old =>
+        log.warning(s"Vehicle reconnection, hanging up on old GCS $old")
+        old ! VehicleDisconnected()
+      }
       gcsActor = Some(sender)
 
     case VehicleDisconnected() =>

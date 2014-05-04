@@ -78,6 +78,21 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
     Some(ShowMsg(text = Some(s), priority = ShowMsg.Priority.MEDIUM))
 
   def receive = {
+    // It is possible for vehicle actors to tell us they are now talking to a different GCS.  In
+    // that case we forget about them
+    case VehicleDisconnected() =>
+      log.warning(s"Vehicle $sender has abandoned our GCS")
+
+      // Expensive way to find and remove the mapping
+      val removeOpt = vehicles.find { case (k, v) => v == sender }.map(_._1)
+
+      removeOpt match {
+        case Some(k) =>
+          vehicles.remove(k)
+        case None =>
+          log.error(s"Count not find vehicle $sender in our children")
+      }
+
     case SendMavlinkToVehicle(msg) =>
       log.debug(s"Sending mavlink to vehicle $msg")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))

@@ -55,7 +55,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
       import context._
 
       cancelTimeout()
-      disconnectTimer = Some(context.system.scheduler.scheduleOnce(30 seconds, actor, ZMQConnectionLost))
+      disconnectTimer = Some(context.system.scheduler.scheduleOnce(5 * 60 seconds, actor, ZMQConnectionLost))
     }
   }
 
@@ -78,7 +78,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
 
       // FIXME - validate that the client id looks like a UUID (so we don't generate invalid actor names)
 
-      log.debug(s"Received ZMQ from $clientIdStr")
+      //log.debug(s"Received ZMQ from $clientIdStr")
 
       // Get or create actor as needed
       val ainfo = clientIdToActor.getOrElseUpdate(clientIdStr, {
@@ -93,7 +93,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
       ainfo.actor ! FromZMQ(payload)
 
     case m: ToZMQ =>
-      log.debug(s"Sending from $sender to ZMQ...")
+      //log.debug(s"Sending from $sender to ZMQ...")
       val clientId = actorToClientId(sender)
       val zmsg = m.zmqMessage(clientId)
       socket ! zmsg
