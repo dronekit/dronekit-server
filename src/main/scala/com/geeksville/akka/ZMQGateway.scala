@@ -26,7 +26,7 @@ import akka.actor.Terminated
  *
  * FIXME - kill worker actors if we haven't heard from their client in a while
  */
-class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://127.0.0.1:21233") extends DebuggableActor with ActorLogging {
+class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://127.0.0.1:5556") extends DebuggableActor with ActorLogging {
   import ZMQGateway._
 
   private val socket = ZeroMQExtension(context.system).newSocket(
