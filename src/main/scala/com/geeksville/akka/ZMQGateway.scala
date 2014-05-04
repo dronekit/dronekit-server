@@ -11,6 +11,9 @@ import akka.actor.ActorRef
 import akka.util.ByteString
 import akka.util.CompactByteString
 import akka.actor.Terminated
+import akka.actor.Cancellable
+import scala.concurrent.duration._
+import akka.actor.PoisonPill
 
 /**
  * An actor that manages incoming packets from GCSes speaking ZeroMQ
@@ -26,7 +29,7 @@ import akka.actor.Terminated
  *
  * FIXME - kill worker actors if we haven't heard from their client in a while
  */
-class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://127.0.0.1:5556") extends DebuggableActor with ActorLogging {
+class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*:5556") extends DebuggableActor with ActorLogging {
   import ZMQGateway._
 
   private val socket = ZeroMQExtension(context.system).newSocket(
@@ -37,8 +40,32 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://1
     // Wait 200ms to give any last msgs a hope of getting out
     Linger(200))
 
-  private val clientIdToActor = new HashMap[String, ActorRef]()
+  private case class ActorInfo(val actor: ActorRef) {
+    var disconnectTimer: Option[Cancellable] = None
+
+    // Start the initial deathwatch timeout
+    resetTimeout()
+
+    def cancelTimeout() {
+      disconnectTimer.foreach(_.cancel())
+    }
+
+    // If we don't receive a packet often enough from the client we will declare loss of connection
+    def resetTimeout() {
+      import context._
+
+      cancelTimeout()
+      disconnectTimer = Some(context.system.scheduler.scheduleOnce(30 seconds, actor, ZMQConnectionLost))
+    }
+  }
+
+  private val clientIdToActor = new HashMap[String, ActorInfo]()
   private val actorToClientId = new HashMap[ActorRef, ByteString]()
+
+  override def postStop() {
+    clientIdToActor.values.foreach(_.cancelTimeout())
+    super.postStop()
+  }
 
   def receive = {
     // Incoming msg from ZMQ client DEALERS
@@ -54,15 +81,16 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://1
       log.debug(s"Received ZMQ from $clientIdStr")
 
       // Get or create actor as needed
-      val actor = clientIdToActor.getOrElseUpdate(clientIdStr, {
+      val ainfo = clientIdToActor.getOrElseUpdate(clientIdStr, {
         val r = context.actorOf(workerActorFactory, clientIdStr)
         // Also keep a map in the other direction
         actorToClientId(r) = clientId
         context.watch(r)
-        r
+        ActorInfo(r)
       })
 
-      actor ! FromZMQ(payload)
+      ainfo.resetTimeout() // We just received a packet - stave off death a bit longer
+      ainfo.actor ! FromZMQ(payload)
 
     case m: ToZMQ =>
       log.debug(s"Sending from $sender to ZMQ: $m")
@@ -88,4 +116,7 @@ object ZMQGateway {
   case class ToZMQ(msg: ByteString) {
     def zmqMessage(clientId: ByteString) = ZMQMessage(clientId, msg)
   }
+
+  /// Sent to the actor if we detect loss of link to the client.  Actor is expected to kill itself
+  case object ZMQConnectionLost extends PoisonPill
 }
