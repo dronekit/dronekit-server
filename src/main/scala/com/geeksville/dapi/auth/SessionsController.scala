@@ -173,9 +173,17 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
       haltBadRequest("insuffient password")
 
     val r = User.create(id, u.password.get, u.email, u.fullName)
-    user = r // Mark the session that this user is logged in
-    sendWelcomeEmail(r)
-    r
+    try {
+      sendWelcomeEmail(r)
+      user = r // Mark the session that this user is logged in
+      r
+    } catch {
+      case ex: Exception =>
+        // If we failed sending the email delete the new user record
+        r.delete()
+
+        throw ex
+    }
   }
 
 }
