@@ -14,15 +14,58 @@ import org.json4s.JsonDSL._
 import com.geeksville.util.Gravatar
 import java.util.Date
 import com.github.aselab.activerecord.ActiveRecordCompanion
+import org.squeryl.Session
+import org.squeryl.internals.StatementWriter
+import java.sql.SQLException
 
-case class Migration(var currentVersion: Int) extends DapiRecord with Logging {
-
-}
+case class Migration(var currentVersion: Int) extends DapiRecord with Logging
 
 object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
-  val requiredVersion = 1
   val dbWipeVersion = 6
+
+  val migrations = Seq(
+    Migrator(7,
+      "ALTER TABLE users ADD need_new_password BOOLEAN NOT NULL DEFAULT false"))
+
+  case class Migrator(newVerNum: Int, sql: String*) {
+    def run() {
+      inTransaction {
+        val schema = Tables.users.schema
+        info(s"Migrating to: $this")
+        // schema.printDdl { s => info(s) }
+        // val adapter = Session.currentSession.databaseAdapter
+        // val sw = new StatementWriter(adapter)
+        //Tables.users.schema.createColumnGroupConstraintsAndIndexes
+        sql.foreach(executeDdl)
+      }
+
+      // Success - we are now at this new version #
+      setVersion(newVerNum)
+    }
+  }
+
+  def requiredVersion = migrations.map(_.newVerNum).reduce(math.max)
+
+  /// Run raw SQL
+  private def executeDdl(statement: String) = {
+
+    val cs = Session.currentSession
+    cs.log(statement)
+
+    val s = cs.connection.createStatement
+    try {
+      s.execute(statement)
+    } finally {
+      s.close
+    }
+  }
+
+  private def setVersion(v: Int) {
+    val dbVer = find()
+    dbVer.currentVersion = v
+    dbVer.save
+  }
 
   def update() {
     val curver = try {
@@ -36,11 +79,10 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     if (curver < dbWipeVersion) {
       error("WIPING TABLES DUE TO MIGRATION!")
       Tables.reset
+      setVersion(dbWipeVersion)
     }
 
-    val dbVer = find()
-    dbVer.currentVersion = math.max(requiredVersion, dbWipeVersion)
-    dbVer.save
+    migrations.filter(curver < _.newVerNum).foreach(_.run())
   }
 
   private def find(): Migration = {

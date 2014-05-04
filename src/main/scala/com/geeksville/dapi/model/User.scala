@@ -50,6 +50,9 @@ case class User(@Required @Unique login: String,
   // User has confirmed their email
   var emailVerified = false
 
+  // A sysadmin/daemon has decided this user needs a new password
+  var needNewPassword = false
+
   /// If set this token can be used tempoarily by confirmPasswordReset
   var passwordResetToken: Option[Long] = None
 
@@ -170,6 +173,8 @@ object UserSerializer extends CustomSerializer[User](implicit format => (
         ("isAdmin" -> u.isAdmin) ~
         ("avatarImage" -> u.avatarImageURL) ~
         ("profileURL" -> u.profileURL) ~
+        ("emailVerified" -> u.emailVerified) ~
+        ("needNewPassword" -> u.needNewPassword) ~
         ("vehicles" -> u.vehicles.map(_.id))
   }))
 
