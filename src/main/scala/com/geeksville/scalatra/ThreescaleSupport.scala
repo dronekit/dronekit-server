@@ -18,7 +18,14 @@ object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
 
   private lazy val threeActor: ActorRef = synchronized {
-    MockAkka.system.actorOf(Props(new ThreeActor(MockAkka.config.getString("dapi.threescale.apiKey"))))
+    val keyname = "dapi.threescale.apiKey"
+    val config = MockAkka.config
+    val key = if (config.hasPath(keyname))
+      Some(config.getString(keyname))
+    else
+      None
+
+    MockAkka.system.actorOf(Props(new ThreeActor(key)))
   }
 
 }
