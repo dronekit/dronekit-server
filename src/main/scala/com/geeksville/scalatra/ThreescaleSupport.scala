@@ -17,9 +17,19 @@ import java.util.concurrent.TimeoutException
 object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
 
+  def config = MockAkka.config
+
+  private lazy val service = {
+    val keyname = "dapi.threescale.serviceId"
+    if (config.hasPath(keyname))
+      config.getString(keyname)
+    else
+      "unspecified"
+  }
+
   private lazy val threeActor: ActorRef = synchronized {
     val keyname = "dapi.threescale.apiKey"
-    val config = MockAkka.config
+
     val key = if (config.hasPath(keyname))
       Some(config.getString(keyname))
     else
@@ -35,8 +45,6 @@ object ThreescaleSupport {
  */
 trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
   import ThreescaleSupport._
-
-  private lazy val service = MockAkka.config.getString("dapi.threescale.serviceId")
 
   def requireServiceAuth(metricIn: String) {
     val metric = metricIn.replace('/', '_') // 3scale converts slashes to underscores
