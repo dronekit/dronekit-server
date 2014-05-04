@@ -76,7 +76,7 @@ object NestorBuild extends Build {
 
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-zeromq" % "2.3.0" withSources (),
-        
+
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-atmosphere" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-scalate" % ScalatraVersion withSources (),
@@ -113,7 +113,7 @@ object NestorBuild extends Build {
         "com.novus" %% "salat" % "1.9.5",
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
 
-        "org.apache.httpcomponents" % "httpclient" % "4.2.6",
+        "org.apache.httpcomponents" % "httpclient" % "4.2",
         //"org.apache.httpcomponents" % "httpcore" % "4.2.6",
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",

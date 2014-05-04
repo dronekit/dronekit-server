@@ -45,7 +45,7 @@ class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.
           new BasicNameValuePair(key, v)
       }.toList.asJava
 
-      transaction.setEntity(new UrlEncodedFormEntity(nvps));
+      transaction.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
 
       val response = httpclient.execute(targetHost, transaction)
 
