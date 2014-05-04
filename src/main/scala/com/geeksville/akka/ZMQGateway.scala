@@ -93,7 +93,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
       ainfo.actor ! FromZMQ(payload)
 
     case m: ToZMQ =>
-      log.debug(s"Sending from $sender to ZMQ: $m")
+      log.debug(s"Sending from $sender to ZMQ...")
       val clientId = actorToClientId(sender)
       val zmsg = m.zmqMessage(clientId)
       socket ! zmsg
@@ -118,5 +118,5 @@ object ZMQGateway {
   }
 
   /// Sent to the actor if we detect loss of link to the client.  Actor is expected to kill itself
-  case object ZMQConnectionLost extends PoisonPill
+  case object ZMQConnectionLost
 }

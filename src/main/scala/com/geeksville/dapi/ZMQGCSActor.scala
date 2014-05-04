@@ -18,6 +18,10 @@ class ZMQGCSActor extends GCSActor {
   override def receive = myReceive.orElse(super.receive)
 
   private def myReceive: Receive = {
+    case ZMQConnectionLost =>
+      log.warning("Connection lost to GCS - exiting")
+      self ! PoisonPill
+
     case FromZMQ(msg) =>
       val env = defaultEnvelope.mergeFrom(msg.toArray)
       log.debug(s"Got packet $env")
