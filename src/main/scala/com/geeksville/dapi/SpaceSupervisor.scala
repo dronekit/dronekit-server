@@ -143,7 +143,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   override def toString = {
     val numLive = actorToMission.size
     val numRecent = recentMissions.size
-    val nummsg = allMissions.foldLeft(0)((c, info) => c + info.numMessages)
+    val nummsg = allMissions.map(_.numMessages).reduceOption(_ + _).getOrElse(0)
     s"SpaceSupervisor: $numLive live, $numRecent recent, $nummsg messages"
   }
 
