@@ -16,6 +16,7 @@ import com.geeksville.dapi.model.UserJson
 import com.geeksville.util.Using._
 import com.geeksville.mailgun.MailgunClient
 import com.geeksville.scalatra.ScalatraTools
+import com.github.aselab.activerecord.RecordInvalidException
 
 class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
@@ -172,7 +173,13 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     if (!u.password.isDefined)
       haltBadRequest("insuffient password")
 
-    val r = User.create(id, u.password.get, u.email, u.fullName)
+    val r = try {
+      User.create(id, u.password.get, u.email, u.fullName)
+    } catch {
+      // Failed validation
+      case ex: RecordInvalidException =>
+        haltBadRequest(ex.getMessage)
+    }
     try {
       sendWelcomeEmail(r)
       user = r // Mark the session that this user is logged in
