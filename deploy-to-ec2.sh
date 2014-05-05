@@ -27,3 +27,6 @@ git push --tags
 echo
 echo "Starting new version...."
 ./ssh-ec2 /etc/rc2.d/S98nestor-startup
+
+# Tell newrelic we just pushed a new load
+curl -H "x-api-key:cc0479f46c7b884f2bc3f011c5803096e44e0fa3544a70a" -d "deployment[app_name]=My Application" -d "deployment[user]=$USER" -d "deployment[description]=deploy-to-ec2" https://api.newrelic.com/deployments.xml
