@@ -35,6 +35,7 @@ import org.mavlink.messages.MAV_MODE_FLAG
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.net.NetworkInterface
 import com.geeksville.akka.DebuggableActor
+import com.geeksville.flight.SendMessage
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
@@ -45,7 +46,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
   private val webapi = new GCSHooksImpl(host)
   private val random = new Random
 
-  def receive = {
+  override def receive = {
     case Terminated(_) =>
       if (children.isEmpty) // All our vehicles done?
         self ! PoisonPill
@@ -73,6 +74,8 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
   }
 
   private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender {
+    private var seqNum = 0
+
     case object SimNext
     val interfaceNum = 0
     val isControllable = false
@@ -118,6 +121,11 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     }
 
     def receive = {
+      case SendMessage(m) =>
+        //println("Sending heartbeat")
+        //if (!listenOnly) // Don't talk to the vehicle if we are supposed to stay off the air
+        sendMavlink(m)
+
       case SimNext =>
         if (numRemaining == 0)
           self ! PoisonPill
@@ -150,6 +158,8 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
       //log.debug(s"Sending to server: $m")
       m match {
         case m: MAVLinkMessage =>
+          seqNum += 1
+          m.sequence = (seqNum & 0xff)
           webapi.filterMavlink(interfaceNum, m.encode)
       }
     }
