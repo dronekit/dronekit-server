@@ -15,6 +15,7 @@ import org.json4s._
 import com.geeksville.util.Gravatar
 import java.util.Date
 import scala.util.Random
+import com.geeksville.akka.MockAkka
 
 case class User(@Required @Unique login: String,
   @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
@@ -191,8 +192,8 @@ object User extends DapiRecordCompanion[User] with Logging {
         debug(s"Seeding $id user")
 
         // If we don't find a root account - make a new one (must be a virgin/damaged DB)
-        // FIXME - choose a random initial password and print it to the log
-        val psw = "fish4403"
+        // If your run is failing on the following line, add a definition to ~/nestor.conf
+        val psw = MockAkka.config.getString("dapi.defaultRootPsw")
         val u = create("root", psw, Some("kevin@3drobotics.com"), Some("Kevin Hester"), group = "admin")
         Some(u)
       } else {
