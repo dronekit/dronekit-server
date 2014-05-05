@@ -147,7 +147,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
         -Kevin
         """
 
-      val r = client.sendTo(u.email.get, "kevin+droneshare@3drobotics.com", "Welcome to Droneshare",
+      val r = client.sendTo("kevin+droneshare@3drobotics.com", u.email.get, "Welcome to Droneshare",
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + compact(render(r)))
     }
