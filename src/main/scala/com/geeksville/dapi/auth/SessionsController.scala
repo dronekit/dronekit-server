@@ -48,6 +48,10 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     */
 
   private def doLogin() = {
+
+    // Make sure this app is allowed to login users
+    requireServiceAuth("user/login")
+
     val user = scentry.authenticate("Password")
 
     // User just tried to login - if login has failed tell them they can't access the site
@@ -77,10 +81,12 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     doLogin()
   }
 
-  // NOTE: For most applications this GET method should not be used - but it does make for easier browser based testing
-  get("/login") {
-    doLogin()
-  }
+  /**
+   * NOTE: For most applications this GET method should not be used - but it does make for easier browser based testing
+   * get("/login") {
+   * doLogin()
+   * }
+   */
 
   post("/pwreset") {
     requireLogin().beginPasswordReset()
@@ -117,6 +123,9 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   // Never do this in a real app. State changes should never happen as a result of a GET request. However, this does
   // make it easier to illustrate the logout code.
   post("/logout", operation(logoutOp)) {
+    // Only allow logout if we can login
+    requireServiceAuth("user/login")
+
     scentry.logout()
 
     // NOT USING HTML
