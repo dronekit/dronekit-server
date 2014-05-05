@@ -60,7 +60,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   import context._
   import SpaceSupervisor._
 
-  private val msgLogThrottle = new Throttled(5000)
+  private val msgLogThrottle = new Throttled(30 * 1000)
 
   private val eventStream = new EventStream
 
