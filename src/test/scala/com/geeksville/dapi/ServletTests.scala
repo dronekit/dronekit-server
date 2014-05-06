@@ -129,10 +129,8 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
       jsonGet(s"/api/v1/user/$login")
     }
 
-    ignore("User !read !self") {
-      get(s"/api/v1/user/root", headers = jsonHeaders) {
-        status should equal(401)
-      }
+    test("User read !self") {
+      jsonGet(s"/api/v1/user/root")
     }
 
     test("User !read user list") {
@@ -142,17 +140,17 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     }
   }
 
-  ignore("vehicle") {
-    userSession {
-      Given("Create a new vehicle")
-      val v = VehicleJson(UUID.randomUUID, "unit-test vehicle")
-      put("/api/v1/vehicle", toJSON(v), headers = jsonHeaders) {
-        checkStatusOk()
-      }
-      And("Read vehicle")
-      jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
+  //userSession {
+  ignore("Vehicle create") {
+    val v = VehicleJson(UUID.randomUUID, "unit-test vehicle")
+    put("/api/v1/vehicle", toJSON(v), headers = jsonHeaders) {
+      checkStatusOk()
     }
   }
+  ignore("Vehicle read") {
+    jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
+  }
+  //}
 
   ignore("security-tlog-upload (not logged in)") {
     post("/api/v1/vehicle/1/missions", headers = jsonHeaders) {
