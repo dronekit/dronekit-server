@@ -55,12 +55,16 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
    * Look for API key in an authorization header, or if not there, then in the query string.
    */
   private def apiKey = {
-    val headerkeys = request.getHeaders("Authorization").asScala.flatMap { s =>
+    warn(s"*** Looking for API keys in $request")
+    val authHeaders = request.getHeaders("Authorization").asScala.toSeq
+
+    val headerkeys = authHeaders.flatMap { s =>
       s match {
         case HeaderRegex(key) => Some(key)
         case _ => None
       }
     }.toSeq
+    warn(s"*** Auth headers ${authHeaders.mkString(",")} => keys=${headerkeys.mkString(",")}")
 
     if (headerkeys.isEmpty)
       params.getOrElse("api_key", haltUnauthorized("api key is required. See http://nestor.3dr.com/develop"))

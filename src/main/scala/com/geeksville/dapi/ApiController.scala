@@ -190,6 +190,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Retrieve a list of instances
    */
   get("/", operation(getOp)) {
+    dumpRequest()
     requireReadAllAccess()
     val r = getAll
     // We do the json conversion here - so that it happens inside of our try/catch block
@@ -209,10 +210,21 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be fetched")))
 
+  def dumpRequest() {
+    debug(s"Request dump: $request")
+    request.headers.foreach { h =>
+      debug(s"  Header: $h")
+    }
+    request.cookies.foreach { h =>
+      debug(s"  Cookie: $h")
+    }
+  }
+
   /**
    * Find an object
    */
   get("/:id", operation(findByIdOp)) {
+    dumpRequest()
     findById
   }
 

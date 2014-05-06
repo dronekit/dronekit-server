@@ -37,48 +37,55 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
   protected implicit def jsonFormats: Formats = DefaultFormats ++ DroneModelFormats ++ GeeksvilleFormats
 
   // The random ID we will use for this test session
-  val uniqueSuffix = Random.alphanumeric.take(6).mkString
+  val random = new Random(System.currentTimeMillis)
+  val uniqueSuffix = random.alphanumeric.take(6).mkString
   val login = "test-" + uniqueSuffix
-  val password = Random.alphanumeric.take(8).mkString
+  val password = random.alphanumeric.take(8).mkString
 
   val apiKey = "eb34bd67.megadroneshare"
-  val jsonHeaders = Map(
-    "Accept" -> "application/json",
-    "Content-Type" -> "application/json",
+
+  // Send this in all cases
+  val commonHeaders = Map(
     "Authorization" -> s"""DroneApi apikey="$apiKey"""")
+
+  val jsonHeaders = commonHeaders ++ Map(
+    "Accept" -> "application/json",
+    "Content-Type" -> "application/json")
 
   val loginInfo = Map("login" -> login, "password" -> password)
 
   // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
   override def beforeAll() {
+    println("**************************** STARTING TESTS ************************************")
     System.setProperty("run.mode", "test") // So we use the correct testing DB
     Global.setConfig()
 
     super.beforeAll()
 
     activeRecordTables.initialize
+
+    addServlet(new SessionsController, "/api/v1/session/*")
+    addServlet(new UserController, "/api/v1/user/*")
+    addServlet(new VehicleController, "/api/v1/vehicle/*")
+    addServlet(new SharedMissionController, "/api/v1/mission/*")
+    addServlet(new SessionsController, "/api/v1/auth/*")
   }
 
   override def afterAll() {
     super.afterAll()
   }
 
-  addServlet(new SessionsController, "/api/v1/session/*")
-  addServlet(new UserController, "/api/v1/user/*")
-  addServlet(new VehicleController, "/api/v1/vehicle/*")
-  addServlet(new MissionController, "/api/v1/mission/*")
-  addServlet(new SessionsController, "/api/v1/auth/*")
-
   def jsonGet(uri: String) = {
-    get(uri, headers = jsonHeaders) {
+    get(uri, /* params = loginInfo, */ headers = jsonHeaders) {
       checkStatusOk()
       parse(body)
     }
   }
 
   def checkStatusOk() {
-    if (status != 200) // If not okay then show the error msg from server
-      error(body)
+    if (status != 200) { // If not okay then show the error msg from server
+      error(response.statusLine.message)
+    }
     status should equal(200)
   }
 
@@ -90,47 +97,52 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
 
   /// Do a session logged in as our test user
   def userSession[A](f: => A): A = session {
-    post("/api/v1/session/login", loginInfo) {
+    post("/api/v1/session/login", loginInfo, jsonHeaders) {
       checkStatusOk()
     }
 
     f
   }
 
-  test("user") {
-    // We want cookies for this test
-    session {
-      Given("First make a new user")
+  // We want cookies for this test
+  session {
+    val email = s"kevin+$uniqueSuffix@3drobotics.com"
+    val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
-      val email = s"kevin+$uniqueSuffix@3drobotics.com"
-      val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
-
+    test("User create") {
       post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
         checkStatusOk()
+        response.headers.foreach {
+          case (k, v) =>
+            println(s"Create response: $k => ${v.mkString(",")}")
+        }
       }
+    }
 
-      Then("Make sure we can't recreate using the same ID")
+    test("User !recreate") {
       post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
         status should equal(409)
       }
+    }
 
-      And("List that user")
+    test("User read self") {
       jsonGet(s"/api/v1/user/$login")
+    }
 
-      And("Can't see other users")
-      // Make sure a regular user can't read other users
-      get(s"/api/v1/user/root") {
+    test("User !read !self") {
+      get(s"/api/v1/user/root", headers = jsonHeaders) {
         status should equal(401)
       }
+    }
 
-      // They also shouldn't be allowed to list all users
-      get(s"/api/v1/user") {
+    test("User !read user list") {
+      get(s"/api/v1/user", headers = jsonHeaders) {
         status should equal(401)
       }
     }
   }
 
-  test("vehicle") {
+  ignore("vehicle") {
     userSession {
       Given("Create a new vehicle")
       val v = VehicleJson(UUID.randomUUID, "unit-test vehicle")
@@ -143,32 +155,32 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
   }
 
   ignore("security-tlog-upload (not logged in)") {
-    post("/api/v1/vehicle/1/missions") {
+    post("/api/v1/vehicle/1/missions", headers = jsonHeaders) {
       status should equal(401)
     }
   }
 
-  test("sessions work") {
+  ignore("sessions work") {
     // We want cookies for this test
     session {
       Given("We start by logging out")
-      post("/api/v1/session/logout", loginInfo) {
+      post("/api/v1/session/logout", loginInfo, headers = jsonHeaders) {
         checkStatusOk()
       }
 
       Then("We are logged out")
       // First try being not logged in
-      get("/api/v1/session/user") {
+      get("/api/v1/session/user", headers = jsonHeaders) {
         status should equal(401)
       }
 
       Then("We can log in")
-      post("/api/v1/session/login", loginInfo) {
+      post("/api/v1/session/login", loginInfo, headers = jsonHeaders) {
         checkStatusOk()
       }
 
       And("login cookie works")
-      get("/api/v1/session/user") {
+      get("/api/v1/session/user", headers = jsonHeaders) {
         checkStatusOk()
       }
     }
@@ -183,7 +195,7 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
       is.close()
       val payload = BytesPart(name, bytes, Mission.mimeType)
 
-      post("/api/v1/vehicle/1/missions", Iterable.empty, Map("payload" -> payload)) {
+      post("/api/v1/vehicle/1/missions", Iterable.empty, Map("payload" -> payload), headers = commonHeaders) {
         checkStatusOk()
         info("View URL is " + body)
       }

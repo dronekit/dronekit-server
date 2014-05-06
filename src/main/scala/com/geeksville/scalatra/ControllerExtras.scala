@@ -32,6 +32,7 @@ trait ControllerExtras extends ScalatraBase with Logging {
     case e: Exception =>
       contentType = "text/html"
 
+      println(e)
       error("Fatal exception", e)
 
       InternalServerError(<html>
