@@ -224,7 +224,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Find an object
    */
   get("/:id", operation(findByIdOp)) {
-    dumpRequest()
+    //dumpRequest()
     findById
   }
 
