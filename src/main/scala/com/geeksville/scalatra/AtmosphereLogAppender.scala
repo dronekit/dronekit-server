@@ -11,23 +11,27 @@ import com.geeksville.akka.MockAkka
 import scala.concurrent.ExecutionContext
 
 class AtmosphereLogAppender extends OutputStreamAppender[ILoggingEvent] {
+  lazy val isTesting = ScalatraTools.isTesting // atmo no work in test world
+
   private val stream = new ByteArrayOutputStream() {
     override def write(b: Array[Byte], off: Int, len: Int) = {
-      val r = super.write(b, off, len)
+      if (!isTesting) {
+        val r = super.write(b, off, len)
 
-      val str = toString()
-      reset()
+        val str = toString()
+        reset()
 
-      // println(s"Sending to atmo $str")
+        // println(s"Sending to atmo $str")
 
-      val route = "/api/v1/admin/log"
+        val route = "/api/v1/admin/log"
 
-      // Yuck FIXME - must be a nicer way to find execution context
-      // Also a nicer way to see if we've created our akka context
-      if (MockAkka.configOverride.isDefined) {
-        implicit val context: ExecutionContext = MockAkka.system.dispatcher
-        AtmosphereTools.broadcast(route, "log", JString(str))
-        r
+        // Yuck FIXME - must be a nicer way to find execution context
+        // Also a nicer way to see if we've created our akka context
+        if (MockAkka.configOverride.isDefined) {
+          implicit val context: ExecutionContext = MockAkka.system.dispatcher
+          AtmosphereTools.broadcast(route, "log", JString(str))
+          r
+        }
       }
     }
   }
