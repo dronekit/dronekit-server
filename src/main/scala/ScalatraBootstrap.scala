@@ -59,6 +59,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Doesn't work yet - for now allow all origins
     //context.initParameters("org.scalatra.cors.allowedOrigins") = "http://www.droneshare.com http://localhost:8080 http://dmn0kpsvjtmio.cloudfront.net nestor-production.herokuapp.com"
+    context.initParameters("org.scalatra.cors.allowCredentials") = "true"
 
     // Don't start old nestor stuff for now
     //context.mount(new DeviceServlet, "/api/*")
@@ -86,7 +87,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 
-    Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
+    // Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
   }
 
   /// Make sure you shut down Akka
