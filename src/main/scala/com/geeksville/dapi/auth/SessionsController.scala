@@ -192,6 +192,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     try {
       sendWelcomeEmail(r)
       user = r // Mark the session that this user is logged in
+      rememberMe.setCookie(user)
       r
     } catch {
       case ex: Exception =>

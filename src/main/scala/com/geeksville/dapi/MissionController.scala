@@ -21,16 +21,18 @@ import org.json4s.JsonDSL._
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.json.ActiveRecordSerializer
 import org.scalatra.atmosphere._
-import com.geeksville.scalatra.CustomAtmosphereSupport
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
-class MissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) with CustomAtmosphereSupport {
-
+/// Atmosphere doesn't work in the test framework so we split it out
+class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
   private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
   atmosphere("/live", operation(liveOp)) {
     new AtmosphereLive(tryLogin())
   }
+}
+
+class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
 
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions

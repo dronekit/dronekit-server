@@ -163,6 +163,18 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
     //app.redirect("/sessions/new")
   }
 
+  /// Set the cookie indicating that this user is logged in
+  def setCookie(user: User) {
+    if (shouldUseCookies) {
+      logger.trace("rememberMe: setting cookie")
+      val token = makeToken(user)
+      Option(app.cookies) match {
+        case Some(c) => c.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))
+        case None => logger.error(s"Can't set cookie on $request") // It seems like the atmosphere paths are broken for cookies
+      }
+    }
+  }
+
   /**
    * *
    * After successfully authenticating with either the RememberMeStrategy, or the UserPasswordStrategy with the
@@ -173,12 +185,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    */
   override def afterAuthenticate(winningStrategy: String, user: User)(implicit request: HttpServletRequest, response: HttpServletResponse) = {
     if (winningStrategy == "RememberMe" || shouldUseCookies) {
-      logger.trace("rememberMe: setting cookie")
-      val token = makeToken(user)
-      Option(app.cookies) match {
-        case Some(c) => c.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))
-        case None => logger.error(s"Can't set cookie on $request") // It seems like the atmosphere paths are broken for cookies
-      }
+      setCookie(user)
     }
   }
 

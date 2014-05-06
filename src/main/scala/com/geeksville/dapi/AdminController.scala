@@ -17,7 +17,6 @@ import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.test.PlaybackGCSClient
 import org.scalatra.CorsSupport
-import com.geeksville.scalatra.CustomAtmosphereSupport
 import org.scalatra.AsyncResult
 import _root_.akka.actor.{ ActorRef, Actor, Props, ActorSystem }
 import _root_.akka.util.Timeout
@@ -28,7 +27,7 @@ import org.scalatra.CorsSupport
 /**
  * Special admin operations
  */
-class AdminController(implicit val swagger: Swagger) extends DroneHubStack with FutureSupport with CorsSupport with CustomAtmosphereSupport with SwaggerSupport {
+class AdminController(implicit val swagger: Swagger) extends DroneHubStack with FutureSupport with CorsSupport with AtmosphereSupport with SwaggerSupport {
 
   // Akka implicits for FutureSupport
   lazy val system = MockAkka.system

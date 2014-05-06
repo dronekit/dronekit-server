@@ -17,6 +17,8 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
   }
   protected def toSession = { case usr: User => usr.login }
 
+  protected def rememberMe = scentry.strategies("Remember").asInstanceOf[RememberMeStrategy]
+
   val realm = "Drone"
 
   // For now we just keep the defaults
