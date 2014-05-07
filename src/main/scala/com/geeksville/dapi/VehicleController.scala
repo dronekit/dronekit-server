@@ -71,12 +71,20 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   post("/:id/missions", operation(addMissionInfo)) {
     val v = requireWriteAccess(findById)
-    val payload = fileParams("payload")
-    val ctype = payload.contentType.getOrElse(haltBadRequest("content-type not set"))
-    if (Mission.mimeType != ctype)
-      haltBadRequest("invalid content-type")
+    val files = fileMultiParams.values.flatMap { s => s }
+    files.foreach { payload =>
+      warn(s"Considering ${payload.name} ${payload.fieldName} ${payload.contentType}")
+      val ctype = {
+        if (payload.name.endsWith(".tlog")) // In case the client isn't smart enough to set mime types
+          Mission.mimeType
+        else
+          payload.contentType.getOrElse(haltBadRequest("content-type not set"))
+      }
+      if (Mission.mimeType != ctype)
+        haltBadRequest(s"invalid content-type: Found $ctype")
 
-    v.createMission(payload.get, Some("Web upload"))
+      v.createMission(payload.get, Some(payload.name))
+    }
 
     warn("Returning")
 

@@ -75,7 +75,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   protected def requireWriteAccess(o: T): T = {
     requireServiceAuth(aName + "/update")
-    haltMethodNotAllowed("We don't allow writes to this")
+    o
   }
 
   protected def requireDeleteAccess(o: T): T = {
@@ -89,8 +89,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     val u = tryLogin()
     val isOwner = u.map(_.id == ownerId).getOrElse(false)
     val isResearcher = u.map(_.isResearcher).getOrElse(false)
+    val isAdmin = u.map(_.isAdmin).getOrElse(false)
 
-    if (!ApiController.isAccessAllowed(privacyCode, isOwner, isResearcher, defaultPrivacy))
+    if (!ApiController.isAccessAllowed(privacyCode, isOwner || isAdmin, isResearcher, defaultPrivacy))
       haltUnauthorized("No access")
   }
 
