@@ -55,7 +55,7 @@ case class Vehicle(
   lazy val missions = hasMany[Mission]
 
   /// Create a new mission as a child of this vehicle (given tlog bytes)
-  def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) {
+  def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) = {
     // Copy over tlog
     Mission.putBytes(tlogId, bytes)
 
@@ -69,6 +69,7 @@ case class Vehicle(
     m.regenSummary()
     m.save()
     debug("Done with record")
+    m
   }
 
   /**

@@ -62,7 +62,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   }
 
   private val addMissionInfo =
-    (apiOperation[String]("addMission")
+    (apiOperation[List[Mission]]("addMission")
       summary s"Add a new mission (as a tlog, bog or log)"
       consumes (Mission.mimeType)
       parameters (
@@ -72,7 +72,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   post("/:id/missions", operation(addMissionInfo)) {
     val v = requireWriteAccess(findById)
     val files = fileMultiParams.values.flatMap { s => s }
-    files.foreach { payload =>
+    val created = files.flatMap { payload =>
       warn(s"Considering ${payload.name} ${payload.fieldName} ${payload.contentType}")
       val ctype = {
         if (payload.name.endsWith(".tlog")) // In case the client isn't smart enough to set mime types
@@ -80,16 +80,17 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
         else
           payload.contentType.getOrElse(haltBadRequest("content-type not set"))
       }
-      if (Mission.mimeType != ctype)
-        haltBadRequest(s"invalid content-type: Found $ctype")
-
-      v.createMission(payload.get, Some(payload.name))
-    }
+      if (Mission.mimeType != ctype) {
+        warn(s"invalid content-type for ${payload.name} Found $ctype")
+        None
+      } else
+        Some(v.createMission(payload.get, Some(payload.name)))
+    }.toList
 
     warn("Returning")
 
-    // Return a URL where the flight can be viewed
-    JString("http://fish.com")
+    // Return the missions that were created
+    created
   }
 
 }
