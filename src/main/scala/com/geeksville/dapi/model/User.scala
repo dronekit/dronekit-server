@@ -183,6 +183,9 @@ object User extends DapiRecordCompanion[User] with Logging {
 
   private val random = new Random(System.currentTimeMillis)
 
+  def findByEmail(email: String): Option[User] =
+    this.where(_.email === email.toLowerCase).headOption
+
   /**
    * Find a user (creating the root acct if necessary)
    */
@@ -204,7 +207,7 @@ object User extends DapiRecordCompanion[User] with Logging {
   }
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
-    val u = User(login.toLowerCase, email, fullName)
+    val u = User(login.toLowerCase, email.map(_.toLowerCase), fullName)
     u.password = password
     u.groupId = group
     u.create

@@ -47,8 +47,17 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
 }
 
 object UserPasswordStrategy extends Logging {
+  /**
+   * First we try to find the user by login name, if that fails we check to see if the client provided an
+   * email address.
+   */
   def getValidatedUser(login: String, password: String) = {
-    User.find(login).filter { user =>
+    var userOpt = User.find(login).orElse {
+      logger.warn(s"Username $login not found, now searching for email $login")
+      User.findByEmail(login)
+    }
+
+    userOpt.filter { user =>
       if (user.isPasswordGood(password)) {
         logger.info(s"login succeeded for $login")
         true
