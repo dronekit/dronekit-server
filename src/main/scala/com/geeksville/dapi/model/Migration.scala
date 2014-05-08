@@ -26,7 +26,9 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
   val migrations = Seq(
     Migrator(7,
-      "ALTER TABLE users ADD need_new_password BOOLEAN NOT NULL DEFAULT false"))
+      "ALTER TABLE users ADD need_new_password BOOLEAN NOT NULL DEFAULT false"),
+    Migrator(8,
+      "ALTER TABLE users ADD want_emails BOOLEAN NOT NULL DEFAULT true"))
 
   case class Migrator(newVerNum: Int, sql: String*) {
     def run() {

@@ -54,6 +54,8 @@ case class User(@Required @Unique login: String,
   // A sysadmin/daemon has decided this user needs a new password
   var needNewPassword = false
 
+  var wantEmails = true
+
   /// If set this token can be used tempoarily by confirmPasswordReset
   var passwordResetToken: Option[Long] = None
 
@@ -154,7 +156,8 @@ case class User(@Required @Unique login: String,
 }
 
 case class UserJson(login: String,
-  password: Option[String] = None, email: Option[String] = None, fullName: Option[String] = None)
+  password: Option[String] = None, email: Option[String] = None,
+  fullName: Option[String] = None, wantEmails: Option[String] = None)
 
 /// We provide an initionally restricted view of users
 /// If we know a viewer we will customize for them
@@ -180,9 +183,9 @@ class UserSerializer(viewer: Option[User]) extends CustomSerializer[User](implic
         ("vehicles" -> u.vehicles.map(_.id))
 
       val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
-      if (showEmail)
-        r = r ~ ("email" -> u.email)
-
+      if (showEmail) {
+        r = r ~ ("email" -> u.email) ~ ("wantEmails" -> u.wantEmails)
+      }
       r
   }))
 
