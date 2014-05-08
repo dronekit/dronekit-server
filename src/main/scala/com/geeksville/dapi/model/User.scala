@@ -89,7 +89,7 @@ case class User(@Required @Unique login: String,
     } else {
       // FIXME - never leave enabled in production code, because emitting psws to logs is bad juju
       // logger.warn(s"Checking password $test againsted hashed version $hashedPassword")
-      BCrypt.checkpw(test, hashedPassword)
+      BCrypt.checkpw(test.trim, hashedPassword)
     }
   }
 
@@ -207,8 +207,8 @@ object User extends DapiRecordCompanion[User] with Logging {
   }
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
-    val u = User(login.toLowerCase, email.map(_.toLowerCase), fullName)
-    u.password = password
+    val u = User(login.trim.toLowerCase, email.map(_.trim.toLowerCase), fullName.map(_.trim))
+    u.password = password.trim
     u.groupId = group
     u.create
     u.save
