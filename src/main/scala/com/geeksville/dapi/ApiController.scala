@@ -14,6 +14,7 @@ import org.json4s.JsonAST.JObject
 import javax.servlet.http.HttpServletResponse
 import java.util.Date
 import org.json4s.Extraction
+import org.json4s.JsonAST.JValue
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -195,7 +196,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     requireReadAllAccess()
     val r = getAll
     // We do the json conversion here - so that it happens inside of our try/catch block
-    Extraction.decompose(r)
+    toJSON(r)
   }
 
   /**
@@ -226,8 +227,14 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   get("/:id", operation(findByIdOp)) {
     //dumpRequest()
-    findById
+    toJSON(findById)
   }
+
+  /**
+   * Used to conver the specified object to JSON (subclasses can override if they would like to use
+   * context specific json formatters
+   */
+  protected def toJSON(o: Any): JValue = Extraction.decompose(o)
 
   /**
    * Get the object associated with the provided id param (or fatally end the request with a 404)

@@ -9,6 +9,8 @@ import com.geeksville.dapi.model.User
 import org.json4s.JsonAST.JObject
 import org.json4s._
 import com.geeksville.dapi.model.UserJson
+import com.geeksville.dapi.model.UserSerializer
+import com.geeksville.json.GeeksvilleFormats
 
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
@@ -20,6 +22,10 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
     requireAdmin()
 
     super.requireReadAllAccess()
+  }
+
+  override protected def toJSON(o: Any): JValue = {
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new UserSerializer(Option(user)))
   }
 
 }

@@ -157,7 +157,8 @@ case class UserJson(login: String,
   password: Option[String] = None, email: Option[String] = None, fullName: Option[String] = None)
 
 /// We provide an initionally restricted view of users
-object UserSerializer extends CustomSerializer[User](implicit format => (
+/// If we know a viewer we will customize for them
+class UserSerializer(viewer: Option[User]) extends CustomSerializer[User](implicit format => (
   {
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
@@ -169,7 +170,7 @@ object UserSerializer extends CustomSerializer[User](implicit format => (
   },
   {
     case u: User =>
-      ("login" -> u.login) ~
+      var r = ("login" -> u.login) ~
         ("fullName" -> u.fullName) ~
         ("isAdmin" -> u.isAdmin) ~
         ("avatarImage" -> u.avatarImageURL) ~
@@ -177,6 +178,12 @@ object UserSerializer extends CustomSerializer[User](implicit format => (
         ("emailVerified" -> u.emailVerified) ~
         ("needNewPassword" -> u.needNewPassword) ~
         ("vehicles" -> u.vehicles.map(_.id))
+
+      val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
+      if (showEmail)
+        r = r ~ ("email" -> u.email)
+
+      r
   }))
 
 object User extends DapiRecordCompanion[User] with Logging {
