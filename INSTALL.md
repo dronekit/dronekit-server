@@ -3,7 +3,12 @@
 To install on a new server
 
 * Install various dependancies
+Ubuntu 14.04 or later
 apt-get install libzmq-dev
+
+Older version of ubuntu, you must build
+ubuntu@ip-10-179-53-86:~/zeromq-2.2.0$ make
+from src.
 
 * Install MySql
 apt-get install mysql-client mysql-server
