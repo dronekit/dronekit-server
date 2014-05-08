@@ -37,6 +37,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
     Listener(self),
     Bind(zmqSocket),
     HighWatermark(200),
+    Identity("SERVER".getBytes),
     // Wait 200ms to give any last msgs a hope of getting out
     Linger(200))
 
@@ -78,7 +79,7 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
 
       // FIXME - validate that the client id looks like a UUID (so we don't generate invalid actor names)
 
-      //log.debug(s"Received ZMQ from $clientIdStr")
+      //log.debug(s"Received ZMQ $m from $clientIdStr")
 
       // Get or create actor as needed
       val ainfo = clientIdToActor.getOrElseUpdate(clientIdStr, {
