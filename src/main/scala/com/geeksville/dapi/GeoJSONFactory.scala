@@ -45,7 +45,7 @@ class GeoJSONFactory(model: PlaybackModel) {
 
       if (crossedModeChange) {
         val newModeName = nextMode.get._2
-        modeMarkers = makeMarker(p.loc, newModeName, symbol = Some("bar")) :: modeMarkers
+        modeMarkers = makeMarker(p.loc, newModeName, symbol = Some("triangle-stroked")) :: modeMarkers
         advanceMode()
       }
 
