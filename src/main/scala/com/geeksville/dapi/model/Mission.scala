@@ -49,6 +49,11 @@ case class MissionSummary(
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
 
+  /**
+   * A heristically generated user friendly string describing this flight (shown in GUI)
+   */
+  var text: Option[String] = None
+
   def isSummaryValid = startTime.isDefined
 
   def minutes = for {
@@ -167,7 +172,8 @@ case class MissionJson(
   softwareVersion: Option[String],
   softwareGit: Option[String],
   createdOn: Date,
-  updatedOn: Date)
+  updatedOn: Date,
+  summaryText: Option[String])
 
 /// We provide an initionally restricted view of users
 object MissionSerializer extends CustomSerializer[Mission](implicit format => (
@@ -190,7 +196,8 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.longitude),
         s.flatMap(_.softwareVersion),
         s.flatMap(_.softwareGit),
-        u.createdOn, u.updatedOn)
+        u.createdOn, u.updatedOn,
+        s.flatMap(_.text))
       Extraction.decompose(m)
   }))
 
