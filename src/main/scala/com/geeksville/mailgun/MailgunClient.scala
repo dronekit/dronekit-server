@@ -16,51 +16,36 @@ import scala.collection.JavaConverters._
 import org.apache.http.impl.client.DefaultHttpClient
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
+import com.geeksville.http.HttpClient
 
-class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org") {
-  private val httpclient = new DefaultHttpClient()
-  // val myhttps = new Protocol("https", new MySSLSocketFactory(), 443);
+object MailgunClient {
+  val monitor = false
+}
 
-  val monitor = true
-  private val targetHost = new HttpHost(if (monitor) "***REMOVED***.my.apitools.com" else "api.mailgun.net", 443, "https");
+class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org")
+  extends HttpClient(new HttpHost(if (MailgunClient.monitor) "***REMOVED***.my.apitools.com" else "api.mailgun.net", 443, "https")) {
+
   httpclient.getCredentialsProvider.setCredentials(
-    new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+    new AuthScope(httpHost.getHostName(), httpHost.getPort()),
     new UsernamePasswordCredentials("api", "***REMOVED***"));
-
-  def close() {
-    httpclient.getConnectionManager().shutdown()
-  }
 
   def send(pairs: (String, String)*): JObject = {
     val transaction = new HttpPost(s"/v2/$myDomain/messages")
-    try {
-      // The underlying HTTP connection is still held by the response object
-      // to allow the response content to be streamed directly from the network socket.
-      // In order to ensure correct deallocation of system resources
-      // the user MUST either fully consume the response content  or abort request
-      // execution by calling CloseableHttpResponse#close().
 
-      val nvps = pairs.map {
-        case (key, v) =>
-          new BasicNameValuePair(key, v)
-      }.toList.asJava
+    // The underlying HTTP connection is still held by the response object
+    // to allow the response content to be streamed directly from the network socket.
+    // In order to ensure correct deallocation of system resources
+    // the user MUST either fully consume the response content  or abort request
+    // execution by calling CloseableHttpResponse#close().
 
-      transaction.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
+    val nvps = pairs.map {
+      case (key, v) =>
+        new BasicNameValuePair(key, v)
+    }.toList.asJava
 
-      val response = httpclient.execute(targetHost, transaction)
+    transaction.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
 
-      val entity = response.getEntity()
-
-      val msg = EntityUtils.toString(entity)
-      EntityUtils.consume(entity)
-
-      if (response.getStatusLine.getStatusCode != 200)
-        throw new Exception("Mailgun failure: " + response.getStatusLine())
-
-      parse(msg).asInstanceOf[JObject]
-    } finally {
-      transaction.releaseConnection()
-    }
+    callJson(transaction)
   }
 
   def sendTo(from: String, to: String, subject: String, bodyText: String, tag: String = "default", testing: Boolean = false) = {
