@@ -218,6 +218,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
         val s = summary
         s.create
         s.mission := m
+        s.regenText()
         s.save()
 
         vehicle.updateFromMission(this)

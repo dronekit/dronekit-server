@@ -30,7 +30,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     Migrator(8,
       "ALTER TABLE users ADD want_emails BOOLEAN NOT NULL DEFAULT true"),
     Migrator(9,
-      "ALTER TABLE mission_summaries ADD text STRING"))
+      "ALTER TABLE mission_summaries ADD text VARCHAR(80)"))
 
   case class Migrator(newVerNum: Int, sql: String*) {
     def run() {
@@ -83,10 +83,11 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     if (curver < dbWipeVersion) {
       error("WIPING TABLES DUE TO MIGRATION!")
       Tables.reset
-      setVersion(dbWipeVersion)
-    }
 
-    migrations.filter(curver < _.newVerNum).foreach(_.run())
+      // A wipe implies no need to run migrations
+      setVersion(math.max(dbWipeVersion, requiredVersion))
+    } else
+      migrations.filter(curver < _.newVerNum).foreach(_.run())
   }
 
   private def find(): Migration = {

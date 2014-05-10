@@ -54,6 +54,14 @@ case class Vehicle(
    */
   lazy val missions = hasMany[Mission]
 
+  /// A pretty user visible string for this vehicle
+  def text = {
+    if (name.isEmpty)
+      vehicleType.getOrElse("mystery vehicle")
+    else
+      name
+  }
+
   /// Create a new mission as a child of this vehicle (given tlog bytes)
   def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) = {
     // Copy over tlog
@@ -66,6 +74,11 @@ case class Vehicle(
     m.keep = true
     m.isLive = false
     m.tlogId = Some(tlogId)
+    m.vehicle := this
+    m.save()
+    save()
+
+    // We need to do this after the record is written
     m.regenSummary()
     m.save()
     debug("Done with record")
@@ -108,7 +121,8 @@ case class VehicleJson(
   controlPrivacy: Option[AccessCode.EnumVal] = None,
   missions: Option[Iterable[Long]] = None,
   createdOn: Option[Date] = None,
-  updatedOn: Option[Date] = None)
+  updatedOn: Option[Date] = None,
+  summaryText: Option[String] = None)
 
 /// We provide an initionally restricted view of users
 object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
@@ -128,7 +142,8 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
         Some(AccessCode.valueOf(u.controlPrivacy)),
         Some(u.missions.map(_.id)),
         Some(u.createdOn),
-        Some(u.updatedOn))
+        Some(u.updatedOn),
+        Some(u.text))
       Extraction.decompose(m)
   }))
 
