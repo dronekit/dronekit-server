@@ -83,11 +83,13 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
       if (Mission.mimeType != ctype) {
         warn(s"invalid content-type for ${payload.name} Found $ctype")
         None
-      } else
+      } else {
+        info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
         Some(v.createMission(payload.get, Some(payload.name)))
+      }
     }.toList
 
-    warn("Returning")
+    warn(s"Returning ${created.mkString(", ")}")
 
     // Return the missions that were created
     created

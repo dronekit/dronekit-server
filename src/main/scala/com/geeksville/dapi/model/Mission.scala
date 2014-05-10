@@ -154,14 +154,14 @@ case class Mission(
    * CPU and ongoing memory
    */
   def model = tlogBytes.map { bytes =>
-    warn(s"Regenerating model for $this")
+    warn(s"Regenerating model for $this, numBytes=${bytes.size}")
     PlaybackModel.fromBytes(bytes, false)
   }
 
   /// FIXME - figure out when to call this
   def regenSummary() {
     if (!summary.headOption.isDefined) {
-      warn("Mission summary missing")
+      // warn("Mission summary missing")
       model.foreach { m =>
         val s = m.summary
         s.create
@@ -171,7 +171,7 @@ case class Mission(
         vehicle.updateFromMission(m)
         this.save
 
-        warn("Regen completed")
+        warn(s"Summary regened: $this")
       }
     }
   }
@@ -215,7 +215,11 @@ case class MissionJson(
   softwareGit: Option[String],
   createdOn: Date,
   updatedOn: Date,
-  summaryText: Option[String])
+  summaryText: Option[String],
+
+  // The following information comes from vehicle/user - might be expensive,
+  vehicleType: Option[String],
+  userName: Option[String])
 
 /// We provide an initionally restricted view of users
 object MissionSerializer extends CustomSerializer[Mission](implicit format => (
@@ -239,7 +243,9 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.softwareVersion),
         s.flatMap(_.softwareGit),
         u.createdOn, u.updatedOn,
-        s.flatMap(_.text))
+        s.flatMap(_.text),
+        u.vehicle.vehicleType,
+        Some(u.vehicle.user.login))
       Extraction.decompose(m)
   }))
 
@@ -267,10 +273,13 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   }
 
   def putBytes(id: String, src: InputStream, srcLen: Long) {
-    logger.info(s"Uploading to s3: $id")
+    info(s"Uploading to s3: $id (numBytes=$srcLen)")
     S3Client.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
   }
 
+  /**
+   * Put tlog data into the cache and s3
+   */
   def putBytes(id: String, bytes: Array[Byte]) {
     val src = new ByteArrayInputStream(bytes)
     putBytes(id, src, bytes.length)
