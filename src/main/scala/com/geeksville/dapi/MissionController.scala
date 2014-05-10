@@ -70,6 +70,21 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     OkWithFilename(o.tlogBytes.getOrElse(haltNotFound()), o.tlogId.get.toString + ".tlog")
   }
 
+  // Helper class for generating json
+  case class MessageJson(time: Long, msg: String)
+
+  roField[Seq[MessageJson]]("messages.json") { (o) =>
+    val m = getModel(o)
+    var msgs = m.messages
+
+    params.get("page_size").foreach { numrecs =>
+      msgs = msgs.take(numrecs.toInt)
+    }
+
+    // FIXME - instead of passing msg content as string, it should be a json object
+    msgs.map { a => MessageJson(a.time, a.msg.toString) }
+  }
+
   private def getModel(o: Mission) = o.model.getOrElse(haltNotFound("no tlog found"))
 
   /// A recommended end user visible (HTML) view to see this mission
