@@ -28,6 +28,14 @@ object MapboxClient {
 class MapboxClient(myDomain: String = "***REMOVED***")
   extends HttpClient(new HttpHost(if (MapboxClient.monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com")) {
 
+  /**
+   * Returns a sequenct of pairs of the following form:
+   * 02:37.320 INFO  com.geeksville.mapbox.MapboxTests  - Mapbox says: (street,Ala Moana Blvd)
+   * 02:37.322 INFO  com.geeksville.mapbox.MapboxTests  - Mapbox says: (city,Honolulu)
+   * 02:37.322 INFO  com.geeksville.mapbox.MapboxTests  - Mapbox says: (province,Hawaii)
+   * 02:37.322 INFO  com.geeksville.mapbox.MapboxTests  - Mapbox says: (country,United States)
+   *
+   */
   def geocode(lat: Double, lon: Double): Seq[(String, String)] = {
     val transaction = new HttpGet(s"/v3/$myDomain/geocode/$lon,$lat.json")
 
