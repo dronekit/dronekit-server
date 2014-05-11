@@ -180,7 +180,7 @@ class UserSerializer(viewer: Option[User]) extends CustomSerializer[User](implic
         ("profileURL" -> u.profileURL) ~
         ("emailVerified" -> u.emailVerified) ~
         ("needNewPassword" -> u.needNewPassword) ~
-        ("vehicles" -> u.vehicles.map(_.id))
+        ("vehicles" -> u.vehicles.map(_.id).toSeq.sorted)
 
       val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
       if (showEmail) {
