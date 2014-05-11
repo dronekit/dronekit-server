@@ -218,7 +218,8 @@ object User extends DapiRecordCompanion[User] with Logging {
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
     val u = User(login.trim.toLowerCase, email.map(_.trim.toLowerCase), fullName.map(_.trim))
-    u.password = password.trim
+    if (password != null)
+      u.password = password.trim
     u.groupId = group
     u.create
     u.save
