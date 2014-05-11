@@ -2,6 +2,7 @@ package com.geeksville.dapi
 
 import com.geeksville.json.GeoJSON
 import org.json4s.JsonAST.JObject
+import com.geeksville.flight.LiveOrPlaybackModel
 
 class GeoJSONFactory(model: PlaybackModel) {
   import model._
@@ -11,17 +12,21 @@ class GeoJSONFactory(model: PlaybackModel) {
 
     val bbox = new BoundingBox
 
+    val wptColor = Some("#0000ff")
+
     // Symbol names documented here: https://www.mapbox.com/maki/
-    val wpts = waypointsForMap.map { wp =>
+    val wptMarkers = waypointsForMap.map { wp =>
       bbox.addPoint(wp.location)
 
       if (wp.isHome)
-        makeMarker(wp.location, "Home", symbol = Some("building"))
+        makeMarker(wp.location, "Home", color = wptColor, symbol = Some("building"))
       else {
         val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
-        makeMarker(wp.location, "Waypoint #" + wp.seq, symbol = Some(symbol))
+        makeMarker(wp.location, "Waypoint #" + wp.seq, color = wptColor, symbol = Some(symbol))
       }
     }
+
+    val wptLines = waypointsForMap.map(_.location)
 
     // State for advancing modes
     val modeIterator = modeChanges.iterator
@@ -45,17 +50,20 @@ class GeoJSONFactory(model: PlaybackModel) {
 
       if (crossedModeChange) {
         val newModeName = nextMode.get._2
-        modeMarkers = makeMarker(p.loc, newModeName, symbol = Some("triangle-stroked")) :: modeMarkers
+
+        val color = LiveOrPlaybackModel.htmlColorName(newModeName)
+        modeMarkers = makeMarker(p.loc, newModeName, color = color, symbol = Some("triangle-stroked")) :: modeMarkers
         advanceMode()
       }
 
       bbox.addPoint(p.loc)
       p.loc
     }
-    val lines = makeFeature(makeLineString(locations))
-
-    addBoundingBox(makeFeatureCollection(
-      Seq(makeFeatureCollection(wpts), makeFeatureCollection(modeMarkers), makeFeatureCollection(Seq(lines)))), bbox)
+    val tracklog = makeFeatureCollection(makeFeature(makeLineString(locations)))
+    val modeLayer = makeFeatureCollection(modeMarkers: _*)
+    val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines)): _*)
+    val topLevel = makeFeatureCollection(modeLayer, wptLayer, tracklog)
+    addBoundingBox(topLevel, bbox)
   }
 
 }

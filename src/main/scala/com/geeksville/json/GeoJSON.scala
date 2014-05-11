@@ -49,7 +49,7 @@ object GeoJSON {
     ("type" -> "GeometryCollection") ~ ("geometries" -> Extraction.decompose(geos))
   }
 
-  def makeFeatureCollection(f: Seq[JObject]) = {
+  def makeFeatureCollection(f: JObject*) = {
     ("type" -> "FeatureCollection") ~ ("features" -> Extraction.decompose(f))
   }
 
