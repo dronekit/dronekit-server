@@ -172,7 +172,9 @@ case class Mission(
         s.regenText()
         s.save
         vehicle.updateFromMission(m)
-        m.startTime.foreach { date => createdOn = new Date(date) }
+
+        // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
+        m.startTime.foreach { date => createdOn = new Date(date / 1000L) }
         this.save
 
         warn(s"Summary regened: $this")
