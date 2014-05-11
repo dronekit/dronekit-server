@@ -125,11 +125,11 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
 
   private def loadMessage(raw: TimestampedMessage) {
     numMessages += 1
+    perhapsUpdateModel(raw)
 
     // First update any standard live/delayed model stuff
     val msg = raw.msg
-    if (updateModel.isDefinedAt(msg))
-      updateModel.apply(msg)
+    perhapsUpdateModel(msg)
 
     // Update useful summary information as we read
     msg match {
