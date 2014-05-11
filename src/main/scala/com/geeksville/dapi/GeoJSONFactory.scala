@@ -13,17 +13,28 @@ class GeoJSONFactory(model: PlaybackModel) {
     val bbox = new BoundingBox
 
     val wptColor = Some("#0000ff")
+    val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
+    val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
+    val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
 
     // Symbol names documented here: https://www.mapbox.com/maki/
     val wptMarkers = waypointsForMap.map { wp =>
       bbox.addPoint(wp.location)
 
-      if (wp.isHome)
-        makeMarker(wp.location, "Home", color = wptColor, symbol = Some("building"))
-      else {
-        val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
-        makeMarker(wp.location, "Waypoint #" + wp.seq, color = wptColor, symbol = Some(symbol))
-      }
+      // If the waypoint has interesting text, show it
+      val desc = if (wp.shortString != "Waypoint")
+        Some(wp.shortString)
+      else
+        None
+
+      val (name, symbol) = if (wp.isHome)
+        ("Home", "building")
+      else
+        // Just cycle the wpt numbers from 0 to ten over and over again
+        //val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
+        ("Waypoint #" + wp.seq, (wp.seq % 10).toString)
+
+      makeMarker(wp.location, name, color = wptColor, description = desc, symbol = Some(symbol))
     }
 
     val wptLines = waypointsForMap.map(_.location)
@@ -52,16 +63,22 @@ class GeoJSONFactory(model: PlaybackModel) {
         val newModeName = nextMode.get._2
 
         val color = LiveOrPlaybackModel.htmlColorName(newModeName)
-        modeMarkers = makeMarker(p.loc, newModeName, color = color, symbol = Some("triangle-stroked")) :: modeMarkers
+        modeMarkers = makeMarker(p.loc, "Mode change", description = Some(newModeName), size = "small", color = color, symbol = Some("triangle-stroked")) :: modeMarkers
         advanceMode()
       }
 
       bbox.addPoint(p.loc)
       p.loc
     }
-    val tracklog = makeFeatureCollection(makeFeature(makeLineString(locations)))
+
+    // The lines along the tracklog
+    val tracklogLineString = makeLineString(locations)
+
+    // Ugh - we want to draw a shadow on our tracklog - so we need to send the whole list of points _twice_
+    val tracklog = makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
+
     val modeLayer = makeFeatureCollection(modeMarkers: _*)
-    val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines)): _*)
+    val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines), wptLineStyle): _*)
     val topLevel = makeFeatureCollection(modeLayer, wptLayer, tracklog)
     addBoundingBox(topLevel, bbox)
   }

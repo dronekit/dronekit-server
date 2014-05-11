@@ -57,12 +57,52 @@ object GeoJSON {
     ("type" -> "Feature") ~ ("geometry" -> geo) ~ ("properties" -> properties)
   }
 
+  /// Make line style properties based on teh following rules
+  // OPTIONAL: default "555555"
+  // the color of a line as part of a polygon, polyline, or
+  // multigeometry
+  //
+  // value must follow COLOR RULES
+  //"stroke": "#555555",
+  // OPTIONAL: default 1.0
+  // the opacity of the line component of a polygon, polyline, or
+  // multigeometry
+  //
+  // value must be a floating point number greater than or equal to
+  // zero and less or equal to than one
+  //"stroke-opacity": 1.0,
+  // OPTIONAL: default 2
+  // the width of the line component of a polygon, polyline, or
+  // multigeometry
+  //
+  // value must be a floating point number greater than or equal to 0
+  //"stroke-width": 2,
+  // OPTIONAL: default "555555"
+  // the color of the interior of a polygon
+  //
+  // value must follow COLOR RULES
+  //"fill": "#555555",
+  // OPTIONAL: default 0.6
+  // the opacity of the interior of a polygon. implementations
+  // may choose to set this to 0 for line features.
+  //
+  // value must be a floating point number greater than or equal to
+  // zero and less or equal to than one
+  //"fill-opacity": 0.5
+  def lineStyles(color: Option[String] = None, width: Option[Double] = None, opacity: Option[Double] = None, fill: Option[String] = None): JObject = {
+    ("stroke" -> color) ~ ("fill" -> fill) ~ ("stroke-width" -> width) ~ ("stroke-opacity" -> opacity)
+  }
+
   /**
    * color such as "#ff4444"
    */
-  def makeMarker(coords: Location, title: String, color: Option[String] = None, size: String = "medium", symbol: Option[String] = None) = {
+  def makeMarker(coords: Location, title: String, description: Option[String] = None, color: Option[String] = None, size: String = "medium", symbol: Option[String] = None) = {
     val geo = makePoint(coords)
-    var ps = ("marker-size" -> size) ~ ("title" -> title) ~ ("marker-color" -> color) ~ ("marker-symbol" -> symbol)
+    var ps = ("marker-size" -> size) ~
+      ("title" -> title) ~
+      ("description" -> description) ~
+      ("marker-color" -> color) ~
+      ("marker-symbol" -> symbol)
 
     val props: JObject = ps
     makeFeature(geo, props)
