@@ -208,14 +208,13 @@ object TLogChunkDAO extends SalatDAO[TLogChunk, String](DBClient.db("tlog")) {
     r
   }
 
-  def tlogsRecent(maxResults: Int) = {
+  def tlogsRecent(maxResults: Int): TraversableOnce[TLogChunk] = {
     println("Looking for recent")
 
     // Show newest flights first
     val r = find(ref = MongoDBObject())
       .sort(orderBy = MongoDBObject("startTime" -> -1))
       .limit(maxResults)
-      .toList
 
     // println("found: " + r.mkString("\n"))
     r

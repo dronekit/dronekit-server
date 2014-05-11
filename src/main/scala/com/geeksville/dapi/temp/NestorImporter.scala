@@ -20,6 +20,7 @@ case class DoImport(numRecords: Int)
  */
 class NestorImporter extends Actor with ActorLogging {
 
+  case class ImportTLog(tlog: TLogChunk)
   def receive = {
     case DoImport(numRecords) =>
       migrate(numRecords)
@@ -36,8 +37,8 @@ class NestorImporter extends Actor with ActorLogging {
         TLogChunkDAO.remove(tlog)
         false
       } else if (oldMission.isDefined && !forceReimport) {
-        log.info(s"Skipping $id ${tlog.startTime}")
-        false
+        log.info(s"Terminating due to finding old $id ${tlog.startTime}")
+        true
       } else {
         // Delete the old mission - we will recreate
         oldMission.foreach(_.delete)
