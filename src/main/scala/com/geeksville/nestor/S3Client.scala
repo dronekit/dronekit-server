@@ -19,6 +19,6 @@ import com.geeksville.aws.ConfigCredentials
 /**
  * The Nestor glue for talking to S3
  */
-object S3Client extends S3Bucket("s3-droneshare", credentials = new ConfigCredentials("")) {
+object S3Client extends S3Bucket("s3-droneshare", false, credentials = new ConfigCredentials("")) {
   setRules(createExpireRule("upload-expire", "uploads/", 5))
 }

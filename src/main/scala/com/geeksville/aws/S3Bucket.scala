@@ -25,22 +25,24 @@ import scala.collection.JavaConverters._
 import java.util.TimeZone
 import java.text.SimpleDateFormat
 import com.amazonaws.auth.AWSCredentials
+import grizzled.slf4j.Logging
 
-class S3Bucket(bucketName: String, val credentials: AWSCredentials) {
+class S3Bucket(bucketName: String, val isReadable: Boolean, val credentials: AWSCredentials) extends Logging {
   val client = new AmazonS3Client(credentials)
 
   // At startup make sure our bucket exists
   createBucket()
 
   /// Return a URL that can be use for reading a file (FIXME, make secure)
-  def getReadURL(bucket: String, objKey: String) =
-    "https://%s.%s/%s".format(bucketName, objKey)
+  def getReadURL(objKey: String) =
+    s"http://$bucketName.s3.amazonaws.com/$objKey"
 
   def createBucket() {
     // FIXME, support creating buckets in different regions
-    println("Creating AWS bucket: " + bucketName)
+    info(s"Creating AWS bucket : $bucketName (readable=$isReadable)")
     client.createBucket(bucketName)
-    // makeReadable(name)
+    if (isReadable)
+      makeReadable()
   }
 
   def createExpireRule(id: String, prefix: String, days: Int) = new BucketLifecycleConfiguration.Rule()
@@ -108,7 +110,8 @@ class S3Bucket(bucketName: String, val credentials: AWSCredentials) {
   /**
    * Upload a file to S3
    */
-  def uploadStream(key: String, stream: InputStream, mimeType: String, length: Long, highValue: Boolean = false) {
+  def uploadStream(key: String, stream: InputStream, mimeType: String, length: Long, highValue: Boolean = true) {
+    debug(s"Uploading to S3 (readable=$isReadable).  Read URL is: " + getReadURL(key))
     val metadata = new ObjectMetadata()
     metadata.setContentType(mimeType)
     metadata.setContentLength(length)

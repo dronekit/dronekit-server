@@ -26,6 +26,7 @@ import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import org.json4s._
 import com.geeksville.mapbox.MapboxClient
+import java.text.DecimalFormat
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -62,22 +63,6 @@ case class MissionSummary(
     e <- endTime
   } yield (e.getTime - s.getTime) / 1000.0 / 60
 
-  /// A detailed description for facebook
-  /*
-  def descriptionString = {
-    val fmt = new SimpleDateFormat("MMMMM d")
-    val date = fmt.format(startTime)
-
-    val name = if (ownerId.isEmpty)
-      "a droneshare pilot"
-    else
-      ownerId
-
-    val minutes = (endTime.getTime - startTime.getTime) / 1000 / 60
-
-    """On %s, %s flew their %s for %s minutes""".format(date, name, vehicleTypeGuess, minutes.toLong)
-  }
-  */
   /**
    * Regenerate the summary text
    */
@@ -188,6 +173,36 @@ case class Mission(
   lazy val summary = hasOne[MissionSummary]
 
   /**
+   * A nice small map thumbnail suitable for showing on a map
+   */
+  def mapThumbnailURL = try {
+    for {
+      latIn <- summary.latitude
+      lonIn <- summary.longitude
+    } yield {
+      val zoom = 2
+      val width = 140
+      val height = 100
+
+      // Four digits is pretty accurate and increases the chance of cache reuse
+      val fmt = new DecimalFormat("##.0000")
+      val lat = fmt.format(latIn)
+      val lon = fmt.format(lonIn)
+
+      val isPlane = vehicle.vehicleType.map(_ == "fixed-wing").getOrElse(false)
+      val icon = if (isPlane) "airport" else "heliport"
+
+      val mapBoxURL = s"http://api.tiles.mapbox.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
+
+      mapBoxURL
+    }
+  } catch {
+    case ex: Exception =>
+      error(s"Can't generate thumbnail for $this due to $ex")
+      None
+  }
+
+  /**
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
   def tlogBytes = try {
@@ -222,6 +237,7 @@ case class MissionJson(
   createdOn: Date,
   updatedOn: Date,
   summaryText: Option[String],
+  mapThumbnailURL: Option[String],
 
   // The following information comes from vehicle/user - might be expensive,
   vehicleText: Option[String],
@@ -250,6 +266,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.softwareGit),
         u.createdOn, u.updatedOn,
         s.flatMap(_.text),
+        u.mapThumbnailURL,
         Some(u.vehicle.text),
         Some(u.vehicle.user.login))
       Extraction.decompose(m)
@@ -263,7 +280,7 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
 
   private def readBytesByPath(id: String): Array[Byte] = {
     logger.debug("Asking S3 for " + id)
-    Using.using(S3Client.downloadStream(id)) { s =>
+    Using.using(S3Client.tlogBucket.downloadStream(id)) { s =>
       //logger.debug("Reading bytes from S3")
       val r = ByteStreams.toByteArray(s)
       logger.debug("Done reading S3 bytes, size = " + r.length)
@@ -280,7 +297,7 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
 
   def putBytes(id: String, src: InputStream, srcLen: Long) {
     info(s"Uploading to s3: $id (numBytes=$srcLen)")
-    S3Client.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
+    S3Client.tlogBucket.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
   }
 
   /**
