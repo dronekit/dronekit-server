@@ -29,14 +29,19 @@ class NestorImporter extends Actor with ActorLogging {
     TLogChunkDAO.tlogsRecent(maxResults).find { tlog =>
 
       val id = tlog.id
+      val forceReimport = true
+      val oldMission = Mission.findByTlogId(id)
       val wantStop = if (tlog.startTime.getYear > 2020) {
         log.info(s"Bogus record $id ${tlog.startTime}")
         TLogChunkDAO.remove(tlog)
         false
-      } else if (Mission.findByTlogId(id).isDefined) {
+      } else if (oldMission.isDefined && !forceReimport) {
         log.info(s"Skipping $id ${tlog.startTime}")
         false
       } else {
+        // Delete the old mission - we will recreate
+        oldMission.foreach(_.delete)
+
         val summary = tlog.summary
         var userid = summary.ownerId
 
