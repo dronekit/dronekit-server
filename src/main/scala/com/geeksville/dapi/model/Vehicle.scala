@@ -140,7 +140,8 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
         u.autopilotType,
         Some(AccessCode.valueOf(u.viewPrivacy)),
         Some(AccessCode.valueOf(u.controlPrivacy)),
-        Some(u.missions.map(_.id)),
+        // We deliver newer missions first
+        Some(u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)),
         Some(u.createdOn),
         Some(u.updatedOn),
         Some(u.text))
