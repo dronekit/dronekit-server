@@ -12,7 +12,7 @@ class GeoJSONFactory(model: PlaybackModel) {
 
     val bbox = new BoundingBox
 
-    val wptColor = Some("#0000ff")
+    val wptColor = Some("#000099")
     val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
     val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
     val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
