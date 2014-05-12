@@ -45,7 +45,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       uid
     }
 
-    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
+    warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
+    //requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
     super.requireReadAccess(o)
   }
 
