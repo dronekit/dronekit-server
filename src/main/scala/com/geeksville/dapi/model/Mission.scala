@@ -87,7 +87,7 @@ case class MissionSummary(
         } yield {
           val geo = MissionSummary.mapboxClient.geocode(lat, lon)
           // First line might be too identifying - skip it
-          geo.tail.map(_._2).mkString("near ", ", ", "")
+          geo.tail.map(_._2).mkString(", ")
         }).getOrElse(unknown)
       } catch {
         case ex: Exception =>
