@@ -142,7 +142,7 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
 
   //userSession {
   ignore("Vehicle create") {
-    val v = VehicleJson(UUID.randomUUID, "unit-test vehicle")
+    val v = VehicleJson(Some(UUID.randomUUID), "unit-test vehicle")
     put("/api/v1/vehicle", toJSON(v), headers = jsonHeaders) {
       checkStatusOk()
     }
