@@ -110,7 +110,7 @@ case class Vehicle(
 }
 
 case class VehicleJson(
-  uuid: UUID,
+  uuid: Option[UUID],
   name: String,
   id: Option[Long] = None,
   userId: Option[Long] = None,
@@ -134,7 +134,7 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
   },
   {
     case u: Vehicle =>
-      val m = VehicleJson(u.uuid, u.name, Some(u.id), u.userId,
+      val m = VehicleJson(Some(u.uuid), u.name, Some(u.id), u.userId,
         u.manufacturer,
         u.vehicleType,
         u.autopilotType,

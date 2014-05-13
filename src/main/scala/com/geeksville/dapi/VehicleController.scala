@@ -58,7 +58,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   override protected def createDynamically(payload: JObject): Any = {
     val json = payload.extract[VehicleJson]
-    user.getOrCreateVehicle(json.uuid)
+    user.getOrCreateVehicle(json.uuid.get)
   }
 
   private val addMissionInfo =
@@ -67,7 +67,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
       consumes (Mission.mimeType)
       parameters (
         bodyParam[Array[Byte]],
-        pathParam[String]("id").description(s"Id of $aName to be appended")))
+        pathParam[String]("id").description(s"Id of $aName to be have mission added")))
 
   post("/:id/missions", operation(addMissionInfo)) {
     val v = requireWriteAccess(findById)
