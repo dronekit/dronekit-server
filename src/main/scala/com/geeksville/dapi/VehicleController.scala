@@ -73,6 +73,8 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   post("/:id/missions", operation(addMissionInfo)) {
     val v = requireWriteAccess(findById)
     val files = fileMultiParams.values.flatMap { s => s }
+
+    var errMsg: Option[String] = None
     val created = files.flatMap { payload =>
       warn(s"Considering ${payload.name} ${payload.fieldName} ${payload.contentType}")
       val ctype = {
@@ -82,13 +84,22 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
           payload.contentType.getOrElse(haltBadRequest("content-type not set"))
       }
       if (Mission.mimeType != ctype) {
-        warn(s"invalid content-type for ${payload.name} Found $ctype")
+        val msg = (s"invalid content-type for ${payload.name} Found $ctype")
+        errMsg = Some(msg)
         None
       } else {
         info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
         Some(v.createMission(payload.get, Some(payload.name)))
       }
     }.toList
+
+    // If we had exactly one bad file, tell the client there was a problem via an error code.
+    // Otherwise, claim success (this allows users to drag and drop whole directories and we'll cope with
+    // just the tlogs).
+    errMsg.foreach { msg =>
+      if (files.size == 1)
+        haltBadRequest(msg)
+    }
 
     warn(s"Returning ${created.mkString(", ")}")
 
