@@ -34,7 +34,7 @@ import java.text.DecimalFormat
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
 case class MissionSummary(
-  startTime: Option[Date] = None,
+  var startTime: Option[Date] = None,
   var endTime: Option[Date] = None,
   var maxAlt: Double = 0.0,
   var maxGroundSpeed: Double = 0.0,

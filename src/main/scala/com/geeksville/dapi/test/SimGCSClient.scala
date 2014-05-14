@@ -173,6 +173,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
           sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100), heading))
           sendMavlink(makeAttitude(toRad(heading).toFloat, toRad(heading).toFloat, toRad(heading).toFloat))
           sendMavlink(makePosition(curLoc))
+          sendMavlink(makeGPSRaw(curLoc))
           if (random.nextInt(100) < 2)
             sendMavlink(makeStatusText("Random status text msg!"))
 

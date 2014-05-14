@@ -67,7 +67,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
 
   /// First found position
   var startPosition: Option[Location] = None
-  var endPosition: Option[Location] = None
 
   var messages: scala.collection.Seq[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
@@ -90,9 +89,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   def waypoints = waypointOpt.flatten.toSeq
 
   val parameters = ArrayBuffer[ROParamValue]()
-
-  // Currently I only use GPS pos, because we don't properly adjust alt offsets (it seems like m.alt is not corrected for MSL)
-  val useGlobalPosition = false
 
   /**
    * duration of flying portion in seconds

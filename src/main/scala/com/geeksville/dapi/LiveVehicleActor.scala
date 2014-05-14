@@ -191,7 +191,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   }
 
   def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), currentTime.map(TimestampedMessage.usecsToDate),
-    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, softwareVersion = buildVersion, softwareGit = buildGit)
+    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
 
   private def sendMissionUpdate() {
 
@@ -200,10 +200,10 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
     // We only send updates when we have an active mission
     missionOpt.foreach { m =>
-      log.info("Generating mission update")
       updateDBSummary()
 
       vehicle.updateFromMission(this)
+      log.info(s"Generating mission update (starttime=${m.summary.startTime}, curtime=$currentTime, loc=$endPosition): $m")
       publishEvent(MissionUpdate(m))
     }
   }
@@ -215,6 +215,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       val s: MissionSummary = m.summary
 
       // Super yucky copies of summary updates
+      s.startTime = ns.startTime
       s.endTime = ns.endTime
       s.maxAlt = ns.maxAlt
       s.maxGroundSpeed = ns.maxGroundSpeed
@@ -225,6 +226,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       s.longitude = ns.longitude
       s.softwareVersion = ns.softwareVersion
       s.softwareGit = ns.softwareGit
+      // Don't copy text - it will be genned as needed 
+      // s.text = ns.text
 
       s.regenText()
       s.save()

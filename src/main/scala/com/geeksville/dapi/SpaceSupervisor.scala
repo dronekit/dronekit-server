@@ -167,6 +167,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       publishEvent(o) // Tell any interested subscribers
       val v = Extraction.decompose(o)
       senderMission.addUpdate(AtmosphereUpdate(typ, v))
+      //log.debug(s"To client: " + v)
       updateAtmosphere(typ, v)
     }
   }

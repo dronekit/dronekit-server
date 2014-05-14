@@ -52,7 +52,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
 
   /// First found position
   var startPosition: Option[Location] = None
-  var endPosition: Option[Location] = None
 
   var messages: scala.collection.Seq[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
@@ -72,9 +71,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   def waypoints = waypointOpt.flatten.toSeq
 
   val parameters = ArrayBuffer[ROParamValue]()
-
-  // Currently I only use GPS pos, because we don't properly adjust alt offsets (it seems like m.alt is not corrected for MSL)
-  val useGlobalPosition = false
 
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
@@ -117,7 +113,7 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
     if (l.lat != 0 && l.lon != 0) {
       if (!startPosition.isDefined)
         startPosition = Some(l)
-      endPosition = Some(l)
+
       positions.append(TimestampedLocation(raw.time, l))
       l.alt.foreach { a => maxAltitude = math.max(maxAltitude, a) }
     }
