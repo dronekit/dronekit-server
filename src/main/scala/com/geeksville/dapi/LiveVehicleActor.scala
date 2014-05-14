@@ -42,7 +42,8 @@ case class VehicleDisconnected()
  * VehicleConnected - sent by the GCSActor when the vehicle first connects
  * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
  */
-class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
+class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
+  extends VehicleModel(maxUpdatePeriod = 5000) with ActorLogging {
 
   import LiveVehicleActor._
   import context._

@@ -36,11 +36,15 @@ import org.scalatra.atmosphere.ActorSystemKey
 import com.geeksville.dapi.model.Migration
 import com.geeksville.akka.ZMQGateway
 import com.geeksville.dapi.ZMQGCSActor
+import com.geeksville.dapi.test.SimGCSClient
+import com.geeksville.akka.AkkaTools
+import scala.util.Success
+import scala.util.Failure
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
 
-  def system = MockAkka.system
+  lazy val system = MockAkka.system
 
   override def init(context: ServletContext) {
 
@@ -87,7 +91,15 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 
-    // Thread.sleep(2000) // Nasty hack to let TCP actor have time to start running
+    import system._
+    // Start up a few sim vehicles that are always running
+    AkkaTools.waitAlive(tcpGCSActor) onComplete {
+      case Failure(t) =>
+        throw t
+
+      case Success(_) =>
+        Global.simGCSClient ! SimGCSClient.RunTest(1, 24 * 60 * 60 * 30)
+    }
   }
 
   /// Make sure you shut down Akka
@@ -96,4 +108,3 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
     super.destroy(context)
   }
 }
-
