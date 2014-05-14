@@ -84,7 +84,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
           payload.contentType.getOrElse(haltBadRequest("content-type not set"))
       }
       if (Mission.mimeType != ctype) {
-        val msg = (s"invalid content-type for ${payload.name} Found $ctype")
+        val msg = (s"${payload.name} did not seem to be a TLOG")
         errMsg = Some(msg)
         None
       } else {
