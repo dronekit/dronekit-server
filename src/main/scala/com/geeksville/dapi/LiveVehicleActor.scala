@@ -25,6 +25,8 @@ import com.geeksville.akka.NamedActorClient
 import akka.actor.ActorRefFactory
 import com.geeksville.akka.MockAkka
 import org.mavlink.messages.ardupilotmega.msg_heartbeat
+import scala.concurrent.duration._
+import com.github.aselab.activerecord.dsl._
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -43,6 +45,7 @@ case class VehicleDisconnected()
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends VehicleModel with ActorLogging {
 
   import LiveVehicleActor._
+  import context._
 
   /// Our LogBinaryMavlink actor
   private var tloggerOpt: Option[ActorRef] = None
@@ -54,6 +57,16 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   private var missionOpt: Option[Mission] = None
 
   private var gcsActor: Option[ActorRef] = None
+
+  private case object SendUpdateTickMsg
+
+  // We periodically send mission updates to any interested subscriber (mainly so SpaceSupervisor can
+  // stay up to date)
+  val updateTickInterval = 60 seconds
+  val updateTickSender = system.scheduler.schedule(updateTickInterval,
+    updateTickInterval,
+    self,
+    SendUpdateTickMsg)
 
   // Since we are on a server, we don't want to inadvertently spam the vehicle
   this.listenOnly = !canAcceptCommands
@@ -68,6 +81,11 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
    * 253 is andropilot
    */
   override def systemId = 252
+
+  override def postStop() {
+    updateTickSender.cancel()
+    super.postStop()
+  }
 
   override def onReceive = mReceive.orElse(super.onReceive)
 
@@ -107,6 +125,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       missionOpt.foreach(_.keep = msg.keep)
 
       stopMission(msg.notes)
+
+    case SendUpdateTickMsg =>
+      sendMissionUpdate()
 
     case msg: TimestampedMessage =>
 
@@ -171,6 +192,44 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
   def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), currentTime.map(TimestampedMessage.usecsToDate),
     maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, softwareVersion = buildVersion, softwareGit = buildGit)
 
+  private def sendMissionUpdate() {
+
+    // we write updates to DB and are careful to reuse old summary ids
+    // if this becomes expensive we could remove db writes
+
+    // We only send updates when we have an active mission
+    missionOpt.foreach { m =>
+      log.info("Generating mission update")
+      updateDBSummary()
+
+      vehicle.updateFromMission(this)
+      publishEvent(MissionUpdate(m))
+    }
+  }
+
+  /// Update our summary record in the DB
+  private def updateDBSummary() {
+    missionOpt.foreach { m =>
+      val ns = summary
+      val s: MissionSummary = m.summary
+
+      // Super yucky copies of summary updates
+      s.endTime = ns.endTime
+      s.maxAlt = ns.maxAlt
+      s.maxGroundSpeed = ns.maxGroundSpeed
+      s.maxAirSpeed = ns.maxAirSpeed
+      s.maxG = ns.maxG
+      s.flightDuration = ns.flightDuration
+      s.latitude = ns.latitude
+      s.longitude = ns.longitude
+      s.softwareVersion = ns.softwareVersion
+      s.softwareGit = ns.softwareGit
+
+      s.regenText()
+      s.save()
+    }
+  }
+
   private def startMission(msg: StartMissionMsg) = blocking {
     assert(!tlogId.isDefined)
     tlogId = Some(UUID.randomUUID())
@@ -195,6 +254,12 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
     m.isLive = true
     m.save()
 
+    // Add the initial summary record
+    val s = summary
+    s.create
+    s.mission := m
+    s.save()
+
     // Find the space controller for our location
     val space = SpaceSupervisor.find()
     eventStream.subscribe(space, (x: Any) => true) // HUGE FIXME - we should subscribe only to the messages we care about
@@ -215,11 +280,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean) extends
       blocking {
         m.isLive = false
         m.tlogId = tlogId.map(_.toString)
-        val s = summary
-        s.create
-        s.mission := m
-        s.regenText()
-        s.save()
+
+        updateDBSummary()
 
         vehicle.updateFromMission(this)
         publishEvent(MissionStop(m))

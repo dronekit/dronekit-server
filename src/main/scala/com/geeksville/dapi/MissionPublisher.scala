@@ -13,9 +13,12 @@ import com.geeksville.dapi.model.MissionSummary
 case class MissionStart(mission: Mission)
 case class MissionStop(mission: Mission)
 
+// Every few minutes we will send an update - so that summary stats are available to newly connected browsers
+case class MissionUpdate(mission: Mission)
+
 // Only SpaceSupervisor sends the following messages
 case class SpaceEnvelope(missionId: Long, payload: Option[Product])
-case class SpaceSummary(vehicle: Option[Vehicle], mission: Mission)
+case class SpaceSummary(vehicle: Option[Vehicle], var mission: Mission)
 
 /**
  * The following messages are published by vehicles (not space supervisor)

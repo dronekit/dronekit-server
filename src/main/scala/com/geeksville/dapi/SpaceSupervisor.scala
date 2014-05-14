@@ -95,7 +95,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
     def numMessages = history.size
 
-    def addStart(m: SpaceSummary) {
+    def setSummary(m: SpaceSummary) {
       mission = Some(m.mission)
       vehicle = m.vehicle
     }
@@ -209,10 +209,17 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       log.debug(s"Received start of $mission from $sender")
       val info = new MissionHistory(mission.id)
       val summary = SpaceSummary(mission.vehicle, mission)
-      info.addStart(summary)
+      info.setSummary(summary)
       actorToMission(sender) = info
       watch(sender)
       publishUpdate("start", summary)
+
+    case MissionUpdate(mission) =>
+      log.debug(s"Applying mission update $mission")
+      val history = actorToMission(sender)
+      val summary = SpaceSummary(mission.vehicle, mission)
+      history.setSummary(summary)
+      publishUpdate("update", summary)
 
     case MissionStop(mission) =>
       log.debug(s"Received stop of $mission")
