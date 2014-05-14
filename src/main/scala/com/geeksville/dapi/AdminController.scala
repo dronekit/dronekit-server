@@ -87,13 +87,18 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     simClient ? PlaybackGCSClient.RunTest("test")
   }
 
-  post("/sim/std/:keep/:numVehicles/:numSecs", operation(simOp)) {
-    val keep = params("keep").toBoolean
+  post("/sim/std/:numVehicles/:numSecs", operation(simOp)) {
+    // val keep = params("keep").toBoolean
     val numVehicles = params("numVehicles").toInt
     val numSecs = params("numSecs").toInt
-    val h = host
-    lazy val simClient = system.actorOf(Props(new SimGCSClient(h, keep)))
+    // val h = host
+    val simClient = Global.simGCSClient
     simClient ? SimGCSClient.RunTest(numVehicles, numSecs)
+  }
+
+  post("/sim/std/stopAll", operation(simOp)) {
+    val simClient = Global.simGCSClient
+    simClient ? SimGCSClient.StopAllTests
   }
 
   // FIXME -very dangerous remove before production

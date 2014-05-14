@@ -158,6 +158,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   private def publishUpdate(typ: String, p: Product = null, preferredSender: ActorRef = sender) {
     withMission(preferredSender) { senderMission =>
 
+      //log.debug(s"Publishing $typ")
       msgLogThrottle.withIgnoreCount { numIgnored: Int =>
         log.debug(s"Published space $typ, $p (and $numIgnored others)")
       }

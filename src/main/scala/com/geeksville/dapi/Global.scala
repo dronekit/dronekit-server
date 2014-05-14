@@ -8,8 +8,13 @@ import com.geeksville.apiproxy.APIConstants
 import com.geeksville.akka.TCPListenerActor
 import java.io.File
 import com.geeksville.akka.MockAkka
+import com.geeksville.dapi.test.SimGCSClient
 
 object Global {
+  def system = MockAkka.system
+
+  lazy val simGCSClient = system.actorOf(Props(new SimGCSClient("localhost", false)))
+
   def setConfig() {
     val configOverride = new File(System.getProperty("user.home") + "/nestor.conf")
     if (configOverride.exists)

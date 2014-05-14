@@ -36,6 +36,9 @@ import org.mavlink.messages.MAV_AUTOPILOT
 import java.net.NetworkInterface
 import com.geeksville.akka.DebuggableActor
 import com.geeksville.flight.SendMessage
+import com.geeksville.akka.AkkaTools
+import scala.util.Success
+import scala.util.Failure
 
 /**
  * An integration test that calls into the server as if it was a GCS/vehicle client
@@ -50,6 +53,10 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     case Terminated(_) =>
       if (children.isEmpty) // All our vehicles done?
         self ! PoisonPill
+
+    case SimGCSClient.StopAllTests =>
+      children.foreach { _ ! PoisonPill }
+      sender ! "Stopped all tests"
 
     case SimGCSClient.RunTest(numVehicles, numSeconds) =>
       log.error("Running test")
@@ -94,6 +101,9 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     val maxLen = 0.5 // in degrees
     val maxAlt = 100
 
+    val ovalWidth = maxLen * random.nextDouble
+    val ovalHeight = maxLen * random.nextDouble
+
     // 20-40sec per each path down the line
     val secondsPerLoop = 20.0 + random.nextDouble * 20
     val numLoops = numSeconds / secondsPerLoop
@@ -125,16 +135,27 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
       val curLoopNum = numLoops * pos
 
-      // How far are we on our current loop (if on odd loops fly backwards in the other direction)
-      val isOdd = (curLoopNum.toInt % 2) == 1
-      val len = if (isOdd)
-        1 - (curLoopNum - math.floor(curLoopNum))
-      else
-        curLoopNum - math.floor(curLoopNum)
+      // Position on current loop (0 to 1)
+      var len = curLoopNum - math.floor(curLoopNum)
 
-      Location(center._1 + len * math.cos(lineAngle),
-        center._2 + len * math.sin(lineAngle),
-        Some(maxAlt * math.sin(len)))
+      val alt = Some(maxAlt * math.sin(len))
+
+      val onLine = false // We either do ovals or lines
+      if (onLine) {
+        // How far are we on our current loop (if on odd loops fly backwards in the other direction)
+        val isOdd = (curLoopNum.toInt % 2) == 1
+
+        if (isOdd)
+          len = 1 - len
+
+        Location(center._1 + len * math.cos(lineAngle),
+          center._2 + len * math.sin(lineAngle),
+          alt)
+      } else {
+        Location(center._1 + ovalWidth * math.cos(len * math.Pi * 2),
+          center._2 + ovalHeight * math.sin(len * math.Pi * 2),
+          alt)
+      }
     }
 
     def receive = {
@@ -157,7 +178,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
           // Fake up some mode changes
           if (random.nextInt(100) < 5) {
-            log.debug("Faking a mode change")
+            //log.debug("Faking a mode change")
             heading = random.nextInt(360)
             gcsCustomMode = random.nextInt(5) + 1
             gcsBaseMode = (if (random.nextBoolean()) MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED else 0) | MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED
@@ -250,32 +271,36 @@ class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging 
 
     // Wait for the uploader to start (so it is subscribed) before starting the tlog reader
     // FIXME - make this into a waitStarted utility...
-    implicit val timeout = Timeout(30 second)
-    (uploader ? Identify(0L)).map { r =>
-      // When our tlog reader finishes, we automatically end the upload
-      context.watch(tlog)
-      log.debug("Waiting for tlog file to end")
-      context.become {
-        case Terminated(t) if t == tlog =>
-          log.info("Tlog finished, telling uploader to exit")
-          uploader ! StopMissionAndExitMsg
-          context.unbecome()
+    AkkaTools.waitAlive(uploader) onComplete {
+      case Failure(t) =>
+        throw t
 
-        case Terminated(t) if t == uploader =>
-          log.info("Simulation completed!")
-          context.sender ! s"Completed sim"
-      }
+      case Success(_) =>
+        // When our tlog reader finishes, we automatically end the upload
+        context.watch(tlog)
+        log.debug("Waiting for tlog file to end")
+        context.become {
+          case Terminated(t) if t == tlog =>
+            log.info("Tlog finished, telling uploader to exit")
+            uploader ! StopMissionAndExitMsg
+            context.unbecome()
 
-      log.debug("Starting tlog playback")
+          case Terminated(t) if t == uploader =>
+            log.info("Simulation completed!")
+            context.sender ! s"Completed sim"
+        }
 
-      // We wait to start the tlog reader until _after_ our subscriptions are setup
-      tlog ! MavlinkStreamReceiver.StartMsg
+        log.debug("Starting tlog playback")
+
+        // We wait to start the tlog reader until _after_ our subscriptions are setup
+        tlog ! MavlinkStreamReceiver.StartMsg
     }
   }
 }
 
 object SimGCSClient extends Logging {
   case class RunTest(numVehicles: Int, numSeconds: Int)
+  case object StopAllTests
 
   /// We use this to ensure each new run of the simulator picks a different set of UUIDs - but we want to always start from
   /// the same set so the DB doesn't fill with a zilliong records
