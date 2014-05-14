@@ -12,6 +12,7 @@ import javax.servlet.annotation.MultipartConfig
 import org.json4s.JsonAST.JString
 import com.geeksville.json.ActiveRecordSerializer
 import org.json4s.JsonAST.JObject
+import java.util.UUID
 
 /// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 @MultipartConfig(maxFileSize = 1024 * 1024)
@@ -58,7 +59,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
 
   override protected def createDynamically(payload: JObject): Any = {
     val json = payload.extract[VehicleJson]
-    user.getOrCreateVehicle(json.uuid.get)
+    user.getOrCreateVehicle(json.uuid.getOrElse(UUID.randomUUID))
   }
 
   private val addMissionInfo =

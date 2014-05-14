@@ -30,22 +30,5 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
   override protected def toJSON(o: Any): JValue = {
     Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + VehicleSerializer + new UserSerializer(Option(user)))
   }
-
-  private val addVehicleInfo =
-    (apiOperation[List[Vehicle]]("addVehicle")
-      summary s"Add a new mission (as a tlog, bog or log)"
-      parameters (
-        bodyParam[Array[Byte]],
-        pathParam[String]("id").description(s"Id of $aName to be appended")))
-
-  post("/:id/vehicles", operation(addVehicleInfo)) {
-    val u = requireWriteAccess(findById)
-    info("Creating new vehicle for web client")
-
-    // FIXME - use the payload provided by the client
-    val uuid = UUID.randomUUID()
-    val v = u.getOrCreateVehicle(uuid)
-    v
-  }
 }
 
