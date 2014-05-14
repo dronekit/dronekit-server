@@ -44,7 +44,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
   import context._
 
   private val webapi = new GCSHooksImpl(host)
-  private val random = new Random
+  private val random = new Random(System.currentTimeMillis)
 
   override def receive = {
     case Terminated(_) =>
@@ -81,13 +81,21 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     val isControllable = false
 
     val generation = SimGCSClient.nextGeneration
-    val center = (21.2966980, -157.8480360)
+
+    // Center our vehicles around various world points
+    val centerLocations = Seq((21.2966980, -157.8480360), // HI
+      (37.517, -122.29), // Belmont
+      (51.500, -0.1262), // London
+      (35.68, 139.69) // Tokyo
+      )
+    val center = centerLocations(random.nextInt(centerLocations.size))
+
     val lineAngle = generation * random.nextDouble % (math.Pi * 2)
     val maxLen = 0.5 // in degrees
     val maxAlt = 100
 
     // 20-40sec per each path down the line
-    val secondsPerLoop = 20.0 + random.nextDouble / 20
+    val secondsPerLoop = 20.0 + random.nextDouble * 20
     val numLoops = numSeconds / secondsPerLoop
 
     var numRemaining = numPoints
@@ -112,12 +120,21 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
     /// A fake current position
     def curLoc = {
+      // How far are we through our sim time 0 means all the time is left, 1 means done
       val pos = (numPoints.toDouble - numRemaining.toDouble) / numPoints
-      val len = (maxLen / numLoops) * pos
+
+      val curLoopNum = numLoops * pos
+
+      // How far are we on our current loop (if on odd loops fly backwards in the other direction)
+      val isOdd = (curLoopNum.toInt % 2) == 1
+      val len = if (isOdd)
+        1 - (curLoopNum - math.floor(curLoopNum))
+      else
+        curLoopNum - math.floor(curLoopNum)
 
       Location(center._1 + len * math.cos(lineAngle),
         center._2 + len * math.sin(lineAngle),
-        Some(maxAlt * math.sin(pos)))
+        Some(maxAlt * math.sin(len)))
     }
 
     def receive = {
