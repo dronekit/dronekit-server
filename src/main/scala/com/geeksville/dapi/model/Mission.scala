@@ -63,6 +63,13 @@ case class MissionSummary(
     e <- endTime
   } yield (e.getTime - s.getTime) / 1000.0 / 60
 
+  override def toString = {
+    val mins = minutes.map(_.toString).getOrElse("unknown")
+    val loc = text.getOrElse("unknown")
+
+    s"MissionSummary($maxAlt alt, $mins mins, $loc location)"
+  }
+
   /**
    * Regenerate the summary text
    */
@@ -72,11 +79,6 @@ case class MissionSummary(
       def vehicle: Vehicle = mission.vehicle
       def user: User = vehicle.user
       def username = user.login
-      def minutes = flightDuration
-      def timestr = flightDuration.map { d =>
-        val mins = (d / 60).toInt
-        s"$mins minutes"
-      }.getOrElse("")
 
       val unknown = "at an unknown location"
       val needGeocoding = !text.isDefined || text.get == unknown
