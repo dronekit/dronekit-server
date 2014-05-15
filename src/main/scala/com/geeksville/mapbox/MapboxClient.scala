@@ -17,6 +17,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
 import com.geeksville.http.HttpClient
 import org.json4s._
+import grizzled.slf4j.Logging
 
 object MapboxClient {
   val monitor = false
@@ -26,7 +27,8 @@ object MapboxClient {
 // lon, lat
 
 class MapboxClient(myDomain: String = "***REMOVED***")
-  extends HttpClient(new HttpHost(if (MapboxClient.monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com")) {
+  extends HttpClient(new HttpHost(if (MapboxClient.monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com"))
+  with Logging {
 
   /**
    * Returns a sequenct of pairs of the following form:
@@ -49,6 +51,9 @@ class MapboxClient(myDomain: String = "***REMOVED***")
 
       typ -> name
     }
+
+    if (r.length == 0)
+      error(s"Geocoding failed to find location for lat $lat, lon $lon: $json")
 
     r
   }
