@@ -48,6 +48,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
   private val webapi = new GCSHooksImpl(host)
   private val random = new Random(System.currentTimeMillis)
+  private var started = false
 
   override def receive = {
     case Terminated(_) =>
@@ -112,7 +113,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
     var heading = random.nextInt(360)
 
-    val uuid = UUID.nameUUIDFromBytes(getMachineId :+ systemId.toByte :+ generation.toByte)
+    val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
     log.info(s"Created sim vehicle $systemId: $uuid")
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
 
@@ -204,8 +205,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     }
   }
 
-  private def runTest(numVehicles: Int, numSeconds: Int) {
-
+  private def startConnection() {
     val loginName = "test-bob"
     val email = "test-bob@3drobotics.com"
     val password = "sekrit"
@@ -218,11 +218,18 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
     webapi.flush()
 
-    // How long to run the test
-    val numPoints = numSeconds * 2
-
     log.info("Starting mission")
     webapi.startMission(keep, UUID.randomUUID)
+  }
+
+  private def runTest(numVehicles: Int, numSeconds: Int) {
+    if (!started) {
+      startConnection()
+      started = true
+    }
+
+    // How long to run the test
+    val numPoints = numSeconds * 2
 
     (0 until numVehicles).foreach { i =>
       watch(context.actorOf(Props(new SimVehicle(SimGCSClient.nextGeneration(), numSeconds, numPoints))))

@@ -268,7 +268,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   }
 
   private def startMission(msg: StartMissionMsg) = blocking {
+    // The following can fail if the client sends multiple start msgs
     assert(!tlogId.isDefined)
+
     tlogId = Some(UUID.randomUUID())
     log.debug(s"Starting tlog $tlogId")
 
