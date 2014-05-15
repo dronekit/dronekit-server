@@ -46,9 +46,7 @@ import scala.util.Failure
 class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with ActorLogging {
   import context._
 
-  private val webapi = new GCSHooksImpl(host)
   private val random = new Random(System.currentTimeMillis)
-  private var started = false
 
   override def receive = {
     case Terminated(_) =>
@@ -66,8 +64,6 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
   }
 
   override def postStop() {
-    webapi.stopMission(keep)
-    webapi.close()
 
     log.info("Sim test completed")
 
@@ -83,6 +79,8 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
   private class SimVehicle(val systemId: Int, numSeconds: Int, val numPoints: Int) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender {
     private var seqNum = 0
+
+    private val webapi = new GCSHooksImpl(host)
 
     case object SimNext
     val interfaceNum = 0
@@ -114,8 +112,6 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     var heading = random.nextInt(360)
 
     val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
-    log.info(s"Created sim vehicle $systemId: $uuid")
-    webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
 
     val interval = numSeconds.toDouble / numPoints
     private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
@@ -124,10 +120,38 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     vehicleTypeCode = MAV_TYPE.MAV_TYPE_QUADROTOR
     autopilotCode = MAV_AUTOPILOT.MAV_AUTOPILOT_ARDUPILOTMEGA
 
+    startConnection()
+
     sendMavlink(makeStatusText("Starting sim vehicle"))
 
     // Start our sim
     scheduleNext()
+
+    override def postStop() {
+      webapi.stopMission(keep)
+      webapi.close()
+      super.postStop()
+    }
+
+    private def startConnection() {
+      val loginName = "test-bob"
+      val email = "test-bob@3drobotics.com"
+      val password = "sekrit"
+
+      // Create user if necessary/possible
+      if (webapi.isUsernameAvailable(loginName))
+        webapi.createUser(loginName, password, Some(email))
+      else
+        webapi.loginUser(loginName, password)
+
+      webapi.flush()
+
+      log.info("Starting mission")
+      webapi.startMission(keep, UUID.randomUUID)
+
+      log.info(s"Created sim vehicle $systemId: $uuid")
+      webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
+    }
 
     /// A fake current position
     def curLoc = {
@@ -205,29 +229,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     }
   }
 
-  private def startConnection() {
-    val loginName = "test-bob"
-    val email = "test-bob@3drobotics.com"
-    val password = "sekrit"
-
-    // Create user if necessary/possible
-    if (webapi.isUsernameAvailable(loginName))
-      webapi.createUser(loginName, password, Some(email))
-    else
-      webapi.loginUser(loginName, password)
-
-    webapi.flush()
-
-    log.info("Starting mission")
-    webapi.startMission(keep, UUID.randomUUID)
-  }
-
   private def runTest(numVehicles: Int, numSeconds: Int) {
-    if (!started) {
-      startConnection()
-      started = true
-    }
-
     // How long to run the test
     val numPoints = numSeconds * 2
 
