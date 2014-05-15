@@ -236,7 +236,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       updateDBSummary()
 
       vehicle.updateFromMission(this)
-      log.info(s"Generating mission update (starttime=${m.summary.startTime}, curtime=$currentTime, loc=$endPosition): $m")
+      //log.debug(s"Generating mission update (starttime=${m.summary.startTime}, curtime=$currentTime, loc=$endPosition): $m")
       publishEvent(MissionUpdate(m))
     }
   }
