@@ -29,7 +29,7 @@ class HttpClient(val httpHost: HttpHost) {
     httpclient.getConnectionManager().shutdown()
   }
 
-  def call(transaction: HttpRequestBase) = {
+  def call(transaction: HttpRequestBase) = synchronized {
     try {
       val response = httpclient.execute(httpHost, transaction)
 
