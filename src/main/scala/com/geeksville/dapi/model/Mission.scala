@@ -27,6 +27,12 @@ import org.json4s.JsonDSL._
 import org.json4s._
 import com.geeksville.mapbox.MapboxClient
 import java.text.DecimalFormat
+import com.geeksville.dapi.LiveVehicleActor
+import scala.concurrent.duration._
+import akka.pattern.ask
+import scala.concurrent.Await
+import com.geeksville.dapi.GetTLogMessage
+import akka.util.Timeout
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -144,7 +150,7 @@ case class Mission(
   var tlogId: Option[String] = None
 
   /**
-   * A reconstructed playback model for this vehicle - note: accessing this lazy val is _expensive_
+   * A reconstructed playback model for this vehicle - note: calling this function is _expensive_
    * CPU and ongoing memory
    */
   def model = tlogBytes.map { bytes =>
@@ -212,7 +218,24 @@ case class Mission(
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
   def tlogBytes = try {
-    tlogId.flatMap { s => Mission.getBytes(s) }
+    if (!isLive)
+      tlogId.flatMap { s => Mission.getBytes(s) }
+    else {
+      info(s"Asking live actor for tlog $this")
+      // FIXME - kinda yucky way to ask the live vehicle for a tracklog
+      val actor = LiveVehicleActor.find(vehicle)
+      actor match {
+        case None =>
+          error(s"Supposedly live mission doesn't have an actor: $this")
+          None
+
+        case Some(a) =>
+          implicit val timeout = Timeout(60 seconds)
+          val f = (a ? GetTLogMessage)
+          val b = Await.result(f, 60 seconds).asInstanceOf[Option[Array[Byte]]]
+          b
+      }
+    }
   } catch {
     case ex: Exception =>
       error(s"S3 can't find tlog ${tlogId.get} due to $ex")

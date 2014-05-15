@@ -27,11 +27,15 @@ import com.geeksville.akka.MockAkka
 import org.mavlink.messages.ardupilotmega.msg_heartbeat
 import scala.concurrent.duration._
 import com.github.aselab.activerecord.dsl._
+import com.geeksville.mavlink.FlushNowMessage
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
 
 case class VehicleDisconnected()
+
+// We would like the live vehicle to reply with an Option[Array[Byte]] of tlog bytes
+case object GetTLogMessage
 
 /**
  * An actor that represents a connection to a live vehicle.  GCSAdapters use this object to store mavlink from vehicle and publishes from this object
@@ -53,6 +57,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
   /// We reserve a tlog ID at mission start - but don't use it until mission end
   private var tlogId: Option[UUID] = None
+  private var myTlogFile: Option[File] = None
 
   /// The mission we are creating
   private var missionOpt: Option[Mission] = None
@@ -130,6 +135,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     case SendUpdateTickMsg =>
       sendMissionUpdate()
 
+    case GetTLogMessage =>
+      sender ! getTlogBytes()
+
     case msg: TimestampedMessage =>
 
       // Log to the file
@@ -175,7 +183,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   /**
    * We modify the actor to copy to S3 after the file is closed
    */
-  private class TlogToS3Actor(mission: Mission) extends LogBinaryMavlink(LogBinaryMavlink.getFilename(), deleteIfBoring = false, wantImprovedFilename = false) {
+  private class TlogToS3Actor(filename: File, mission: Mission) extends LogBinaryMavlink(filename, deleteIfBoring = false, wantImprovedFilename = false) {
     override protected def onFileClose() {
       if (mission.keep) {
         log.debug(s"Copying to s3: $tlogId")
@@ -187,6 +195,31 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
       tlogId = None
       file.delete()
+    }
+  }
+
+  def getTlogBytes(): Option[Array[Byte]] = {
+    try {
+      myTlogFile.map { finalfile =>
+        // FIXME - super skanky - we use knowledge on where the temp file is stored
+        val file = new File(finalfile.getCanonicalPath() + ".tmp")
+        log.info(s"Reading working tlog from $file")
+
+        // Tell our tlogger to write to disk
+        // FIXME - wait for a reply
+        tloggerOpt.foreach { _ ! FlushNowMessage }
+
+        log.info(s"Returning tlog bytes to live actor client")
+        com.geeksville.util.Using.using(new FileInputStream(file)) { source =>
+          val byteArray = new Array[Byte](file.length.toInt)
+          source.read(byteArray)
+          byteArray
+        }
+      }
+    } catch {
+      case ex: Exception =>
+        log.error(s"Failed getting tlog due to $ex", ex)
+        None
     }
   }
 
@@ -240,13 +273,14 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     log.debug(s"Starting tlog $tlogId")
 
     val f = LogBinaryMavlink.getFilename() // FIXME - create in temp directory instead
+    myTlogFile = Some(f)
 
     val m = Mission.create(vehicle)
     missionOpt = Some(m)
     startTime = None
     m.notes = msg.notes
 
-    tloggerOpt = Some(context.actorOf(Props(new TlogToS3Actor(m)), "tlogger"))
+    tloggerOpt = Some(context.actorOf(Props(new TlogToS3Actor(f, m)), "tlogger"))
 
     // Pull privacy from vehicle if not specified
     var viewPriv = msg.viewPrivacy.getOrElse(AccessCode.DEFAULT).id
@@ -279,6 +313,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       a ! PoisonPill
       tloggerOpt = None
     }
+    myTlogFile = None
 
     missionOpt.foreach { m =>
       blocking {
@@ -310,10 +345,10 @@ object LiveVehicleActor {
   private val msgLogThrottle = new Throttled(5000)
 
   /**
-   * Find the supervisor responsible for a region of space
-   *
-   * FIXME - add grid identifer param
+   * Find the supervisor responsible for a particular vehicle
    */
-  def find(vehicle: Vehicle, canAcceptCommands: Boolean) = actors.getOrCreate(vehicle.uuid.toString, Props(new LiveVehicleActor(vehicle, canAcceptCommands)))
+  def findOrCreate(vehicle: Vehicle, canAcceptCommands: Boolean) = actors.getOrCreate(vehicle.uuid.toString, Props(new LiveVehicleActor(vehicle, canAcceptCommands)))
+
+  def find(vehicle: Vehicle) = actors.get(vehicle.uuid.toString)
 
 }

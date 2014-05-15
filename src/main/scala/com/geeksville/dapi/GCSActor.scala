@@ -108,7 +108,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
         val uuid = UUID.fromString(msg.vehicleUUID)
         val vehicle = user.getOrCreateVehicle(uuid)
 
-        val actor = LiveVehicleActor.find(vehicle, msg.canAcceptCommands)
+        val actor = LiveVehicleActor.findOrCreate(vehicle, msg.canAcceptCommands)
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
         actor ! VehicleConnected()
 

@@ -225,7 +225,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     webapi.startMission(keep, UUID.randomUUID)
 
     (0 until numVehicles).foreach { i =>
-      watch(context.actorOf(Props(new SimVehicle(i, numSeconds, numPoints))))
+      watch(context.actorOf(Props(new SimVehicle(SimGCSClient.nextGeneration(), numSeconds, numPoints))))
     }
 
     // Handle the no vehicle case
