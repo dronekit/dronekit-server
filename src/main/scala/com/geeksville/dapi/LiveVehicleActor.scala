@@ -104,6 +104,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
       gcsActor.foreach { old =>
         log.warning(s"Vehicle reconnection, hanging up on old GCS $old")
+        stopMission()
         old ! VehicleDisconnected()
       }
       gcsActor = Some(sender)
