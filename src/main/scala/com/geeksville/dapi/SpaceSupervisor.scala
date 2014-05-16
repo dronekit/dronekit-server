@@ -269,6 +269,14 @@ object SpaceSupervisor {
   /// Resend any old messages to this new client
   case class SendToAtmosphereMessage(dest: AtmosphereLive)
 
+  // Most space notifications come due to subscribing to particlar live vehicles
+  // However, if someone manually uploads a tlog via the REST api, we want to consider that
+  // a new mission as well.
+  def tellMission(space: ActorRef, m: Mission) {
+    space ! MissionStart(m)
+    space ! MissionStop(m)
+  }
+
   /**
    * Find the supervisor responsible for a region of space
    *

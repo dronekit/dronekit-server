@@ -89,7 +89,14 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
         None
       } else {
         info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
-        Some(v.createMission(payload.get, Some(payload.name)))
+
+        val m = v.createMission(payload.get, Some(payload.name))
+
+        // Make this new mission show up on the recent flights list
+        val space = SpaceSupervisor.find()
+        SpaceSupervisor.tellMission(space, m)
+
+        Some(m)
       }
     }.toList
 
