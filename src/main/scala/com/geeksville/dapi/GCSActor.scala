@@ -45,7 +45,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   private val dataStream = new DataInputStream(new QueueInputStream(mavlinkQueue))
   private val reader = new MAVLinkReader(dataStream, IMAVLinkMessage.MAVPROT_PACKET_START_V10)
 
-  private val msgLogThrottle = new Throttled(5000)
+  private val msgLogThrottle = new Throttled(30 * 1000)
 
   private var myVehicle: Option[ActorRef] = None
   private val vehicles = HashMap[VehicleBinding, ActorRef]()
