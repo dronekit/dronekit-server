@@ -29,16 +29,10 @@ owners.
 
 Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 
-mysql> CREATE USER 'dapi'@'localhost' IDENTIFIED BY 'password';
-Query OK, 0 rows affected (0.00 sec)
-
-mysql> GRANT ALL PRIVILEGES ON * . * TO 'dapi'@'localhost';
-Query OK, 0 rows affected (0.01 sec)
-
-mysql> FLUSH PRIVILEGES;
-Query OK, 0 rows affected (0.00 sec)
-
-mysql> create database dapi;
-Query OK, 1 row affected (0.00 sec)
+Enter the following commands:
+CREATE USER 'dapi'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON * . * TO 'dapi'@'localhost';
+FLUSH PRIVILEGES;
+create database dapi;
 
 

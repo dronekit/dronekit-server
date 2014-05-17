@@ -37,6 +37,6 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
   def publicUriBase = {
     val h = request.getServerName()
 
-    new URL(request.getScheme(), if (h == "localhost") "nestor.3dr.com" else h, "").toURI
+    new URL(request.getScheme(), if (h == "localhost") "api.3dr.com" else h, "").toURI
   }
 }
