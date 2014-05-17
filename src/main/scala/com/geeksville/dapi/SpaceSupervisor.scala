@@ -60,7 +60,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   import context._
   import SpaceSupervisor._
 
-  private val msgLogThrottle = new Throttled(30 * 1000)
+  private val msgLogThrottle = new Throttled(5 * 60 * 1000)
 
   private val eventStream = new EventStream
 
@@ -217,7 +217,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       publishUpdate("start", summary)
 
     case MissionUpdate(mission) =>
-      log.debug(s"Applying mission update $mission")
+      // log.debug(s"Applying mission update $mission")
       val history = actorToMission(sender)
       val summary = SpaceSummary(mission.vehicle, mission)
       history.setSummary(summary)

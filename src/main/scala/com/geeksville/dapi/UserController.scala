@@ -27,8 +27,31 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
     super.requireReadAllAccess()
   }
 
+  override protected def requireWriteAccess(o: User) = {
+    requireBeOwnerOrAdmin(o.id)
+    super.requireWriteAccess(o)
+  }
+
   override protected def toJSON(o: Any): JValue = {
     Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + VehicleSerializer + new UserSerializer(Option(user)))
+  }
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in updating objects.
+  /// Implementations should return the updated object
+  override protected def updateObject(o: User, payload: JObject) = {
+    val r = payload.extract[UserJson]
+
+    // Handle password updates
+    r.password.foreach { newPsw =>
+      val oldPwGood = r.oldPassword.map(o.isPasswordGood).getOrElse(user.isAdmin)
+      if (!oldPwGood)
+        haltUnauthorized("Invalid oldPassword")
+
+      o.password = newPsw
+      o.save
+    }
+
+    o
   }
 }
 

@@ -84,6 +84,18 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   /**
+   * Throws unauthorized if not owned by the current user (or user is an admin)
+   */
+  protected def requireBeOwnerOrAdmin(ownerId: Long) {
+    val u = tryLogin()
+    val isOwner = u.map(_.id == ownerId).getOrElse(false)
+    val isAdmin = u.map(_.isAdmin).getOrElse(false)
+
+    if (!isOwner && !isAdmin)
+      haltUnauthorized("You do not own this record")
+  }
+
+  /**
    * Check if the specified owned resource can be accessed by the current user given an AccessCode
    */
   protected def requireAccessCode(ownerId: Long, privacyCode: Int, defaultPrivacy: Int) {
@@ -93,7 +105,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     val isAdmin = u.map(_.isAdmin).getOrElse(false)
 
     if (!ApiController.isAccessAllowed(privacyCode, isOwner || isAdmin, isResearcher, defaultPrivacy))
-      haltUnauthorized("No access")
+      haltUnauthorized("You do not have adequate permissions")
   }
 
   /// Generate a ro attribute on this rest endpoint of the form /:id/name.
@@ -128,17 +140,20 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     }
   }
 
-  put("/") {
-    requireCreateAccess()
-
-    val jobj = try {
+  private def bodyAsJSON = {
+    try {
       parsedBody.extract[JObject]
     } catch {
       case ex: Exception =>
         error(s"Malformed client json: $parsedBody")
         haltBadRequest("JSON object expected")
     }
-    createDynamically(jobj)
+  }
+
+  put("/") {
+    requireCreateAccess()
+
+    createDynamically(bodyAsJSON)
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to / to result in creating new objects.  implementations should return the new ID
@@ -255,6 +270,25 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
   post("/:id", operation(createByIdOp)) {
     haltNotFound()
+  }
+
+  private lazy val updateByIdOp =
+    (apiOperation[String]("uodateById")
+      summary "Update by id"
+      parameters (
+        bodyParam[T],
+        pathParam[String]("id").description(s"Id of $aName that needs to be updated")))
+
+  put("/:id", operation(updateByIdOp)) {
+    val o = findById
+    requireWriteAccess(o)
+    updateObject(o, bodyAsJSON)
+  }
+
+  /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in updating objects.
+  /// Implementations should return the updated object
+  protected def updateObject(o: T, payload: JObject): T = {
+    haltMethodNotAllowed("update by ID not allowed")
   }
 
   private lazy val deleteByIdOp =

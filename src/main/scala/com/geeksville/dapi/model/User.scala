@@ -157,7 +157,10 @@ case class User(@Required @Unique login: String,
 
 case class UserJson(login: String,
   password: Option[String] = None, email: Option[String] = None,
-  fullName: Option[String] = None, wantEmails: Option[String] = None)
+  fullName: Option[String] = None, wantEmails: Option[String] = None,
+
+  // If a client is changing password they must also include this field (or be an admin)
+  oldPassword: Option[String] = None)
 
 /// We provide an initionally restricted view of users
 /// If we know a viewer we will customize for them
