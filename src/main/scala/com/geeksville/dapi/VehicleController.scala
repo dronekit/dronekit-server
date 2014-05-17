@@ -31,7 +31,11 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
    * If not allowed, override should call haltUnauthorized()
    */
   override protected def requireWriteAccess(o: Vehicle) = {
-    requireAccessCode(o.userId.getOrElse(-1L), o.controlPrivacy, ApiController.defaultVehicleControlAccess)
+
+    // Be even more strict than this - only let them change the vehicle object if the owner (for now)
+    // requireAccessCode(o.userId.getOrElse(-1L), o.controlPrivacy, ApiController.defaultVehicleControlAccess)
+    requireBeOwnerOrAdmin(o.userId.getOrElse(-1L))
+
     super.requireWriteAccess(o)
   }
 
@@ -70,6 +74,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
         bodyParam[Array[Byte]],
         pathParam[String]("id").description(s"Id of $aName to be have mission added")))
 
+  // Allow adding missions by posting under the vehicle
   post("/:id/missions", operation(addMissionInfo)) {
     val v = requireWriteAccess(findById)
     val files = fileMultiParams.values.flatMap { s => s }
@@ -114,5 +119,14 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
     created
   }
 
+  /// Allow web gui to update vehicle
+  override protected def updateObject(o: Vehicle, payload: JObject) = {
+    val r = payload.extract[VehicleJson]
+
+    o.name = r.name
+    o.save
+
+    o
+  }
 }
 

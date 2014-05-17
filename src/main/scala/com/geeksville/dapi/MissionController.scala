@@ -34,20 +34,36 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
 
 class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
 
+  private def missionUserId(o: Mission) = for {
+    v <- o.vehicle
+    uid <- v.userId
+  } yield {
+    uid
+  }
+
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */
   override protected def requireReadAccess(o: Mission) = {
-    val userId = for {
-      v <- o.vehicle
-      uid <- v.userId
-    } yield {
-      uid
-    }
+    val userId = missionUserId(o)
 
     warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
     //requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
     super.requireReadAccess(o)
+  }
+
+  /**
+   * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
+   * If not allowed, override should call haltUnauthorized()
+   */
+  override protected def requireWriteAccess(o: Mission) = {
+    val userId = missionUserId(o)
+
+    // Be even more strict than this - only let them change the mission object if the owner (for now)
+    // requireAccessCode(userId.getOrElse(-1L), o.controlPrivacy, ApiController.defaultVehicleControlAccess)
+    requireBeOwnerOrAdmin(userId.getOrElse(-1L))
+
+    super.requireWriteAccess(o)
   }
 
   override protected def getOp = (super.getOp
@@ -246,5 +262,14 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     genParams(o, false)
   }
 
+  /// Allow web gui to update vehicle
+  override protected def updateObject(o: Mission, payload: JObject) = {
+    val r = payload.extract[MissionJson]
+
+    r.notes.foreach { notes => o.notes = Some(notes) }
+    o.save
+
+    o
+  }
 }
 
