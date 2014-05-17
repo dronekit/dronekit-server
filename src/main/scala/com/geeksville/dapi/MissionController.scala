@@ -266,7 +266,12 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   override protected def updateObject(o: Mission, payload: JObject) = {
     val r = payload.extract[MissionJson]
 
+    r.summaryText.foreach { text =>
+      debug(s"Setting summary text to $text")
+      o.summary.text = Some(text)
+    }
     r.notes.foreach { notes => o.notes = Some(notes) }
+    o.summary.save
     o.save
 
     o

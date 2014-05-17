@@ -256,7 +256,7 @@ case class MissionJson(
   id: Long,
   notes: Option[String],
   isLive: Boolean,
-  viewPrivacy: AccessCode.EnumVal,
+  viewPrivacy: Option[AccessCode.EnumVal],
   vehicleId: Option[Long],
 
   // From summary
@@ -269,8 +269,8 @@ case class MissionJson(
   longitude: Option[Double],
   softwareVersion: Option[String],
   softwareGit: Option[String],
-  createdOn: Date,
-  updatedOn: Date,
+  createdOn: Option[Date],
+  updatedOn: Option[Date],
   summaryText: Option[String],
   mapThumbnailURL: Option[String],
 
@@ -289,7 +289,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   {
     case u: Mission =>
       val s = u.summary.headOption
-      val m = MissionJson(u.id, u.notes, u.isLive, AccessCode.valueOf(u.viewPrivacy), u.vehicleId,
+      val m = MissionJson(u.id, u.notes, u.isLive, Some(AccessCode.valueOf(u.viewPrivacy)), u.vehicleId,
         s.map(_.maxAlt),
         s.map(_.maxGroundSpeed),
         s.map(_.maxAirSpeed),
@@ -299,7 +299,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.longitude),
         s.flatMap(_.softwareVersion),
         s.flatMap(_.softwareGit),
-        u.createdOn, u.updatedOn,
+        Some(u.createdOn), Some(u.updatedOn),
         s.flatMap(_.text),
         u.mapThumbnailURL,
         Some(u.vehicle.text),
