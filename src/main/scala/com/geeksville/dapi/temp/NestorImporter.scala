@@ -33,7 +33,7 @@ class NestorImporter extends Actor with ActorLogging {
       recordNum += 1
 
       val id = tlog.id
-      val forceReimport = true
+      val forceReimport = false
       val oldMission = Mission.findByTlogId(id)
       val wantStop = if (tlog.startTime.getYear > 2020) {
         log.info(s"Bogus record $id ${tlog.startTime}")
