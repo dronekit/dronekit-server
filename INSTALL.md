@@ -11,7 +11,7 @@ ubuntu@ip-10-179-53-86:~/zeromq-2.2.0$ make
 from src.
 
 * Install MySql
-apt-get install mysql-client mysql-server
+apt-get install mysql-client mysql-server openjdk-7-jdk unzip
 (you will be prompted to choose a root db psw)
 
 * Create a user in mysql per https://www.digitalocean.com/community/articles/how-to-create-a-new-user-and-grant-permissions-in-mysql
