@@ -12,6 +12,7 @@ import com.geeksville.dapi.AccessCode
 import java.util.UUID
 import com.geeksville.nestor.TLogChunk
 import java.io.ByteArrayInputStream
+import com.geeksville.dapi.SpaceSupervisor
 
 case class DoImport(numRecords: Int)
 
@@ -28,6 +29,9 @@ class NestorImporter extends Actor with ActorLogging {
 
   def migrate(maxResults: Int) = blocking {
     var recordNum = 0
+
+    val space = SpaceSupervisor.find()
+
     TLogChunkDAO.tlogsRecent(maxResults).find { tlog =>
 
       recordNum += 1
@@ -73,9 +77,12 @@ class NestorImporter extends Actor with ActorLogging {
         // Copy over tlog (if it exists)
         try {
           tlog.bytes.foreach { bytes =>
-            if (bytes.size > 0)
-              vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
-            else
+            if (bytes.size > 0) {
+              val m = vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
+
+              // Make this new mission show up on the recent flights list
+              SpaceSupervisor.tellMission(space, m)
+            } else
               log.warning("Skipping zero length mission")
           }
         } catch {
