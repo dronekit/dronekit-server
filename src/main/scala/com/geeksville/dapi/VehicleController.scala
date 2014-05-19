@@ -18,6 +18,17 @@ import java.util.UUID
 @MultipartConfig(maxFileSize = 1024 * 1024)
 class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) with FileUploadSupport {
 
+  override implicit val jsonFormats: Formats = super.jsonFormats + new VehicleSerializer(true)
+
+  /**
+   * Until a compelling use-case can be made we only allow admins to list all vehicles (prevent scraping)
+   */
+  protected override def requireReadAllAccess() = {
+    requireAdmin()
+
+    super.requireReadAllAccess()
+  }
+
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */
