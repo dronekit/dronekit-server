@@ -33,7 +33,7 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
   }
 
   override protected def toJSON(o: Any): JValue = {
-    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + VehicleSerializer + new UserSerializer(Option(user)))
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new UserSerializer(Option(user), true))
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in updating objects.

@@ -164,7 +164,8 @@ case class UserJson(login: String,
 
 /// We provide an initionally restricted view of users
 /// If we know a viewer we will customize for them
-class UserSerializer(viewer: Option[User]) extends CustomSerializer[User](implicit format => (
+/// @param fullVehicles if true include the full vehicle JSON (but still excluding missions)
+class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends CustomSerializer[User](implicit format => (
   {
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
@@ -175,21 +176,34 @@ class UserSerializer(viewer: Option[User]) extends CustomSerializer[User](implic
       u
   },
   {
-    case u: User =>
-      var r = ("login" -> u.login) ~
-        ("fullName" -> u.fullName) ~
-        ("isAdmin" -> u.isAdmin) ~
-        ("avatarImage" -> u.avatarImageURL) ~
-        ("profileURL" -> u.profileURL) ~
-        ("emailVerified" -> u.emailVerified) ~
-        ("needNewPassword" -> u.needNewPassword) ~
-        ("vehicles" -> u.vehicles.map(_.id).toSeq.sorted)
+    implicit val vehicleSerializer = new VehicleSerializer(false)
 
-      val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
-      if (showEmail) {
-        r = r ~ ("email" -> u.email) ~ ("wantEmails" -> u.wantEmails)
-      }
-      r
+    val serializer: PartialFunction[Any, JValue] = {
+      case u: User =>
+        val formatWithVehicles = format + vehicleSerializer
+        val vehicles = u.vehicles.map { v =>
+          if (fullVehicles)
+            Extraction.decompose(v)(formatWithVehicles)
+          else
+            ("id" -> v.id): JObject
+        }.toSeq
+
+        var r = ("login" -> u.login) ~
+          ("fullName" -> u.fullName) ~
+          ("isAdmin" -> u.isAdmin) ~
+          ("avatarImage" -> u.avatarImageURL) ~
+          ("profileURL" -> u.profileURL) ~
+          ("emailVerified" -> u.emailVerified) ~
+          ("needNewPassword" -> u.needNewPassword) ~
+          ("vehicles" -> vehicles)
+
+        val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
+        if (showEmail) {
+          r = r ~ ("email" -> u.email) ~ ("wantEmails" -> u.wantEmails)
+        }
+        r
+    }
+    serializer
   }))
 
 object User extends DapiRecordCompanion[User] with Logging {

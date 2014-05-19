@@ -20,5 +20,7 @@ private object EnumSerializer extends CustomSerializer[EnumLite](implicit format
 object `package` {
 
   /// We have custom JSON converters for key objects
-  val DroneModelFormats = Seq(new UserSerializer(None), MissionSerializer, VehicleSerializer, EnumSerializer)
+  // new UserSerializer(None), 
+  // new VehicleSerializer()
+  val DroneModelFormats = Seq(MissionSerializer, EnumSerializer)
 }

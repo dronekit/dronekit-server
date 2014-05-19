@@ -119,13 +119,13 @@ case class VehicleJson(
   autopilotType: Option[String] = None,
   viewPrivacy: Option[AccessCode.EnumVal] = None,
   controlPrivacy: Option[AccessCode.EnumVal] = None,
-  missions: Option[Iterable[Long]] = None,
+  missions: Option[Seq[JValue]] = None,
   createdOn: Option[Date] = None,
   updatedOn: Option[Date] = None,
   summaryText: Option[String] = None)
 
 /// We provide an initionally restricted view of users
-object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
+class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle](implicit format => (
   {
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
@@ -134,6 +134,14 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
   },
   {
     case u: Vehicle =>
+      // u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)
+      val missions = u.missions.map { v =>
+        if (fullMissions)
+          Extraction.decompose(v)
+        else
+          ("id" -> v.id): JObject
+      }.toSeq
+
       val m = VehicleJson(Some(u.uuid), u.name, Some(u.id), u.userId,
         u.manufacturer,
         u.vehicleType,
@@ -141,7 +149,7 @@ object VehicleSerializer extends CustomSerializer[Vehicle](implicit format => (
         Some(AccessCode.valueOf(u.viewPrivacy)),
         Some(AccessCode.valueOf(u.controlPrivacy)),
         // We deliver newer missions first
-        Some(u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)),
+        Some(missions),
         Some(u.createdOn),
         Some(u.updatedOn),
         Some(u.text))
