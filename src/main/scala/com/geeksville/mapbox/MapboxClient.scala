@@ -51,7 +51,12 @@ class MapboxClient(myDomain: String = "***REMOVED***")
    * 02:37.322 INFO  com.geeksville.mapbox.MapboxTests  - Mapbox says: (country,United States)
    *
    */
-  def geocode(lat: Double, lon: Double): Seq[(String, String)] = {
+  def geocode(latIn: Double, lonIn: Double): Seq[(String, String)] = {
+    // Four digits is pretty accurate and increases the chance of cache reuse
+    val fmt = new DecimalFormat("##0.0000")
+    val lat = fmt.format(latIn)
+    val lon = fmt.format(lonIn)
+
     val transaction = new HttpGet(s"/v3/$myDomain/geocode/$lon,$lat.json")
 
     val json = callJson(transaction)
