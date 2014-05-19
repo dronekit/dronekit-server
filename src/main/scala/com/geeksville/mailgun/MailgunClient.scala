@@ -19,7 +19,7 @@ import org.json4s.JsonAST.JObject
 import com.geeksville.http.HttpClient
 
 object MailgunClient {
-  val monitor = false
+  val monitor = true
 }
 
 class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org")
