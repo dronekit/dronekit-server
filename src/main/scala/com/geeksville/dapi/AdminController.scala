@@ -113,6 +113,11 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     "DB created"
   }
 
+  /// To make testing newrelic integration easier
+  get("/throw-exception") {
+    throw new Exception("Test exception")
+  }
+
   get("/debugInfo", operation(apiOperation[String]("akka") summary "akka debugging information")) {
     implicit val timeout = Timeout(5 seconds)
 

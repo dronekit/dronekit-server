@@ -8,6 +8,8 @@ import java.net.URL
 import org.scalatra.ScalatraBase
 import java.lang.{ Integer => JInteger }
 import org.scalatra.HaltException
+import com.newrelic.api.agent.NewRelic
+import com.geeksville.util.AnalyticsService
 
 /**
  * Mixin of my scalatra controller extensions
@@ -34,6 +36,7 @@ trait ControllerExtras extends ScalatraBase with Logging {
 
       println(e)
       error("Fatal exception", e)
+      AnalyticsService.reportException("scalatra exception", e)
 
       InternalServerError(<html>
                             <body>

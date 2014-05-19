@@ -13,6 +13,7 @@ import akka.actor.Props
 import com.geeksville.threescale.ThreeActor
 import scala.collection.JavaConverters._
 import java.util.concurrent.TimeoutException
+import com.newrelic.api.agent.NewRelic
 
 object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
@@ -78,8 +79,12 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
    * Check for authorization to use serviceId X.  will haltUnauthorized if quota exceeded
    */
   def requireServiceAuth(metrics: Map[String, String]) {
+    val key = apiKey
+
+    NewRelic.setProductName(key)
+
     // FIXME include a better URL for developer site
-    val req = AuthRequest(apiKey, service, metrics)
+    val req = AuthRequest(key, service, metrics)
 
     implicit val timeout = Timeout(5 seconds)
     val future = ask(threeActor, req).mapTo[AuthorizeResponse]

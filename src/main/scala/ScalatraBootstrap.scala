@@ -40,6 +40,8 @@ import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.akka.AkkaTools
 import scala.util.Success
 import scala.util.Failure
+import grizzled.slf4j.Logging
+import com.geeksville.dapi.NewRelicAnalyticsAdapter
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -47,6 +49,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
   lazy val system = MockAkka.system
 
   override def init(context: ServletContext) {
+
+    NewRelicAnalyticsAdapter.install()
 
     Global.setConfig()
 
