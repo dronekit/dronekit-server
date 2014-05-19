@@ -18,9 +18,22 @@ import org.json4s.JsonAST.JObject
 import com.geeksville.http.HttpClient
 import org.json4s._
 import grizzled.slf4j.Logging
+import java.text.DecimalFormat
 
 object MapboxClient {
   val monitor = false
+
+  /// Generate an URL for a static map png
+  def staticMapURL(latIn: Double, lonIn: Double, zoom: Integer, width: Integer, height: Integer, icon: String) = {
+    // Four digits is pretty accurate and increases the chance of cache reuse
+    val fmt = new DecimalFormat("##0.0000")
+    val lat = fmt.format(latIn)
+    val lon = fmt.format(lonIn)
+
+    val mapBoxURL = s"http://api.tiles.mapbox.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
+
+    mapBoxURL
+  }
 }
 
 // http://api.tiles.mapbox.com/v3/examples.map-zr0njcqy/geocode/-73.989,40.733.json

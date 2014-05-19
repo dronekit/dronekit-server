@@ -202,17 +202,10 @@ case class Mission(
       val width = 140
       val height = 100
 
-      // Four digits is pretty accurate and increases the chance of cache reuse
-      val fmt = new DecimalFormat("##.0000")
-      val lat = fmt.format(latIn)
-      val lon = fmt.format(lonIn)
-
       val isPlane = vehicle.vehicleType.map(_ == "fixed-wing").getOrElse(false)
       val icon = if (isPlane) "airport" else "heliport"
 
-      val mapBoxURL = s"http://api.tiles.mapbox.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
-
-      mapBoxURL
+      MapboxClient.staticMapURL(latIn, lonIn, zoom, width, height, icon)
     }
   } catch {
     case ex: Exception =>
