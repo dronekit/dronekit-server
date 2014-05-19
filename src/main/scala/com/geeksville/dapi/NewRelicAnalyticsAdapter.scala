@@ -11,6 +11,10 @@ object NewRelicAnalyticsAdapter extends AnalyticsAdapter with Logging {
     NewRelic.noticeError(ex)
   }
 
+  override def addBreadcrumb(key: String, value: String) {
+    NewRelic.addCustomParameter(key, value)
+  }
+
   def install() {
     AnalyticsService.handler = this
   }

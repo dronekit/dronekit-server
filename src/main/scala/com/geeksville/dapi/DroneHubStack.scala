@@ -14,6 +14,7 @@ import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ThreescaleSupport
 import org.scalatra.CorsSupport
+import com.geeksville.util.AnalyticsService
 
 abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with AuthenticationSupport with GZipSupport with NativeJsonSupport with ThreescaleSupport {
 
@@ -22,6 +23,7 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
 
   before() {
     logger.debug("Handle " + request)
+    AnalyticsService.addBreadcrumb("clientIP", request.getRemoteAddr)
   }
 
   /// We allow CORS requests from anywhere - FIXME - check if secure?
