@@ -14,6 +14,8 @@ import com.geeksville.threescale.ThreeActor
 import scala.collection.JavaConverters._
 import java.util.concurrent.TimeoutException
 import com.newrelic.api.agent.NewRelic
+import com.geeksville.threescale.WhitelistApp
+import com.geeksville.util.AnalyticsService
 
 object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
@@ -36,7 +38,14 @@ object ThreescaleSupport {
     else
       None
 
-    MockAkka.system.actorOf(Props(new ThreeActor(key)))
+    val whitelist = Seq(
+      WhitelistApp("eb34bd67.megadroneshare",
+        // We make local users (devs test-driving the app) use the full threescale
+        // "http://localhost:9099",
+        "http://alpha.droneshare.com/",
+        "http://beta.droneshare.com/",
+        "http://www.droneshare.com/"))
+    MockAkka.system.actorOf(Props(new ThreeActor(key, whitelist)))
   }
 
 }
@@ -49,7 +58,12 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
 
   def requireServiceAuth(metricIn: String) {
     val metric = metricIn.replace('/', '_') // 3scale converts slashes to underscores
-    requireServiceAuth(Map(metric -> "1"))
+
+    // Find referer for api checking - we prefer 'Origin' as the new preferred but will fall back to Referer
+    val originOpt = request.header("Origin")
+    val referer = originOpt.orElse(request.referrer)
+
+    requireServiceAuth(Map(metric -> "1"), referer)
   }
 
   /**
@@ -78,13 +92,13 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
   /**
    * Check for authorization to use serviceId X.  will haltUnauthorized if quota exceeded
    */
-  def requireServiceAuth(metrics: Map[String, String]) {
+  def requireServiceAuth(metrics: Map[String, String], referer: Option[String] = None) {
     val key = apiKey
 
     NewRelic.setProductName(key)
 
     // FIXME include a better URL for developer site
-    val req = AuthRequest(key, service, metrics)
+    val req = AuthRequest(key, service, referer, metrics)
 
     implicit val timeout = Timeout(5 seconds)
     val future = ask(threeActor, req).mapTo[AuthorizeResponse]
@@ -94,14 +108,21 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
 
       // FIXME - if threescale is too slow show an error msg in logs and just let the user go
       if (!result.success) {
-        warn(s"3scale denied $req due to ${result.getReason}")
+        val msg = s"3scale denied $req due to ${result.getReason}"
+        warn(msg)
+
+        // For now tell us if anyone starts using bad keys
+        AnalyticsService.reportException("3scale", new Exception(msg))
+
         haltQuotaExceeded("Quota exceeded: " + result.getReason)
       } else {
         //debug(s"3scale said okay to $req, plan ${result.getPlan}")
       }
     } catch {
       case ex: TimeoutException =>
-        error(s"Threescale is DOWN - allowing transaction...")
+        val msg = s"Threescale is DOWN - allowing transaction..."
+        error(msg)
+        AnalyticsService.reportException("3scale", new Exception(msg))
     }
   }
 }
