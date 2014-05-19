@@ -2,17 +2,18 @@
 
 To install on a new server
 
-* Install various dependancies
+* Install various dependencies
+apt-get install mysql-client mysql-server openjdk-7-jdk unzip build-essential uuid-dev
+(you will be prompted to choose a root db psw)
+
+* Install lib ZeroMQ
 Ubuntu 14.04 or later
 apt-get install libzmq-dev
 
-Older version of ubuntu, you must build
-ubuntu@ip-10-179-53-86:~/zeromq-2.2.0$ make
-from src.
+Older version of ubuntu, you must build from source:
 
-* Install MySql
-apt-get install mysql-client mysql-server openjdk-7-jdk unzip
-(you will be prompted to choose a root db psw)
+ubuntu@ip-10-179-53-86:~/zeromq-2.2.0$ ./configure; make; sudo make install; sudo ldconfig
+from src.
 
 * Create a user in mysql per https://www.digitalocean.com/community/articles/how-to-create-a-new-user-and-grant-permissions-in-mysql
 
