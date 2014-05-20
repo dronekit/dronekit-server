@@ -13,6 +13,7 @@ import com.geeksville.dapi.model.User
 import org.scalatra.swagger.StringResponseMessage
 import org.scalatra.CorsSupport
 import com.geeksville.dapi.model.UserJson
+import com.geeksville.dapi.model.UserSerializer
 import com.geeksville.util.Using._
 import com.geeksville.mailgun.MailgunClient
 import com.geeksville.scalatra.ScalatraTools
@@ -22,6 +23,8 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   override protected val applicationName = Some("api/v1/auth")
   protected lazy val applicationDescription = s"Session operations (login, logout, etc...)"
+
+  protected def userJsonFormat = super.jsonFormats + new UserSerializer(Option(user), true)
 
   // Before every action runs, set the content type to be in JSON format.
   before() {
@@ -66,7 +69,8 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
       redirect("/sessions/new")
     }
     * */
-    Extraction.decompose(user)
+
+    Extraction.decompose(user)(userJsonFormat)
   }
 
   private lazy val loginOp = (
@@ -116,7 +120,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    */
   get("/user", operation(userOp)) {
     requireLogin()
-    user
+    Extraction.decompose(user)(userJsonFormat)
   }
 
   private lazy val logoutOp = apiOperation[String]("logout") summary "Logout the current user"
