@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException
 import com.newrelic.api.agent.NewRelic
 import com.geeksville.threescale.WhitelistApp
 import com.geeksville.util.AnalyticsService
+import com.geeksville.threescale.WhitelistOkay
 
 object ThreescaleSupport {
   private val HeaderRegex = "DroneApi apikey=\"(.*)\"".r
@@ -44,7 +45,8 @@ object ThreescaleSupport {
         // "http://localhost:9099",
         "http://alpha.droneshare.com/",
         "http://beta.droneshare.com/",
-        "http://www.droneshare.com/"))
+        "http://www.droneshare.com/"),
+      WhitelistOkay("eb34bd67.newrelic"))
     MockAkka.system.actorOf(Props(new ThreeActor(key, whitelist)))
   }
 

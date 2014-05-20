@@ -207,7 +207,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Retrieve a list of instances
    */
   get("/", operation(getOp)) {
-    // dumpRequest()
+    //dumpRequest()
     requireReadAllAccess()
     val r = getAll
     // We do the json conversion here - so that it happens inside of our try/catch block
@@ -235,6 +235,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     request.cookies.foreach { h =>
       debug(s"  Cookie: $h")
     }
+
+    debug(s"  ClientIP: ${request.getRemoteHost}")
   }
 
   /**
