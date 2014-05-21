@@ -97,7 +97,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       log.debug(s"Sending mavlink to vehicle $msg")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
-    case msg: SetVehicleMsg =>
+    case msg: SenderIdMsg =>
       checkLoggedIn()
 
       log.info(s"Binding vehicle $msg")
@@ -233,7 +233,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
    */
   protected def fromEnvelope(env: Envelope) = {
     // FIXME - use the enum to more quickly find the payload we care about
-    Seq(env.mavlink, env.login, env.setVehicle, env.startMission, env.stopMission, env.note).flatten
+    Seq(env.mavlink, env.login, env.setSender, env.startMission, env.stopMission, env.note).flatten
   }
 }
 
