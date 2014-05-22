@@ -72,8 +72,12 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
   private def getMachineId = {
     val iface = NetworkInterface.getNetworkInterfaces.nextElement
-    val addr = iface.getHardwareAddress
-    log.warning(s"Using $iface: ${addr.mkString(":")}")
+    var addr = iface.getHardwareAddress
+
+    if (addr == null)
+      addr = Array(0.toByte) // If no network interfaces is available, just use a placeholder
+
+    log.debug(s"Using $iface: ${addr.mkString(":")}")
     addr
   }
 
