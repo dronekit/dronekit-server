@@ -105,7 +105,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    */
   post("/pwreset/:login/:token") {
     try {
-      warn("Doing password reset confirm for $login")
+      warn(s"Doing password reset confirm for $login")
       val u = User.find(params("login")).getOrElse(haltNotFound())
       val token = params("token")
 
