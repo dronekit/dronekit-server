@@ -92,8 +92,10 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    * }
    */
 
-  post("/pwreset") {
-    requireLogin().beginPasswordReset()
+  post("/pwreset/:login") {
+    val u = User.find(params("login")).getOrElse(haltNotFound())
+    u.beginPasswordReset()
+    sendPasswordReset(u)
     "Password reset started"
   }
 
@@ -101,14 +103,23 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    * This URL is used to confirm password reset email acknowledgement.  If someone starts a password
    * reset we will send the user an email that asks them to visit this link.
    */
-  post("pwreset/:login/:token") {
-    val u = User.find(params("login")).getOrElse(haltNotFound())
-    val token = params("token")
+  post("/pwreset/:login/:token") {
+    try {
+      warn("Doing password reset confirm for $login")
+      val u = User.find(params("login")).getOrElse(haltNotFound())
+      val token = params("token")
 
-    // The body is expected to contain the new user password
-    val newPassword = parsedBody.extract[JString].s
+      // The body is expected to contain the new user password - FIXME, perhaps I shouldn't have sent the string form the client with
+      // quotes
+      val newPassword = request.body.substring(1, request.body.length - 1)
 
-    u.confirmPasswordReset(token, newPassword)
+      debug(s"Doing a password reset, new password $newPassword")
+      u.confirmPasswordReset(token, newPassword)
+      loginAndReturn(u)
+    } catch {
+      case ex: Exception =>
+        haltBadRequest(ex.getMessage)
+    }
   }
 
   /**
@@ -157,7 +168,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   def sendWelcomeEmail(u: User) {
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = "http://$hostname/confirm/${u.login}/${u.verificationCode}"
+      val confirmDest = s"http://$hostname/confirm/${u.login}/${u.verificationCode}"
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
@@ -179,20 +190,21 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     }
   }
 
-  def sendPassowrdReset(u: User) {
+  def sendPasswordReset(u: User) {
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
       val code = u.beginPasswordReset()
-      val confirmDest = "http://$hostname/reset/${u.login}/$code"
+      val confirmDest = s"http://$hostname/reset/${u.login}/$code"
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
         s"""
         Dear $fullname,
         
-        Someone has begun a password reset procedure on your account.  If _you_ started this
-        password request, then please visit the following URL to select your new password.  If
-        you did not request a new password, you can ignore this email.
+        Someone has requested a password reset procedure on your account.  If _you_ did this, then please 
+        visit the following URL to select your new password.  
+        
+        If you did not request a new password, you can ignore this email.
         
         $confirmDest 
         
@@ -205,6 +217,12 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + compact(render(r)))
     }
+  }
+
+  private def loginAndReturn(r: User) = {
+    user = r // Mark the session that this user is logged in
+    rememberMe.setCookie(user)
+    Extraction.decompose(r)(userJsonFormat)
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
@@ -236,9 +254,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     }
     try {
       sendWelcomeEmail(r)
-      user = r // Mark the session that this user is logged in
-      rememberMe.setCookie(user)
-      r
+      loginAndReturn(r)
     } catch {
       case ex: Exception =>
         // If we failed sending the email delete the new user record

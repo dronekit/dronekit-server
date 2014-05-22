@@ -124,7 +124,7 @@ case class User(@Required @Unique login: String,
     val r = User.random.nextLong
     passwordResetToken = Some(r)
     passwordResetDate = Some(new Date)
-    save()
+    save
 
     r
   }
@@ -134,9 +134,7 @@ case class User(@Required @Unique login: String,
    * @return false for failure
    */
   def confirmPasswordReset(token: String, newPassword: String) {
-    warn(s"Trying password reset using token")
-
-    if (Some(token) != passwordResetToken || !passwordResetDate.isDefined)
+    if (Some(token.toLong) != passwordResetToken || !passwordResetDate.isDefined)
       throw new Exception("Invalid password reset token")
 
     val timeLimit = 24 * 2 * 60 * 60 * 1000L // 48 hrs
@@ -145,6 +143,8 @@ case class User(@Required @Unique login: String,
       throw new Exception("Password reset token has expired")
 
     password = newPassword
+    passwordResetToken = None
+    passwordResetDate = None
     save()
   }
 
