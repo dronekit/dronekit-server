@@ -104,10 +104,21 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   post("pwreset/:login/:token") {
     val u = User.find(params("login")).getOrElse(haltNotFound())
     val token = params("token")
-    val newPassword = "FIXME"
 
     // The body is expected to contain the new user password
-    throw new Exception("not yet implemented")
+    val newPassword = parsedBody.extract[JString].s
+
+    u.confirmPasswordReset(token, newPassword)
+  }
+
+  /**
+   * Frontend submits this to confirm email address
+   */
+  post("emailconfirm/:login/:token") {
+    val u = User.find(params("login")).getOrElse(haltNotFound())
+    val token = params("token")
+
+    u.confirmVerificationCode(token)
   }
 
   private lazy val userOp = (apiOperation[User]("user")
@@ -139,10 +150,12 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
 
+  val senderEmail = "platform-support@3drobotics.com"
+
   def sendWelcomeEmail(u: User) {
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = "http://droneshare.appspot.com/confirm/2342255 (not yet working - no need to click)"
+      val confirmDest = "http://alpha.droneshare.com/confirm/${u.login}/${u.verificationCode}"
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
@@ -160,7 +173,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
         -Kevin
         """
 
-      val r = client.sendTo("kevin+droneshare@3drobotics.com", u.email.get, "Welcome to Droneshare",
+      val r = client.sendTo(senderEmail, u.email.get, "Welcome to Droneshare",
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + compact(render(r)))
     }

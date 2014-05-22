@@ -16,6 +16,7 @@ import com.geeksville.util.Gravatar
 import java.util.Date
 import scala.util.Random
 import com.geeksville.akka.MockAkka
+import com.geeksville.util.MD5Tools
 
 case class User(@Required @Unique login: String,
   @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
@@ -95,26 +96,56 @@ case class User(@Required @Unique login: String,
     }
   }
 
+  private def verificationMagic = "ab641x"
+
+  /**
+   * Return a MD5 string which can be used to verify that the user owns this email address
+   */
+  def verificationCode =
+    MD5Tools.toBase64(verificationMagic + email.getOrElse(throw new Exception("Can't verify without email")))
+
+  /// Check if the specified code proves the USER's email is good
+  def confirmVerificationCode(code: String) {
+    if (MD5Tools.checkBase64(code, verificationCode)) {
+      emailVerified = true
+      save
+    } else
+      throw new Exception("Invalid verification code")
+  }
+
   /**
    * Start a password reset session by picking a reset token and sending an email to the user
-   * that contains that token (later submitted to MDS via a webform, then MDS does a post that
+   * that contains that token (later submitted to MDS via a webform, then MDS does a post that.
+   * The token will only be accepted for 48 hours
+   *
+   * @return token that should be included in the email to the user
    */
-  def beginPasswordReset() {
-    passwordResetToken = Some(User.random.nextLong)
+  def beginPasswordReset() = {
+    val r = User.random.nextLong
+    passwordResetToken = Some(r)
     passwordResetDate = Some(new Date)
     save()
 
-    // FIXME - send email
-    throw new Exception("not yet implemented")
+    r
   }
 
   /**
    * Update the password if the token is correct.
    * @return false for failure
    */
-  def confirmPasswordReset(token: String, newPassword: String) = {
-    throw new Exception("not yet implemented")
-    false
+  def confirmPasswordReset(token: String, newPassword: String) {
+    warn(s"Trying password reset using token")
+
+    if (Some(token) != passwordResetToken || !passwordResetDate.isDefined)
+      throw new Exception("Invalid password reset token")
+
+    val timeLimit = 24 * 2 * 60 * 60 * 1000L // 48 hrs
+    val expire = passwordResetDate.get.getTime + timeLimit
+    if (System.currentTimeMillis > expire)
+      throw new Exception("Password reset token has expired")
+
+    password = newPassword
+    save()
   }
 
   override def beforeSave() {

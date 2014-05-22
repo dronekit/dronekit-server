@@ -32,7 +32,7 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   // Akka implicits for FutureSupport
   lazy val system = MockAkka.system
   protected implicit def executor = system.dispatcher
-  protected implicit val timeout = Timeout(30 * 1000)
+  protected implicit val timeout = Timeout(30 seconds)
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/admin")
