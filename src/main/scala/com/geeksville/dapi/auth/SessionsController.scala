@@ -150,12 +150,14 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
 
+  val hostname = "alpha.droneshare.com"
   val senderEmail = "platform-support@3drobotics.com"
+  val appName = "Droneshare"
 
   def sendWelcomeEmail(u: User) {
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = "http://alpha.droneshare.com/confirm/${u.login}/${u.verificationCode}"
+      val confirmDest = "http://$hostname/confirm/${u.login}/${u.verificationCode}"
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
@@ -168,12 +170,38 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
         $confirmDest 
         
         Thank you for joining our beta-test.  Any feedback is always appreciated.  Please email
-        kevin@3drobotics.com.
-        
-        -Kevin
+        $senderEmail.
         """
 
-      val r = client.sendTo(senderEmail, u.email.get, "Welcome to Droneshare",
+      val r = client.sendTo(senderEmail, u.email.get, s"Welcome to $appName",
+        bodyText, testing = ScalatraTools.isTesting)
+      debug("Mailgun reply: " + compact(render(r)))
+    }
+  }
+
+  def sendPassowrdReset(u: User) {
+    using(new MailgunClient()) { client =>
+      val fullname = u.fullName.getOrElse(u.login)
+      val code = u.beginPasswordReset()
+      val confirmDest = "http://$hostname/reset/${u.login}/$code"
+
+      // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
+      val bodyText =
+        s"""
+        Dear $fullname,
+        
+        Someone has begun a password reset procedure on your account.  If _you_ started this
+        password request, then please visit the following URL to select your new password.  If
+        you did not request a new password, you can ignore this email.
+        
+        $confirmDest 
+        
+        Thank you for using Droneshare.  Any feedback is always appreciated.  Please email
+        $senderEmail.
+        
+        """
+
+      val r = client.sendTo(senderEmail, u.email.get, s"$appName password reset",
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + compact(render(r)))
     }
