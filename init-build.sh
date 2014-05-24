@@ -4,6 +4,14 @@ git submodule update --recursive --init
 
 mkdir dependencies
 cd dependencies
+
+#SCALA=scala-2.10.4
+#wget http://www.scala-lang.org/files/archive/$SCALA.tgz
+#tar xvzf $SCALA.tgz
+#pushd ~/bin
+#ln -s ../dependencies/$SCALA/bin/* .
+#popd
+
 git clone git@github.com:geeksville/sbt-scalabuff.git
 cd sbt-scalabuff/
 sbt publishLocal
@@ -14,9 +22,11 @@ cd json4s
 sbt publishLocal
 cd ..
 
+# akka needs sphinx to make docs
+pip install sphinx
 git clone https://github.com/geeksville/akka.git
 cd akka
-sbt publishLocal
+sbt -Dakka.scaladoc.diagrams=false publishLocal
 cd ..
 
 git clone -b 2.3.x_2.10 git@github.com:geeksville/scalatra.git
