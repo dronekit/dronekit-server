@@ -97,6 +97,12 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       log.debug(s"Sending mavlink to vehicle $msg")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
+    case msg: PingMsg => // We just reply to pings
+      sendToVehicle(Envelope(pingResponse = Some(PingResponseMsg())))
+
+    case msg: PingResponseMsg =>
+      log.warning("Ignoring unexpected ping response") // We currently aren't sending pings, so why did the client send this?
+
     case msg: SenderIdMsg =>
       checkLoggedIn()
 
@@ -233,7 +239,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
    */
   protected def fromEnvelope(env: Envelope) = {
     // FIXME - use the enum to more quickly find the payload we care about
-    Seq(env.mavlink, env.login, env.setSender, env.startMission, env.stopMission, env.note).flatten
+    Seq(env.mavlink, env.login, env.setSender, env.startMission, env.stopMission, env.note, env.ping, env.pingResponse).flatten
   }
 }
 
