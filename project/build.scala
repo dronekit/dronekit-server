@@ -30,6 +30,7 @@ object NestorBuild extends Build {
   val Name = "apihub"
   val Version = "0.2.0-SNAPSHOT"
   val ScalatraVersion = "2.3.0-SNAPSHOT"
+  val AkkaVersion = "2.4-SNAPSHOT"
 
   val assemblyCustomize = mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {
@@ -75,7 +76,7 @@ object NestorBuild extends Build {
       // Make "test" command work again per https://groups.google.com/forum/#!topic/scalatra-user/Mkx2lHAqQI0
 
       libraryDependencies ++= Seq(
-        "com.typesafe.akka" %% "akka-zeromq" % "2.3.0" withSources (),
+        "com.typesafe.akka" %% "akka-zeromq" % AkkaVersion withSources (),
 
         "org.scalatra" %% "scalatra" % ScalatraVersion withSources (),
         "org.scalatra" %% "scalatra-atmosphere" % ScalatraVersion withSources (),
