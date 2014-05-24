@@ -7,6 +7,7 @@ import akka.actor.PoisonPill
 import akka.actor.SupervisorStrategy
 import java.net.SocketException
 import java.io.BufferedOutputStream
+import com.google.protobuf.InvalidProtocolBufferException
 
 /**
  * An actor that manages a TCP connection from a GCS
@@ -61,6 +62,8 @@ class TCPGCSActor(private val socket: Socket) extends GCSActor {
     } catch {
       case ex: SocketException =>
         log.error(s"Exiting TCPGCS due to: $ex")
+      case ex: InvalidProtocolBufferException =>
+        log.error(s"Exiting TCPGCS due to invalid protocol buffer received: $ex")
     } finally {
       // If our reader exits, kill our actor
       self ! PoisonPill
