@@ -73,13 +73,14 @@ class ZMQGateway(val workerActorFactory: Props, val zmqSocket: String = "tcp://*
     // the first frame is the client id, third is the message
     case m: ZMQMessage =>
       val clientId = m.frame(0)
-      val clientIdStr = clientId.utf8String
       // val delimeter = m.frame(1)
       val payload = m.frame(2)
 
+      val clientIdStr = clientId.utf8String
+
       // FIXME - validate that the client id looks like a UUID (so we don't generate invalid actor names)
 
-      //log.debug(s"Received ZMQ $m from $clientIdStr")
+      // log.debug(s"Received ZMQ $m from $clientIdStr")
 
       // Get or create actor as needed
       val ainfo = clientIdToActor.getOrElseUpdate(clientIdStr, {

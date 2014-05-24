@@ -98,7 +98,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
     case msg: PingMsg => // We just reply to pings
-      sendToVehicle(Envelope(pingResponse = Some(PingResponseMsg())))
+      sendToVehicle(Envelope(pingResponse = Some(PingResponseMsg(msg.nonce))))
 
     case msg: PingResponseMsg =>
       log.warning("Ignoring unexpected ping response") // We currently aren't sending pings, so why did the client send this?
@@ -201,6 +201,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
               LoginResponseMsg.ResponseCode.OK)
 
           case LoginRequestCode.CREATE =>
+            log.info("Handling user create for " + msg.username)
             if (found.isDefined) {
               log.error(s"Username unavailable: " + msg.username)
               LoginResponseMsg(LoginResponseMsg.ResponseCode.NAME_UNAVAILABLE)
