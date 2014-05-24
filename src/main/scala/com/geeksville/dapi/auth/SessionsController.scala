@@ -105,8 +105,9 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    */
   post("/pwreset/:login/:token") {
     try {
+      val login = params("login")
       warn(s"Doing password reset confirm for $login")
-      val u = User.find(params("login")).getOrElse(haltNotFound())
+      val u = User.find(login).getOrElse(haltNotFound())
       val token = params("token")
 
       // The body is expected to contain the new user password - FIXME, perhaps I shouldn't have sent the string form the client with
