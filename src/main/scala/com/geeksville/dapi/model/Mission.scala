@@ -246,7 +246,7 @@ case class Mission(
   def viewURL = {
     import Global._
 
-    s"$scheme://$hostname/mission/$id"
+    s"$scheme://$hostname/#/mission/$id"
   }
 
   override def toString = s"Mission id=$id, tlog=$tlogId, summary=${summary.getOrElse("(No summary)")}"
