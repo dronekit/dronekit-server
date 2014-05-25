@@ -36,6 +36,7 @@ import com.geeksville.akka.DebuggableActor
 import com.geeksville.util.RingBuffer
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
+import com.geeksville.scalatra.ScalatraTools
 
 /// for json encoding
 private case class Attitude(roll: Double, pitch: Double, yaw: Double)
@@ -151,8 +152,10 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
    * FIXME - not sure if I should be publishing directly to atmosphere in this actor, but for now...
    */
   private def updateAtmosphere(typ: String, o: JValue) {
-    val route = "/api/v1/mission/live"
-    AtmosphereTools.broadcast(route, typ, o)
+    if (!ScalatraTools.isTesting) {
+      val route = "/api/v1/mission/live"
+      AtmosphereTools.broadcast(route, typ, o)
+    }
   }
 
   private def publishUpdate(typ: String, p: Product = null, preferredSender: ActorRef = sender) {
