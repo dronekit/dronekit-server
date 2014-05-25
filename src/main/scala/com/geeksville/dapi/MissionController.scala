@@ -23,6 +23,8 @@ import com.geeksville.json.ActiveRecordSerializer
 import org.scalatra.atmosphere._
 import com.geeksville.dapi.auth.UserPasswordStrategy
 import java.util.UUID
+import org.scalatra.swagger.DataType
+import org.scalatra.swagger.SwaggerSupportSyntax.ModelParameterBuilder
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -265,12 +267,16 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   private val addMissionInfo =
-    (apiOperation[List[Mission]]("uploadForVehicle")
+    (apiOperation[List[MissionJson]]("uploadForVehicle")
       summary s"Add a new mission (as a tlog, bog or log)"
-      consumes (Mission.mimeType)
       parameters (
-        bodyParam[Array[Byte]],
-        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added")))
+        (new ModelParameterBuilder(DataType("file"))).description("log file as a standard html form upload POST").fromBody,
+        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added (client should pick a stable UUID"),
+        queryParam[String]("login").description(s"User login (used if not already logged-in via cookie)"),
+        queryParam[String]("password").description(s"User password (used if not already logged-in via cookie)"),
+        queryParam[String]("email").description(s"Email address (optional, used if user creation is required)").optional,
+        queryParam[String]("fullName").description(s"User full name (optional, used if user creation is required)").optional,
+        queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required")))
 
   // Allow adding missions in the easiest possible way for web clients
   post("/upload/:vehicleUUID", operation(addMissionInfo)) {

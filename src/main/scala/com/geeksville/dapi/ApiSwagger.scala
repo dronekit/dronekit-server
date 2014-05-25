@@ -11,7 +11,7 @@ import com.geeksville.json.GeeksvilleFormats
 
 class ResourcesApp(implicit val swagger: Swagger) extends DroneHubStack with NativeSwaggerBase {
   // It is very important that we use the json formats for swagger (they have a bunch of custom serializers)
-  implicit override val jsonFormats: Formats = super[NativeSwaggerBase].jsonFormats ++ GeeksvilleFormats ++ DroneModelFormats + new ActiveRecordSerializer
+  implicit override val jsonFormats: Formats = super[NativeSwaggerBase].jsonFormats ++ GeeksvilleFormats ++ DroneModelFormats
 }
 
 class ApiSwagger extends Swagger("1.0", "1", ApiInfo("DroneAPIHub", "Central drone server", "TBD", "kevinh@geeksville.com", "TBD", "TBD")) {
