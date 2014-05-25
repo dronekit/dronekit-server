@@ -13,6 +13,10 @@ import com.geeksville.dapi.test.SimGCSClient
 object Global {
   def system = MockAkka.system
 
+  val hostname = "alpha.droneshare.com"
+  val senderEmail = "platform-support@3drobotics.com"
+  val appName = "Droneshare"
+
   lazy val simGCSClient = system.actorOf(Props(new SimGCSClient("localhost", false)))
 
   def setConfig() {
