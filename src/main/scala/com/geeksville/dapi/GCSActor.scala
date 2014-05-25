@@ -209,10 +209,21 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
               // Create new user and login
 
               val u = User.create(msg.username, msg.password.get, msg.email, None)
-              userOpt = Some(u)
+              try {
 
-              log.info(s"Created user " + msg.username)
-              LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+                userOpt = Some(u)
+
+                log.info(s"Created user " + msg.username)
+                if (msg.email.isDefined)
+                  MailTools.sendWelcomeEmail(u)
+
+                LoginResponseMsg(LoginResponseMsg.ResponseCode.OK)
+              } catch {
+                case ex: Exception =>
+                  // If we fail while sending the conf email, return error to client and don't create the record
+                  u.delete()
+                  throw ex
+              }
             }
 
           case _ =>
