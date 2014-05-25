@@ -1,5 +1,5 @@
 package com.geeksville.scalatra
 
 object ScalatraTools {
-  def isTesting = System.getProperty("run.mode", "unset") == "test"
+  lazy val isTesting = System.getProperty("run.mode", "unset") == "test"
 }
