@@ -41,6 +41,8 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
   val uniqueSuffix = random.alphanumeric.take(6).mkString
   val login = "test-" + uniqueSuffix
   val password = random.alphanumeric.take(8).mkString
+  val email = s"kevin+$uniqueSuffix@3drobotics.com"
+  val fullName = "TestUser LongName"
 
   val apiKey = "eb34bd67.megadroneshare"
 
@@ -106,7 +108,6 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
 
   // We want cookies for this test
   session {
-    val email = s"kevin+$uniqueSuffix@3drobotics.com"
     val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
     test("User create") {
@@ -184,20 +185,48 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     }
   }
 
-  ignore("tlog-upload") {
+  /**
+   * Get test tlog data that can be posted to the server
+   */
+  def tlogPayload = {
+    val name = "test.tlog"
+    val is = getClass.getResourceAsStream(name)
+    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    is.close()
+    BytesPart(name, bytes, Mission.mimeType)
+  }
+
+  ignore("tlog-upload-to-vehicle") {
     userSession {
       // Set the payload
-      val name = "test.tlog"
-      val is = getClass.getResourceAsStream(name)
-      val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
-      is.close()
-      val payload = BytesPart(name, bytes, Mission.mimeType)
+      val payload = tlogPayload
 
       post("/api/v1/vehicle/1/missions", Iterable.empty, Map("payload" -> payload), headers = commonHeaders) {
         checkStatusOk()
         info("View URL is " + body)
       }
     }
+  }
+
+  def testEasyUpload(params: Map[String, String]) {
+    // Set the payload
+    val payload = tlogPayload
+    val vehicleId = UUID.randomUUID.toString
+
+    post(s"/api/v1/mission/upload/$vehicleId", params, Map("payload" -> payload), headers = commonHeaders) {
+      checkStatusOk()
+      info("View URL is " + body)
+    }
+  }
+
+  test("tlog-upload-easy without user create") {
+    val params = loginInfo
+    testEasyUpload(params)
+  }
+
+  ignore("tlog-upload-easy with user create") {
+    val params = loginInfo + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
+    testEasyUpload(params)
   }
 
   test("mission") {

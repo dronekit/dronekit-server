@@ -21,6 +21,8 @@ import org.json4s.JsonDSL._
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.json.ActiveRecordSerializer
 import org.scalatra.atmosphere._
+import com.geeksville.dapi.auth.UserPasswordStrategy
+import java.util.UUID
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -32,7 +34,7 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
   }
 }
 
-class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) {
+class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) with MissionUploadSupport {
 
   private def missionUserId(o: Mission) = for {
     v <- o.vehicle
@@ -260,6 +262,40 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   /// Parameters but only with the sharable bits
   roField("parameters.share") { (o) =>
     genParams(o, false)
+  }
+
+  private val addMissionInfo =
+    (apiOperation[List[Mission]]("uploadForVehicle")
+      summary s"Add a new mission (as a tlog, bog or log)"
+      consumes (Mission.mimeType)
+      parameters (
+        bodyParam[Array[Byte]],
+        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added")))
+
+  // Allow adding missions in the easiest possible way for web clients
+  post("/upload/:vehicleUUID", operation(addMissionInfo)) {
+    requireCreateAccess()
+
+    val autoCreate = params.getOrElse("autoCreate", "false").toBoolean
+    val user = tryLogin().getOrElse {
+      if (!autoCreate)
+        haltUnauthorized("login not found and autoCreate is false")
+
+      // If user is not logged in, see if we can create them...
+      val login = params.getOrElse(UserPasswordStrategy.loginKey, haltUnauthorized("login not specified"))
+      val password = params.getOrElse(UserPasswordStrategy.passwordKey, haltUnauthorized("password not specified"))
+      val email = params.get("email")
+      val fullName = params.get("fullName")
+
+      createUserAndWelcome(login, password, email, fullName)
+    }
+
+    val id = params("vehicleUUID")
+    val v = user.getOrCreateVehicle(UUID.fromString(id))
+    if (v.userId.get != user.id)
+      haltForbidden("Not your vehicle")
+
+    handleMissionUpload(v)
   }
 
   /// Allow web gui to update vehicle

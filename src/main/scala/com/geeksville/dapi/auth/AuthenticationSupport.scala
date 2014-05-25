@@ -99,7 +99,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
   // Stuff for account creation
   //
 
-  def createUserAndWelcome(login: String, password: String, fullName: Option[String], email: Option[String]) = {
+  def createUserAndWelcome(login: String, password: String, email: Option[String], fullName: Option[String]) = {
 
     if (User.find(login).isDefined)
       haltConflict("login already exists")
