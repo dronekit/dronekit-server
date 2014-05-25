@@ -28,7 +28,10 @@ import com.amazonaws.auth.AWSCredentials
 import grizzled.slf4j.Logging
 
 class S3Bucket(bucketName: String, val isReadable: Boolean, val credentials: AWSCredentials) extends Logging {
-  val client = new AmazonS3Client(credentials)
+
+  val config = new ClientConfiguration();
+  config.setSocketTimeout(30 * 1000)
+  val client = new AmazonS3Client(credentials, config)
 
   // At startup make sure our bucket exists
   createBucket()
