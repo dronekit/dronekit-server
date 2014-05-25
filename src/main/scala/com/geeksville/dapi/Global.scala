@@ -13,6 +13,7 @@ import com.geeksville.dapi.test.SimGCSClient
 object Global {
   def system = MockAkka.system
 
+  val scheme = "http" // eventually https
   val hostname = "alpha.droneshare.com"
   val senderEmail = "platform-support@3drobotics.com"
   val appName = "Droneshare"

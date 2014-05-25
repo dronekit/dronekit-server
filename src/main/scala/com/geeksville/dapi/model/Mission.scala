@@ -33,6 +33,7 @@ import akka.pattern.ask
 import scala.concurrent.Await
 import com.geeksville.dapi.GetTLogMessage
 import akka.util.Timeout
+import com.geeksville.dapi.Global
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -241,6 +242,13 @@ case class Mission(
       None
   }
 
+  /// A user visible URL that can be used to view this mission
+  def viewURL = {
+    import Global._
+
+    s"$scheme:$hostname/mission/$id"
+  }
+
   override def toString = s"Mission id=$id, tlog=$tlogId, summary=${summary.getOrElse("(No summary)")}"
 }
 
@@ -266,6 +274,7 @@ case class MissionJson(
   updatedOn: Option[Date],
   summaryText: Option[String],
   mapThumbnailURL: Option[String],
+  viewURL: Option[String], // A user visible URL that can be used to view this mission
 
   // The following information comes from vehicle/user - might be expensive,
   vehicleText: Option[String],
@@ -295,6 +304,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         Some(u.createdOn), Some(u.updatedOn),
         s.flatMap(_.text),
         u.mapThumbnailURL,
+        Some(u.viewURL),
         Some(u.vehicle.text),
         Some(u.vehicle.user.login))
       Extraction.decompose(m)
