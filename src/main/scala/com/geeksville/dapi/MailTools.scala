@@ -13,7 +13,7 @@ object MailTools extends Logging {
 
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = s"http://$hostname/confirm/${u.login}/${u.verificationCode}"
+      val confirmDest = s"http://$hostname/#/confirm/${u.login}/${u.verificationCode}"
 
       // FIXME - make HTML email
       val bodyText =
@@ -41,7 +41,7 @@ object MailTools extends Logging {
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
       val code = u.beginPasswordReset()
-      val confirmDest = s"http://$hostname/reset/${u.login}/$code"
+      val confirmDest = s"http://$hostname/#/reset/${u.login}/$code"
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
