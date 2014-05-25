@@ -25,6 +25,7 @@ import com.geeksville.dapi.auth.UserPasswordStrategy
 import java.util.UUID
 import org.scalatra.swagger.DataType
 import org.scalatra.swagger.SwaggerSupportSyntax.ModelParameterBuilder
+import org.scalatra.swagger.StringResponseMessage
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -269,14 +270,27 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   private val addMissionInfo =
     (apiOperation[List[MissionJson]]("uploadForVehicle")
       summary s"Add a new mission (as a tlog, bog or log)"
+      notes """This endpoint is designed to facilitate easy log file uploading from GCS applications.  It requires no oauth or
+      other authentication (but you will need to use your application's api_key).  You should pass in the user's login and password
+      as query parameters.<p>
+      
+      You'll also need to pick a UUID to represent the vehicle (if your user interface allows the user to specify
+      particular models you should associate the UUID with the model - alternatively you can open a WebView and use droneshare to let the
+      user pick a model).  If the vehicle has not previously been seen it will be created.<p>
+      
+      If you are taking advantage of the autoCreate feature, you should specify a user email address and name (so we can send them
+      password reset emails if they forget their password).<p>
+      """
       parameters (
         (new ModelParameterBuilder(DataType("file"))).description("log file as a standard html form upload POST").fromBody,
-        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added (client should pick a stable UUID"),
+        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added (the client should pick a stable UUID"),
         queryParam[String]("login").description(s"User login (used if not already logged-in via cookie)"),
         queryParam[String]("password").description(s"User password (used if not already logged-in via cookie)"),
         queryParam[String]("email").description(s"Email address (optional, used if user creation is required)").optional,
         queryParam[String]("fullName").description(s"User full name (optional, used if user creation is required)").optional,
-        queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required")))
+        queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required"))
+        responseMessage (StringResponseMessage(200, """Success.  Payload will be a JSON array of mission objects.  
+        		You probably want to show the user the viewURL for each file, but the other mission fields might also be interesting.""")))
 
   // Allow adding missions in the easiest possible way for web clients
   post("/upload/:vehicleUUID", operation(addMissionInfo)) {
