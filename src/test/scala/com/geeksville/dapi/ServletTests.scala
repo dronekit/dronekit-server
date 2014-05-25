@@ -38,10 +38,11 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
 
   // The random ID we will use for this test session
   val random = new Random(System.currentTimeMillis)
-  val uniqueSuffix = random.alphanumeric.take(6).mkString
+  def uniqueSuffix() = random.alphanumeric.take(6).mkString
+
   val login = "test-" + uniqueSuffix
   val password = random.alphanumeric.take(8).mkString
-  val email = s"kevin+$uniqueSuffix@3drobotics.com"
+  val email = s"kevin+$login@3drobotics.com"
   val fullName = "TestUser LongName"
 
   val apiKey = "eb34bd67.megadroneshare"
@@ -224,8 +225,12 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     testEasyUpload(params)
   }
 
-  ignore("tlog-upload-easy with user create") {
-    val params = loginInfo + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
+  test("tlog-upload-easy with user create") {
+    val login = "test-uploader-" + uniqueSuffix
+    val password = random.alphanumeric.take(8).mkString
+    val email = s"kevin+$login@3drobotics.com"
+
+    val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
     testEasyUpload(params)
   }
 
