@@ -9,13 +9,14 @@ import grizzled.slf4j.Logging
 
 class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: HttpServletRequest, response: HttpServletResponse)
   extends ScentryStrategy[User] {
+  import UserPasswordStrategy._
 
   val logger = LoggerFactory.getLogger(getClass)
 
   override def name: String = "UserPassword"
 
-  private def login = app.params.getOrElse("login", "")
-  private def password = app.params.getOrElse("password", "")
+  private def login = app.params.getOrElse(loginKey, "")
+  private def password = app.params.getOrElse(passwordKey, "")
 
   /**
    * *
@@ -47,6 +48,9 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
 }
 
 object UserPasswordStrategy extends Logging {
+  val loginKey = "login"
+  val passwordKey = "password"
+
   /**
    * First we try to find the user by login name, if that fails we check to see if the client provided an
    * email address.

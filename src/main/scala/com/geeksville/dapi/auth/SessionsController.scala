@@ -18,6 +18,8 @@ import com.geeksville.util.Using._
 import com.geeksville.mailgun.MailgunClient
 import com.geeksville.scalatra.ScalatraTools
 import com.github.aselab.activerecord.RecordInvalidException
+import com.geeksville.dapi.Global
+import com.geeksville.dapi.MailTools
 
 class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
@@ -95,7 +97,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   post("/pwreset/:login") {
     val u = User.find(params("login")).getOrElse(haltNotFound())
     u.beginPasswordReset()
-    sendPasswordReset(u)
+    MailTools.sendPasswordReset(u)
     "Password reset started"
   }
 
@@ -162,64 +164,6 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   private lazy val createOp = apiOperation[User]("create") summary "Creates a new user record" parameter (bodyParam[UserJson])
 
-  val hostname = "alpha.droneshare.com"
-  val senderEmail = "platform-support@3drobotics.com"
-  val appName = "Droneshare"
-
-  def sendWelcomeEmail(u: User) {
-    using(new MailgunClient()) { client =>
-      val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = s"http://$hostname/confirm/${u.login}/${u.verificationCode}"
-
-      // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
-      val bodyText =
-        s"""
-        Dear $fullname,
-        
-        Your new account on Droneshare is now mostly ready.  The only step that remains is to confirm
-        your email address.  To confirm your email please visit the following URL:
-        
-        $confirmDest 
-        
-        Thank you for joining our beta-test.  Any feedback is always appreciated.  Please email
-        $senderEmail.
-        """
-
-      val r = client.sendTo(senderEmail, u.email.get, s"Welcome to $appName",
-        bodyText, testing = ScalatraTools.isTesting)
-      debug("Mailgun reply: " + compact(render(r)))
-    }
-  }
-
-  def sendPasswordReset(u: User) {
-    using(new MailgunClient()) { client =>
-      val fullname = u.fullName.getOrElse(u.login)
-      val code = u.beginPasswordReset()
-      val confirmDest = s"http://$hostname/reset/${u.login}/$code"
-
-      // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
-      val bodyText =
-        s"""
-        Dear $fullname,
-        
-        Someone has requested a password reset procedure on your account.  If _you_ did this, then please 
-        visit the following URL to select your new password.  
-        
-        If you did not request a new password, you can ignore this email.
-        
-        $confirmDest 
-        
-        Thank you for using Droneshare.  Any feedback is always appreciated.  Please email
-        $senderEmail.
-        
-        """
-
-      val r = client.sendTo(senderEmail, u.email.get, s"$appName password reset",
-        bodyText, testing = ScalatraTools.isTesting)
-      debug("Mailgun reply: " + compact(render(r)))
-    }
-  }
-
   private def loginAndReturn(r: User) = {
     user = r // Mark the session that this user is logged in
     rememberMe.setCookie(user)
@@ -236,33 +180,15 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
     val id = u.login
 
-    val found = User.find(id)
-    if (found.isDefined)
-      haltConflict("login already exists")
-
     if (!u.email.isDefined)
       haltBadRequest("email required")
 
-    if (!u.password.isDefined)
+    val password = u.password.getOrElse {
       haltBadRequest("insuffient password")
-
-    val r = try {
-      User.create(id, u.password.get, u.email, u.fullName)
-    } catch {
-      // Failed validation
-      case ex: RecordInvalidException =>
-        haltBadRequest(ex.getMessage)
     }
-    try {
-      sendWelcomeEmail(r)
-      loginAndReturn(r)
-    } catch {
-      case ex: Exception =>
-        // If we failed sending the email delete the new user record
-        r.delete()
 
-        throw ex
-    }
+    val r = createUserAndWelcome(id, u.password.get, u.email, u.fullName)
+    loginAndReturn(r)
   }
 
 }

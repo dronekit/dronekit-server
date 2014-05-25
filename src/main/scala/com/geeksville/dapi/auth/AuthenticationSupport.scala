@@ -8,8 +8,15 @@ import com.geeksville.scalatra.ControllerExtras
 import org.scalatra.auth.strategy.BasicAuthSupport
 import java.util.Date
 import com.newrelic.api.agent.NewRelic
+import com.geeksville.util.Using._
+import com.geeksville.mailgun.MailgunClient
+import com.geeksville.scalatra.ScalatraTools
+import com.geeksville.dapi.Global
+import com.github.aselab.activerecord.RecordInvalidException
+import org.scalatra.json.NativeJsonSupport
+import com.geeksville.dapi.MailTools
 
-trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with BasicAuthSupport[User] with ControllerExtras {
+trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with BasicAuthSupport[User] with ControllerExtras with NativeJsonSupport {
   self: ScalatraBase =>
 
   protected def fromSession = {
@@ -88,4 +95,32 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     scentry.register("Remember", app => new RememberMeStrategy(app))
   }
 
+  //
+  // Stuff for account creation
+  //
+
+  def createUserAndWelcome(login: String, password: String, fullName: Option[String], email: Option[String]) = {
+
+    if (User.find(login).isDefined)
+      haltConflict("login already exists")
+
+    val r = try {
+      User.create(login, password, email, fullName)
+    } catch {
+      // Failed validation
+      case ex: RecordInvalidException =>
+        haltBadRequest(ex.getMessage)
+    }
+    try {
+      if (email.isDefined)
+        MailTools.sendWelcomeEmail(r)
+      r
+    } catch {
+      case ex: Exception =>
+        // If we failed sending the email delete the new user record
+        r.delete()
+
+        throw ex
+    }
+  }
 }
