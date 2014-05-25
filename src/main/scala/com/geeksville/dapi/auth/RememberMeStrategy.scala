@@ -14,7 +14,6 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
 
   override def name: String = "RememberMe"
 
-  private val COOKIE_KEY = "rememberMe"
   private val oneWeek = 7 * 24 * 3600
 
   def shouldUseCookies = {
@@ -31,10 +30,22 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    * Grab the value of the rememberMe cookie token.
    */
   private def tokenVal = {
-    Option(app.cookies).flatMap(_.get(COOKIE_KEY)) match {
+    Option(app.cookies).flatMap(_.get(cookieKey)) match {
       case Some(token) => token
       case None => ""
     }
+  }
+
+  /**
+   * We use the referer name to construct our cookie - to ensure that any third party API
+   * client gets their own cookie.  (Prevent CORSish attacks)
+   */
+  private def cookieKey(implicit request: HttpServletRequest) = {
+    // Find referer for api checking - we prefer 'Origin' as the new preferred but will fall back to Referer
+    val originOpt = Option(request.getHeader("Origin"))
+    val referer = originOpt.orElse(Option(request.getHeader("Referer")))
+
+    "api-" + referer.getOrElse("unknown")
   }
 
   /**
@@ -169,7 +180,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
       logger.trace("rememberMe: setting cookie")
       val token = makeToken(user)
       Option(app.cookies) match {
-        case Some(c) => c.set(COOKIE_KEY, token)(CookieOptions(maxAge = oneWeek, path = "/"))
+        case Some(c) => c.set(cookieKey, token)(CookieOptions(maxAge = oneWeek, path = "/"))
         case None => logger.error(s"Can't set cookie on $request") // It seems like the atmosphere paths are broken for cookies
       }
     }
@@ -198,7 +209,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
       // FIXME - do we need to do anything here?
       // user.forgetMe
     }
-    app.cookies.delete(COOKIE_KEY)(CookieOptions(path = "/"))
+    app.cookies.delete(cookieKey)(CookieOptions(path = "/"))
   }
 
   /**
