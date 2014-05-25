@@ -183,7 +183,7 @@ case class User(@Required @Unique login: String,
     v
   }
 
-  override def toString() = s"User:$login(group = $groupId)"
+  override def toString() = s"User:$login(group=$groupId, email=$email, fullName=$fullName)"
 }
 
 case class UserJson(login: String,
