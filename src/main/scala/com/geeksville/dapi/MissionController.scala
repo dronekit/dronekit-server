@@ -310,6 +310,11 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       val email = params.get("email")
       val fullName = params.get("fullName")
 
+      // If the login already exists, but tryLogin() failed, that means the user must have used a bad password
+      // Return a better error msg than what createUserAndWelcome would give
+      if (User.find(login).isDefined)
+        haltUnauthorized("invalid password")
+
       createUserAndWelcome(login, password, email, fullName)
     }
 
