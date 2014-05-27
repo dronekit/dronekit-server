@@ -182,10 +182,10 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
 
             if (!found.isDefined) {
               log.error(s"Bad username " + msg.username)
-              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username or password"))
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username"))
             } else if (!found.get.isPasswordGood(msg.password.get)) {
               log.error(s"Bad password for " + msg.username)
-              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad username or password"))
+              LoginResponseMsg(LoginResponseMsg.ResponseCode.BAD_PASSWORD, createMessage("Bad password"))
             } else {
               // We are now logged in
               userOpt = found

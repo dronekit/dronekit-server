@@ -34,6 +34,7 @@ import scala.concurrent.Await
 import com.geeksville.dapi.GetTLogMessage
 import akka.util.Timeout
 import com.geeksville.dapi.Global
+import com.geeksville.apiproxy.APIConstants
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -311,7 +312,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
-  val mimeType = "application/vnd.mavlink.tlog"
+  val mimeType = APIConstants.tlogMimeType
 
   // We use a cache to avoid (slow) rereading of s3 data if we can help it
   private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: String) => readBytesByPath(S3Client.tlogPrefix + key) }

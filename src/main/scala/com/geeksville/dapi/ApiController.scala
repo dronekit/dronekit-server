@@ -227,18 +227,6 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be fetched")))
 
-  def dumpRequest() {
-    debug(s"Request dump: $request")
-    request.headers.foreach { h =>
-      debug(s"  Header: $h")
-    }
-    request.cookies.foreach { h =>
-      debug(s"  Cookie: $h")
-    }
-
-    debug(s"  ClientIP: ${request.getRemoteHost}")
-  }
-
   /**
    * Find an object
    */

@@ -280,6 +280,9 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       
       If you are taking advantage of the autoCreate feature, you should specify a user email address and name (so we can send them
       password reset emails if they forget their password).<p>
+      
+      Both multi-part file POSTs and simple posts of log files as the entire request body are supported.  In the latter case the content
+      type must be set appropriately.<p>
       """
       parameters (
         (new ModelParameterBuilder(DataType("file"))).description("log file as a standard html form upload POST").fromBody,

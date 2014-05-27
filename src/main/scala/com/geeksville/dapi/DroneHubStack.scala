@@ -41,4 +41,5 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
 
     new URL(request.getScheme(), if (h == "localhost") "api.3dr.com" else h, "").toURI
   }
+
 }

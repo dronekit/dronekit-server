@@ -10,6 +10,7 @@ import java.lang.{ Integer => JInteger }
 import org.scalatra.HaltException
 import com.newrelic.api.agent.NewRelic
 import com.geeksville.util.AnalyticsService
+import scala.collection.JavaConverters._
 
 /**
  * Mixin of my scalatra controller extensions
@@ -27,6 +28,22 @@ trait ControllerExtras extends ScalatraBase with Logging {
         request.getServerPort(), "")
 
     url.toURI
+  }
+
+  def dumpRequest() {
+    debug(s"Request dump: $request")
+
+    request.headers.foreach { h =>
+      debug(s"  Header: $h")
+    }
+    request.cookies.foreach { h =>
+      debug(s"  Cookie: $h")
+    }
+
+    if (request.contentType.getOrElse("") == "multipart/form-data")
+      debug(s"  Parts: " + request.getParts.asScala.mkString(","))
+
+    debug(s"  ClientIP: ${request.getRemoteHost}")
   }
 
   /// Better error messages for the user
