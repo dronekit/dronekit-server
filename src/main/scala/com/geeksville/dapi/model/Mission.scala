@@ -279,7 +279,8 @@ case class MissionJson(
 
   // The following information comes from vehicle/user - might be expensive,
   vehicleText: Option[String],
-  userName: Option[String])
+  userName: Option[String],
+  userAvatarImage: Option[String])
 
 /// We provide an initionally restricted view of users
 object MissionSerializer extends CustomSerializer[Mission](implicit format => (
@@ -307,7 +308,8 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         u.mapThumbnailURL,
         Some(u.viewURL),
         Some(u.vehicle.text),
-        Some(u.vehicle.user.login))
+        Some(u.vehicle.user.login),
+        u.vehicle.user.avatarImageURL)
       Extraction.decompose(m)
   }))
 
