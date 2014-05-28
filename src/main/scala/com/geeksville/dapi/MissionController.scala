@@ -89,7 +89,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   roField("messages.tlog") { (o) =>
     contentType = Mission.mimeType
-    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound()), o.tlogId.get.toString + ".tlog")
+    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("tlog not found")), o.tlogId.get.toString + ".tlog")
   }
 
   // Helper class for generating json

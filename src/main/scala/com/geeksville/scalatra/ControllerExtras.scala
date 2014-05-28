@@ -78,14 +78,14 @@ trait ControllerExtras extends ScalatraBase with Logging {
   }
 
   /// syntatic sugar
-  def haltUnauthorized(reason: String = null) = halt(401, reason = reason)
-  def haltForbidden(reason: String = null) = halt(403, reason = reason)
-  def haltQuotaExceeded(reason: String = null) = halt(403, reason = reason)
-  def haltNotFound(reason: String = null) = halt(404, reason = reason)
-  def haltMethodNotAllowed(reason: String = null) = halt(405, reason = reason)
-  def haltConflict(reason: String = null) = halt(409, reason = reason)
-  def haltBadRequest(reason: String = null) = halt(400, reason = reason)
-  def haltNotImplemented(reason: String = null) = halt(501, reason = reason)
-  def haltInternalServerError(reason: String = null) = halt(500, reason = reason)
+  def haltUnauthorized(reason: String) = halt(401, reason = reason)
+  def haltForbidden(reason: String) = halt(403, reason = reason)
+  def haltQuotaExceeded(reason: String) = halt(403, reason = reason)
+  def haltNotFound(reason: String) = halt(404, reason = reason)
+  def haltMethodNotAllowed(reason: String) = halt(405, reason = reason)
+  def haltConflict(reason: String) = halt(409, reason = reason)
+  def haltBadRequest(reason: String) = halt(400, reason = reason)
+  def haltNotImplemented(reason: String) = halt(501, reason = reason)
+  def haltInternalServerError(reason: String) = halt(500, reason = reason)
 }
 

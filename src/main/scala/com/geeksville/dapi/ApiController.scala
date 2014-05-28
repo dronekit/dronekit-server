@@ -218,7 +218,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Using the current query parameters, return all matching records (paging and ordering is supported as well
    */
   protected def getAll(): List[T] = {
-    haltMethodNotAllowed()
+    haltMethodNotAllowed("This endpoint does not support this operation")
   }
 
   private lazy val findByIdOp =
@@ -259,7 +259,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
         pathParam[String]("id").description(s"Id of $aName that needs to be created")))
 
   post("/:id", operation(createByIdOp)) {
-    haltNotFound()
+    haltMethodNotAllowed("This endpoint does not support this operation")
   }
 
   private lazy val updateByIdOp =
