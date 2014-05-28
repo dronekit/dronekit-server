@@ -22,7 +22,7 @@ object MailgunClient {
   val monitor = true
 }
 
-class MailgunClient(myDomain: String = "sandbox91d351510d0a440882ecfaa1c65be642.mailgun.org")
+class MailgunClient(myDomain: String = "droneshare.com")
   extends HttpClient(new HttpHost(if (MailgunClient.monitor) "***REMOVED***.my.apitools.com" else "api.mailgun.net", 443, "https")) {
 
   httpclient.getCredentialsProvider.setCredentials(

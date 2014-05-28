@@ -15,7 +15,7 @@ object Global {
 
   val scheme = "http" // eventually https
   val hostname = "alpha.droneshare.com"
-  val senderEmail = "platform-support@3drobotics.com"
+  val senderEmail = "support@droneshare.com"
   val appName = "Droneshare"
 
   lazy val simGCSClient = system.actorOf(Props(new SimGCSClient("localhost", false)))
