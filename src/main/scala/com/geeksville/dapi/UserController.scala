@@ -51,6 +51,8 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
       o.save
     }
 
+    r.defaultViewPrivacy.foreach { o.defaultViewPrivacy = _ }
+
     o
   }
 }

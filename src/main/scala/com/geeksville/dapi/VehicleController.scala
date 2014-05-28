@@ -98,7 +98,10 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   override protected def updateObject(o: Vehicle, payload: JObject) = {
     val r = payload.extract[VehicleJson]
 
+    debug(s"Setting vehicle from web client, payload=$r")
     o.name = r.name
+    r.viewPrivacy.foreach { v => o.viewPrivacy = v.id }
+    r.controlPrivacy.foreach { v => o.controlPrivacy = v.id }
     o.save
 
     o

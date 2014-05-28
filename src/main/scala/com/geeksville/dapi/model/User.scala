@@ -194,7 +194,9 @@ case class UserJson(login: String,
   fullName: Option[String] = None, wantEmails: Option[String] = None,
 
   // If a client is changing password they must also include this field (or be an admin)
-  oldPassword: Option[String] = None)
+  oldPassword: Option[String] = None,
+  defaultViewPrivacy: Option[AccessCode.EnumVal] = None,
+  defaultControlPrivacy: Option[AccessCode.EnumVal] = None)
 
 /// We provide an initionally restricted view of users
 /// If we know a viewer we will customize for them
@@ -229,6 +231,8 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
           ("profileURL" -> u.profileURL) ~
           ("emailVerified" -> u.emailVerified) ~
           ("needNewPassword" -> u.needNewPassword) ~
+          ("defaultViewPrivacy" -> u.defaultViewPrivacy) ~ // FIXME - should instead use AccessCode and just a json object
+          ("defaultControlPrivacy" -> u.defaultControlPrivacy) ~
           ("vehicles" -> vehicles)
 
         val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)

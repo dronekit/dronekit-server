@@ -335,6 +335,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       o.summary.text = Some(text)
     }
     r.notes.foreach { notes => o.notes = Some(notes) }
+    r.viewPrivacy.foreach { o.viewPrivacy = _ }
     o.summary.save
     o.save
 
