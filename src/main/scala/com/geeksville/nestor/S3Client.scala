@@ -15,10 +15,18 @@ package com.geeksville.nestor
 
 import com.geeksville.aws.S3Bucket
 import com.geeksville.aws.ConfigCredentials
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.services.s3.AmazonS3Client
 
 /**
  * The Nestor glue for talking to S3
  */
-object S3Client extends S3Bucket("s3-droneshare", false, credentials = new ConfigCredentials("")) {
+object S3Client extends S3Bucket("s3-droneshare", false, {
+  val credentials = new ConfigCredentials("")
+
+  val config = new ClientConfiguration()
+  config.setSocketTimeout(30 * 1000)
+  new AmazonS3Client(credentials, config)
+}) {
   setRules(createExpireRule("upload-expire", "uploads/", 5))
 }

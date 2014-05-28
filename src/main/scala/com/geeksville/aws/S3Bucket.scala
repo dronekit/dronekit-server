@@ -27,11 +27,7 @@ import java.text.SimpleDateFormat
 import com.amazonaws.auth.AWSCredentials
 import grizzled.slf4j.Logging
 
-class S3Bucket(bucketName: String, val isReadable: Boolean, val credentials: AWSCredentials) extends Logging {
-
-  val config = new ClientConfiguration();
-  config.setSocketTimeout(30 * 1000)
-  val client = new AmazonS3Client(credentials, config)
+class S3Bucket(bucketName: String, val isReadable: Boolean, val client: AmazonS3Client) extends Logging {
 
   // At startup make sure our bucket exists
   createBucket()
@@ -112,6 +108,7 @@ class S3Bucket(bucketName: String, val isReadable: Boolean, val credentials: AWS
 
   /**
    * Upload a file to S3
+   * It is import that callers NOT close the input stream.  AWS will handle that.
    */
   def uploadStream(key: String, stream: InputStream, mimeType: String, length: Long, highValue: Boolean = true) {
     debug(s"Uploading to S3 (readable=$isReadable).  Read URL is: " + getReadURL(key))
@@ -158,7 +155,7 @@ class S3Bucket(bucketName: String, val isReadable: Boolean, val credentials: AWS
   /**
    * Generate policy -> signature in a form acceptable for HTTP browser upload to S3
    */
-  def s3Policy = {
+  def s3Policy(credentials: AWSCredentials) = {
 
     // |{"success_action_redirect": "http://localhost/"},
     // |{"expiration": "%s", - not needed because we have an expire rule that covers the entire uploads folder
