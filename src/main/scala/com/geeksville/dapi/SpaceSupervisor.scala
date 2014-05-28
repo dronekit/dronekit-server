@@ -118,7 +118,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     def updates = {
       // Always include a start msg if we can
       val summary = mission.map { m =>
-        AtmosphereUpdate("start", Extraction.decompose(SpaceSummary(vehicle, m)))
+        AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(SpaceSummary(vehicle, m)))))
       }
 
       summary ++ history
