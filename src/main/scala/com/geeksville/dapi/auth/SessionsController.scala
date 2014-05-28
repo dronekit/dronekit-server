@@ -95,7 +95,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    */
 
   post("/pwreset/:login") {
-    val u = User.find(params("login")).getOrElse(haltNotFound())
+    val u = User.find(params("login")).getOrElse(haltNotFound("login not found"))
     u.beginPasswordReset()
     MailTools.sendPasswordReset(u)
     "Password reset started"
@@ -109,7 +109,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     try {
       val login = params("login")
       warn(s"Doing password reset confirm for $login")
-      val u = User.find(login).getOrElse(haltNotFound())
+      val u = User.find(login).getOrElse(haltNotFound("login not found"))
       val token = params("token")
 
       // The body is expected to contain the new user password - FIXME, perhaps I shouldn't have sent the string form the client with
@@ -128,8 +128,8 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   /**
    * Frontend submits this to confirm email address
    */
-  post("emailconfirm/:login/:token") {
-    val u = User.find(params("login")).getOrElse(haltNotFound())
+  post("/emailconfirm/:login/:token") {
+    val u = User.find(params("login")).getOrElse(haltNotFound("login not found"))
     val token = params("token")
 
     u.confirmVerificationCode(token)
