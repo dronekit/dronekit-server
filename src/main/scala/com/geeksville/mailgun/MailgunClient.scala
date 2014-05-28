@@ -17,6 +17,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
 import com.geeksville.http.HttpClient
+import scala.xml.Node
 
 object MailgunClient {
   val monitor = true
@@ -48,8 +49,22 @@ class MailgunClient(myDomain: String = "droneshare.com")
     callJson(transaction)
   }
 
-  def sendTo(from: String, to: String, subject: String, bodyText: String, tag: String = "default", testing: Boolean = false) = {
+  def sendText(from: String, to: String, subject: String, bodyText: String, tag: String = "default", testing: Boolean = false) = {
     var options = Seq("from" -> from, "to" -> to, "subject" -> subject, "text" -> bodyText, "o:tag" -> tag)
+
+    if (testing)
+      options = options :+ ("o:testmode" -> "true")
+
+    send(options: _*)
+  }
+
+  /**
+   * Send an html formatted email (text version will be auto generated)
+   */
+  def sendHtml(from: String, to: String, subject: String, bodyHtml: Node, tag: String = "default", testing: Boolean = false) = {
+    val body = bodyHtml.toString
+    println("Sending email: " + body)
+    var options = Seq("from" -> from, "to" -> to, "subject" -> subject, "html" -> body, "o:tag" -> tag)
 
     if (testing)
       options = options :+ ("o:testmode" -> "true")

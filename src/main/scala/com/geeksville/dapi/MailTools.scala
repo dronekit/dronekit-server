@@ -5,6 +5,7 @@ import com.geeksville.util.Using._
 import com.geeksville.mailgun.MailgunClient
 import com.geeksville.scalatra.ScalatraTools
 import grizzled.slf4j.Logging
+import scala.xml._
 
 object MailTools extends Logging {
 
@@ -13,24 +14,27 @@ object MailTools extends Logging {
 
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
-      val confirmDest = s"http://$hostname/#/confirm/${u.login}/${u.verificationCode}"
+      val confirmDest = s"$rootUrl/#/confirm/${u.login}/${u.verificationCode}"
 
       // FIXME - make HTML email
-      val bodyText =
-        s"""
-        Dear $fullname,
-        
-        Your new account on Droneshare is now mostly ready.  The only step that remains is to confirm
-        your email address.  To confirm your email please visit the following URL:
-        
-        $confirmDest 
-        
-        Thank you for joining our beta-test.  Any feedback is always appreciated.  Please email
-        $senderEmail.
-        """
+      val body =
+        <html><body>
+          Dear { fullname },<p/>
 
-      val r = client.sendTo(senderEmail, u.email.get, s"Welcome to $appName",
-        bodyText, testing = ScalatraTools.isTesting)
+          Your new account on <a href={ rootUrl }>Droneshare</a> is now mostly ready.<p/>
+
+          The only remaining step is to confirm your email address.  To confirm your email please visit the following URL:<p/>
+
+          <a href={ confirmDest }>{ confirmDest }</a><p/>
+
+          Feedback on this beta-test is appreciated.  Please email <a href={ "mailto:" + senderEmail }>{ senderEmail }</a>
+          with questions or comments. Droneshare is 
+          <a href="https://github.com/diydrones/droneshare/blob/master/WELCOME.md">open-source</a>, 
+          please contribute code or fork it into something new.<p/>
+        </body></html>
+
+      val r = client.sendHtml(senderEmail, u.email.get, s"Welcome to $appName",
+        body, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + r)
     }
   }
@@ -45,22 +49,21 @@ object MailTools extends Logging {
 
       // FIXME - make HTML email and also use a md5 or somesuch to hash username+emailaddr
       val bodyText =
-        s"""
-        Dear $fullname,
+        <html><body>
+        Dear { fullname },<p/>
         
-        Someone has requested a password reset procedure on your account.  If _you_ did this, then please 
-        visit the following URL to select your new password.  
+        Someone has requested a password reset procedure on your account.  If <b>you</b> did this, then please 
+        visit the following URL to select your new password.<p/>
         
-        If you did not request a new password, you can ignore this email.
+        If you did not request a new password, you can ignore this email.<p/>
         
-        $confirmDest 
+        <a href={ confirmDest }>{ confirmDest }</a><p/>
         
-        Thank you for using Droneshare.  Any feedback is always appreciated.  Please email
-        $senderEmail.
-        
-        """
+        Thank you for using Droneshare.  Please email <a href={ "mailto:" + senderEmail }>{ senderEmail }</a>
+        with questions or comments.<p/>
+        </body></html>
 
-      val r = client.sendTo(senderEmail, u.email.get, s"$appName password reset",
+      val r = client.sendHtml(senderEmail, u.email.get, s"$appName password reset",
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + r)
     }
