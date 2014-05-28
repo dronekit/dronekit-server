@@ -11,6 +11,14 @@ import org.scalatra.HaltException
 import com.newrelic.api.agent.NewRelic
 import com.geeksville.util.AnalyticsService
 import scala.collection.JavaConverters._
+import org.scalatra.ActionResult
+import org.scalatra.ResponseStatus
+
+/**
+ * For some strange reason the scalatra folks made their HaltException private.  If you want to throw an exception but include
+ * a http error code hint, just throw this instead
+ */
+case class WebException(val code: Int, msg: String) extends Exception(msg)
 
 /**
  * Mixin of my scalatra controller extensions
@@ -48,6 +56,9 @@ trait ControllerExtras extends ScalatraBase with Logging {
 
   /// Better error messages for the user
   super[ScalatraBase].error {
+    case e: WebException =>
+      ActionResult(ResponseStatus(e.code, e.getMessage), e.getMessage, Map.empty)
+
     case e: Exception =>
       contentType = "text/html"
 

@@ -23,6 +23,6 @@ object MD5Tools {
    * Returns true if the encoded base 64 string matches the expected signature for message
    */
   def checkBase64(encoded: String, message: String) = {
-    toBase64(message) == encoded
+    encoded == message
   }
 }

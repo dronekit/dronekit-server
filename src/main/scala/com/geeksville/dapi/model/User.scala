@@ -17,6 +17,7 @@ import java.util.Date
 import scala.util.Random
 import com.geeksville.akka.MockAkka
 import com.geeksville.util.MD5Tools
+import com.geeksville.scalatra.WebException
 
 case class User(@Required @Unique login: String,
   @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
@@ -109,8 +110,10 @@ case class User(@Required @Unique login: String,
     if (MD5Tools.checkBase64(code, verificationCode)) {
       emailVerified = true
       save
-    } else
-      throw new Exception("Invalid verification code")
+    } else {
+      error(s"Invalid verification code $verificationCode, wanted $code")
+      throw WebException(400, s"Invalid verification code")
+    }
   }
 
   /**
