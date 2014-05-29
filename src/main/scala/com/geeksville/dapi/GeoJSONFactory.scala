@@ -10,7 +10,7 @@ class GeoJSONFactory(model: PlaybackModel) {
   def toGeoJSON(): JObject = {
     import GeoJSON._
 
-    val bbox = new BoundingBox
+    val bbox = new BoundingBox(0.005)
 
     val wptColor = Some("#000099")
     val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))

@@ -108,7 +108,7 @@ object GeoJSON {
     makeFeature(geo, props)
   }
 
-  class BoundingBox {
+  class BoundingBox(pad: Double) {
     case class LatLngAlt(var lat: Double, var lon: Double, var alt: Double)
     var southWest = LatLngAlt(Double.MaxValue, Double.MaxValue, Double.MaxValue)
     var northEast = LatLngAlt(Double.MinValue, Double.MinValue, Double.MinValue)
@@ -120,12 +120,12 @@ object GeoJSON {
 
     /// Expand the bounding box to include the specified point
     def addPoint(l: Location) {
-      southWest.lat = math.min(l.lat, southWest.lat)
-      southWest.lon = math.min(l.lon, southWest.lon)
+      southWest.lat = math.min(l.lat - pad, southWest.lat)
+      southWest.lon = math.min(l.lon - pad, southWest.lon)
       southWest.alt = math.min(l.alt.getOrElse(0.0), southWest.alt)
 
-      northEast.lat = math.max(l.lat, northEast.lat)
-      northEast.lon = math.max(l.lon, northEast.lon)
+      northEast.lat = math.max(l.lat + pad, northEast.lat)
+      northEast.lon = math.max(l.lon + pad, northEast.lon)
       northEast.alt = math.max(l.alt.getOrElse(0.0), northEast.alt)
     }
   }
