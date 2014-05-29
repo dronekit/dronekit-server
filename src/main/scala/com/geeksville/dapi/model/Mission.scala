@@ -106,7 +106,7 @@ case class MissionSummary(
             if (geo.isEmpty)
               "international waters"
             else
-              // If the firs line is too identifying - skip it
+              // If the first line is too identifying - skip it
               // geo.tail
               geo.map(_._2).mkString(", ")
           }).getOrElse(unknown)
