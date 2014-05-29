@@ -21,7 +21,7 @@ import com.geeksville.scalatra.WebException
 import java.sql.Timestamp
 
 case class User(@Required @Unique login: String,
-  @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
+  @Unique var email: Option[String] = None, var fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
    * A user specified password
    * If null we assume invalid
@@ -89,8 +89,14 @@ case class User(@Required @Unique login: String,
 
   def isResearcher = groupId == "research"
 
+  /**
+   * Some accounts were migrated from the old droneshare, which didn't have the concept of passwords.
+   * For those accounts, if someone wants to pick the same username let them and they become the new owner of any old flights.
+   */
+  def isClaimable = hashedPassword == "invalid"
+
   def isPasswordGood(test: String) = {
-    if (hashedPassword == "invalid") {
+    if (hashedPassword == "invalid" || hashedPassword == "invalid2") {
       logger.warn(s"Failing password test for $login, because stored password is invalid")
       false
     } else {
@@ -165,7 +171,7 @@ case class User(@Required @Unique login: String,
 
     if (hashedPassword == null) {
       logger.warn(s"Saving $this with invalid password")
-      hashedPassword = "invalid"
+      hashedPassword = "invalid2" // This is the new name used for guaranteed invalid passwords.  The old "invalid" string means imported from droneshare
     }
 
     super.beforeSave()

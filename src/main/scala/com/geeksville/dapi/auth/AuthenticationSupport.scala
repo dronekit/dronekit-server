@@ -109,16 +109,30 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
   def createUserAndWelcome(login: String, password: String, email: Option[String], fullName: Option[String]) = {
 
-    if (User.find(login).isDefined)
-      haltConflict("login already exists")
-
     val r = try {
-      User.create(login, password, email, fullName)
+      // Possibly let the user claim old accounts
+      User.find(login) match {
+        case None =>
+          User.create(login, password, email, fullName)
+        case Some(u) =>
+          if (!u.isClaimable)
+            haltConflict("login already exists")
+          else {
+            warn(s"Claiming existing account for $login")
+            u.password = password.trim
+            u.email = email
+            u.fullName = fullName
+            u.save
+            u
+          }
+      }
     } catch {
       // Failed validation
       case ex: RecordInvalidException =>
         haltBadRequest(ex.getMessage)
     }
+
+    // Notify the user
     try {
       if (email.isDefined)
         MailTools.sendWelcomeEmail(r)
