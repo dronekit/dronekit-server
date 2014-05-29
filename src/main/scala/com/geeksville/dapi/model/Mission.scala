@@ -35,6 +35,7 @@ import com.geeksville.dapi.GetTLogMessage
 import akka.util.Timeout
 import com.geeksville.dapi.Global
 import com.geeksville.apiproxy.APIConstants
+import java.sql.Timestamp
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -42,8 +43,8 @@ import com.geeksville.apiproxy.APIConstants
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
 case class MissionSummary(
-  var startTime: Option[Date] = None,
-  var endTime: Option[Date] = None,
+  var startTime: Option[Timestamp] = None,
+  var endTime: Option[Timestamp] = None,
   var maxAlt: Double = 0.0,
   var maxGroundSpeed: Double = 0.0,
   var maxAirSpeed: Double = 0.0,
@@ -98,7 +99,7 @@ case class MissionSummary(
             lat <- latitude
             lon <- longitude
           } yield {
-            val geo = MissionSummary.mapboxClient.geocode(lat, lon)
+            var geo = MissionSummary.mapboxClient.geocode(lat, lon)
 
             info("Geocoded to " + geo.mkString(":"))
             // Some locations (like the pacific ocean) return empty geo locations (no government name)
@@ -106,9 +107,9 @@ case class MissionSummary(
             if (geo.isEmpty)
               "international waters"
             else
-              // If the first line is too identifying - skip it
-              // geo.tail
-              geo.map(_._2).mkString(", ")
+              // Street addresses are too identifying, skip them
+              geo = geo.filter { case (typ, v) => typ != "street" }
+            geo.map(_._2).mkString(", ")
           }).getOrElse(unknown)
         } catch {
           case ex: Exception =>
@@ -181,7 +182,7 @@ case class Mission(
         vehicle.updateFromMission(m)
 
         // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
-        m.startTime.foreach { date => createdOn = new Date(date / 1000L) }
+        m.startTime.foreach { date => createdAt = new Timestamp(date / 1000L) }
         this.save
 
         warn(s"Summary regened: $this")
@@ -305,7 +306,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.longitude),
         s.flatMap(_.softwareVersion),
         s.flatMap(_.softwareGit),
-        Some(u.createdOn), Some(u.updatedOn),
+        Some(u.createdAt), Some(u.updatedAt),
         s.flatMap(_.text),
         u.mapThumbnailURL,
         Some(u.viewURL),

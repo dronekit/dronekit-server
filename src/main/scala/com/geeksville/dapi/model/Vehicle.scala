@@ -150,8 +150,8 @@ class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle]
         Some(AccessCode.valueOf(u.controlPrivacy)),
         // We deliver newer missions first
         Some(missions),
-        Some(u.createdOn),
-        Some(u.updatedOn),
+        Some(u.createdAt),
+        Some(u.updatedAt),
         Some(u.text))
       Extraction.decompose(m)
   }))

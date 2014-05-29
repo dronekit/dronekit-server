@@ -28,6 +28,7 @@ import org.mavlink.messages.ardupilotmega.msg_heartbeat
 import scala.concurrent.duration._
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.mavlink.FlushNowMessage
+import java.sql.Timestamp
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -224,7 +225,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     }
   }
 
-  def summary = MissionSummary(startTime.map(TimestampedMessage.usecsToDate), currentTime.map(TimestampedMessage.usecsToDate),
+  def summary = MissionSummary(startTime.map { t => new Timestamp(TimestampedMessage.usecsToMsecs(t)) },
+    currentTime.map { t => new Timestamp(TimestampedMessage.usecsToMsecs(t)) },
     maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
 
   private def sendMissionUpdate() {

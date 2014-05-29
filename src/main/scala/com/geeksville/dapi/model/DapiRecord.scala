@@ -2,18 +2,18 @@ package com.geeksville.dapi.model
 
 import com.github.aselab.activerecord.ActiveRecord
 import com.github.aselab.activerecord.ActiveRecordCompanion
-import com.github.aselab.activerecord.Datestamps
 import com.github.aselab.activerecord.annotations._
 import org.squeryl.annotations.Transient
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import com.github.aselab.activerecord.dsl._
 import grizzled.slf4j.Logging
+import com.github.aselab.activerecord.Timestamps
 
 /**
  * Behavior common to all Dapi records
  */
-abstract class DapiRecord extends ActiveRecord with Datestamps
+abstract class DapiRecord extends ActiveRecord with Timestamps
 
 /**
  * Standard CRUD operations to support ApiController (normally through ActiveRecord but could be implemented with a different provider)

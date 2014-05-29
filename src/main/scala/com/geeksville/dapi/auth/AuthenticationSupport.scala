@@ -15,6 +15,7 @@ import com.geeksville.dapi.Global
 import com.github.aselab.activerecord.RecordInvalidException
 import org.scalatra.json.NativeJsonSupport
 import com.geeksville.dapi.MailTools
+import java.sql.Timestamp
 
 trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with BasicAuthSupport[User] with ControllerExtras with NativeJsonSupport {
   self: ScalatraBase =>
@@ -46,7 +47,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
       // FIXME - we really need a scheme to cache all these db objects
       u.lastLoginAddr = request.getRemoteAddr
-      val now = new Date
+      val now = new Timestamp(System.currentTimeMillis)
 
       // We only bump up login count once per hr (multiple auths per app session)
       val span = now.getTime - u.lastLoginDate.getTime

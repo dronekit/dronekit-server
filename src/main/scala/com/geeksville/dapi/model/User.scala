@@ -18,6 +18,7 @@ import scala.util.Random
 import com.geeksville.akka.MockAkka
 import com.geeksville.util.MD5Tools
 import com.geeksville.scalatra.WebException
+import java.sql.Timestamp
 
 case class User(@Required @Unique login: String,
   @Unique email: Option[String] = None, fullName: Option[String] = None) extends DapiRecord with Logging {
@@ -41,7 +42,7 @@ case class User(@Required @Unique login: String,
   var groupId: String = ""
 
   /// Date of last login
-  var lastLoginDate: Date = new Date()
+  var lastLoginDate: Timestamp = new Timestamp(System.currentTimeMillis)
 
   @Length(max = 18) /// IP address of last client login
   var lastLoginAddr: String = "unknown"
@@ -62,7 +63,7 @@ case class User(@Required @Unique login: String,
   var passwordResetToken: Option[Long] = None
 
   /// If set this was the time the password reset started (used to ignore 'too old' reset tokens)
-  var passwordResetDate: Option[Date] = None
+  var passwordResetDate: Option[Timestamp] = None
 
   var numberOfLogins = 0
 
@@ -128,7 +129,7 @@ case class User(@Required @Unique login: String,
   def beginPasswordReset() = {
     val r = User.random.nextLong
     passwordResetToken = Some(r)
-    passwordResetDate = Some(new Date)
+    passwordResetDate = Some(new Timestamp(System.currentTimeMillis))
     save
 
     r

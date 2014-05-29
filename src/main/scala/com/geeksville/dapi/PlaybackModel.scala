@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream
 import com.geeksville.mavlink.BinaryMavlinkReader
 import java.io.ByteArrayInputStream
 import com.geeksville.flight.Location
-
 import org.mavlink.messages.ardupilotmega.msg_gps_raw_int
 import java.util.zip.ZipOutputStream
 import java.util.zip.ZipEntry
@@ -19,12 +18,10 @@ import org.mavlink.messages.ardupilotmega.msg_mission_item
 import com.geeksville.flight.Waypoint
 import com.geeksville.flight.WaypointsForMap
 import java.net.URI
-
 import com.geeksville.flight.ParametersReadOnlyModel
 import org.mavlink.messages.ardupilotmega.msg_heartbeat
 import org.mavlink.messages.ardupilotmega.msg_param_value
 import org.mavlink.messages.ardupilotmega.msg_vfr_hud
-
 import org.mavlink.messages.MAV_TYPE
 import com.geeksville.dapi.model.MissionSummary
 import java.util.Date
@@ -33,6 +30,7 @@ import grizzled.slf4j.Logging
 import org.json4s.JsonAST.JObject
 import com.geeksville.json.GeoJSON
 import com.geeksville.flight.LiveOrPlaybackModel
+import java.sql.Timestamp
 
 case class TimestampedLocation(time: Long, loc: Location)
 
@@ -80,7 +78,7 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
     messages.filter { m => m.time >= s && m.time <= e }
   }).getOrElse(Seq())
 
-  private def checkTime(date: Date) = {
+  private def checkTime(date: Timestamp) = {
     val calendar = Calendar.getInstance
     calendar.setTime(date)
     val y = calendar.get(Calendar.YEAR)
@@ -96,8 +94,8 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   }
 
   def summary = {
-    val start = startTime.flatMap { t => checkTime(new Date(t / 1000)) }
-    val end = currentTime.flatMap { t => checkTime(new Date(t / 1000)) }
+    val start = startTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
+    val end = currentTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
     warn(s"Creating NEW summary, start=$start, end=$end")
 
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
