@@ -23,6 +23,8 @@ import _root_.akka.util.Timeout
 import _root_.akka.pattern.ask
 import org.scalatra.FutureSupport
 import org.scalatra.CorsSupport
+import com.geeksville.dapi.model.Mission
+import com.github.aselab.activerecord.dsl._
 
 /**
  * Special admin operations
@@ -101,6 +103,7 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     simClient ? SimGCSClient.StopAllTests
   }
 
+  /*
   // FIXME -very dangerous remove before production
   post("/db/reset", operation(apiOperation[String]("dbReset") summary "Reseed the DB")) {
     Tables.reset
@@ -111,6 +114,14 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   post("/db/create") {
     Tables.create
     "DB created"
+  }
+  * 
+  */
+
+  post("/db/fix") {
+    Mission.collection.foreach { m =>
+      m.deleteIfUninteresting()
+    }
   }
 
   /// To make testing newrelic integration easier
