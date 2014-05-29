@@ -75,7 +75,7 @@ case class MissionSummary(
     val mins = minutes.map(_.toString).getOrElse("unknown")
     val loc = text.getOrElse("unknown")
 
-    s"MissionSummary($maxAlt alt, $mins mins, $loc location)"
+    s"MissionSummary(at ${startTime.getOrElse("no-date")}, alt=$maxAlt, mins=$mins, loc=$loc)"
   }
 
   /**
@@ -100,13 +100,15 @@ case class MissionSummary(
           } yield {
             val geo = MissionSummary.mapboxClient.geocode(lat, lon)
 
+            info("Geocoded to " + geo.mkString(":"))
             // Some locations (like the pacific ocean) return empty geo locations (no government name)
             // http://api.tiles.mapbox.com/v3/examples.map-zr0njcqy/geocode/-158.2276141,21.0933198.json
             if (geo.isEmpty)
               "international waters"
             else
-              // First line might be too identifying - skip it
-              geo.tail.map(_._2).mkString(", ")
+              // If the firs line is too identifying - skip it
+              // geo.tail
+              geo.map(_._2).mkString(", ")
           }).getOrElse(unknown)
         } catch {
           case ex: Exception =>
