@@ -96,9 +96,13 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   }
 
   def summary = {
+    val start = startTime.flatMap { t => checkTime(new Date(t / 1000)) }
+    val end = currentTime.flatMap { t => checkTime(new Date(t / 1000)) }
+    warn(s"Creating NEW summary, start=$start, end=$end")
+
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
-    MissionSummary(startTime.flatMap { t => checkTime(new Date(t / 1000)) },
-      currentTime.flatMap { t => checkTime(new Date(t / 1000)) },
+    MissionSummary(start,
+      end,
       maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
       endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
   }
