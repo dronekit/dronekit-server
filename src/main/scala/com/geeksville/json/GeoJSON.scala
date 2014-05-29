@@ -113,6 +113,9 @@ object GeoJSON {
     var southWest = LatLngAlt(Double.MaxValue, Double.MaxValue, Double.MaxValue)
     var northEast = LatLngAlt(Double.MinValue, Double.MinValue, Double.MinValue)
 
+    /// Does this bounding box contain at least one good point?
+    var isValid = false
+
     def range = Seq(southWest.lon, southWest.lat, southWest.alt,
       northEast.lon, northEast.lat, northEast.alt)
 
@@ -127,6 +130,8 @@ object GeoJSON {
       northEast.lat = math.max(l.lat + pad, northEast.lat)
       northEast.lon = math.max(l.lon + pad, northEast.lon)
       northEast.alt = math.max(l.alt.getOrElse(0.0), northEast.alt)
+
+      isValid = true
     }
   }
 
