@@ -71,15 +71,15 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
         }
     }.toList
 
+    if (created.isEmpty)
+      haltNotAcceptable("Log file was empty or uninteresting, ignoring")
+
     // If we had exactly one bad file, tell the client there was a problem via an error code.
     // Otherwise, claim success (this allows users to drag and drop whole directories and we'll cope with
     // just the tlogs).
     errMsg.foreach { msg =>
       if (tlogs.size == 1)
-        if (created.isEmpty)
-          haltNotAcceptable("Log file was empty or uninteresting, ignoring")
-        else
-          haltBadRequest(msg)
+        haltBadRequest(msg)
     }
 
     warn(s"Returning ${created.mkString(", ")}")
