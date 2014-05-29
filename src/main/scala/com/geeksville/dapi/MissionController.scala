@@ -313,7 +313,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       if (login.isEmpty) {
         error("FIXME - temp hack to cope with buggy clients")
         Thread.sleep(60 * 1000L)
-        haltBadRequest("Login can not be empty")
+        haltUnauthorized("Login can not be empty")
       }
 
       // If the login already exists, but tryLogin() failed, that means the user must have used a bad password
