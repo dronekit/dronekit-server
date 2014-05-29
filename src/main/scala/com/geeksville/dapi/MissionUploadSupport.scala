@@ -18,7 +18,12 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
   def handleMissionUpload(v: Vehicle) = {
     var errMsg: Option[String] = None
 
-    dumpRequest()
+    // dumpRequest()
+
+    def setErr(msg: String) {
+      error(msg)
+      errMsg = Some(msg)
+    }
 
     val tlogs = if (request.contentType == Some(Mission.mimeType)) {
       // Just pull out one file
@@ -36,8 +41,7 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
             payload.contentType.getOrElse(haltBadRequest("content-type not set"))
         }
         if (Mission.mimeType != ctype) {
-          val msg = (s"${payload.name} did not seem to be a TLOG")
-          errMsg = Some(msg)
+          setErr(s"${payload.name} did not seem to be a TLOG")
           None
         } else {
           info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
@@ -48,23 +52,34 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
     }
 
     // Create missions for each tlog
-    val created = tlogs.map {
+    val created = tlogs.flatMap {
       case (name, payload) =>
 
-        val m = v.createMission(payload, name)
+        if (payload.isEmpty) {
+          setErr(s"$name is empty")
+          None
+        } else {
+          val m = v.createMission(payload, name)
 
-        // Make this new mission show up on the recent flights list
-        val space = SpaceSupervisor.find()
-        SpaceSupervisor.tellMission(space, m)
-        m
+          if (!m.deleteIfUninteresting()) {
+            // Make this new mission show up on the recent flights list
+            val space = SpaceSupervisor.find()
+            SpaceSupervisor.tellMission(space, m)
+            Some(m)
+          } else
+            None
+        }
     }.toList
 
     // If we had exactly one bad file, tell the client there was a problem via an error code.
     // Otherwise, claim success (this allows users to drag and drop whole directories and we'll cope with
     // just the tlogs).
     errMsg.foreach { msg =>
-      if (created.size == 1)
-        haltBadRequest(msg)
+      if (tlogs.size == 1)
+        if (created.isEmpty)
+          haltNotAcceptable("Log file was empty or uninteresting, ignoring")
+        else
+          haltBadRequest(msg)
     }
 
     warn(s"Returning ${created.mkString(", ")}")

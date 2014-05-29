@@ -330,11 +330,15 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
         vehicle.updateFromMission(this)
         publishEvent(MissionStop(m))
 
-        if (m.keep) {
+        val interesting = m.isInteresting
+        if (m.keep && interesting) {
           log.debug("Saving mission")
           m.save()
         } else {
-          log.warning("No-keep mission, deleting")
+          if (!interesting)
+            log.warning("mission ended up boring, deleting")
+          else
+            log.warning("No-keep mission, deleting")
           m.delete()
         }
       }

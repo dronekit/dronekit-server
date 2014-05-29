@@ -81,7 +81,8 @@ class NestorImporter extends Actor with ActorLogging {
               val m = vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
 
               // Make this new mission show up on the recent flights list
-              SpaceSupervisor.tellMission(space, m)
+              if (!m.deleteIfUninteresting())
+                SpaceSupervisor.tellMission(space, m)
             } else
               log.warning("Skipping zero length mission")
           }

@@ -169,10 +169,12 @@ case class Mission(
     PlaybackModel.fromBytes(bytes, false)
   }
 
-  /// FIXME - figure out when to call this
+  /**
+   *  FIXME - figure out when to call this
+   */
   def regenSummary() {
     if (!summary.headOption.isDefined) {
-      // warn("Mission summary missing")
+      //warn("Mission summary missing")
       model.foreach { m =>
         val s = m.summary
         s.create
@@ -188,6 +190,35 @@ case class Mission(
         warn(s"Summary regened: $this")
       }
     }
+  }
+
+  /**
+   * Does this mission contain interesting bits?
+   */
+  def isInteresting = {
+    regenSummary() // Make sure we have a summary if we can
+    summary.headOption match {
+      case Some(s) =>
+        s.latitude != None && s.longitude != None
+
+      case None =>
+        false
+    }
+  }
+
+  /**
+   * If this mission is 'boring' (no position data etc... delete from db and return true
+   */
+  def deleteIfUninteresting() = {
+    regenSummary() // Make sure we have a summary if we can
+    val uninteresting = !isInteresting
+    if (uninteresting) {
+      warn(s"Deleting uninteresting mission $this")
+      this.delete()
+    } else
+      debug(s"Keeping interesting mission $this")
+
+    uninteresting
   }
 
   /**
