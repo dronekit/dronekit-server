@@ -52,8 +52,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   override protected def requireReadAccess(o: Mission) = {
     val userId = missionUserId(o)
 
-    warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
-    //requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
+    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
     super.requireReadAccess(o)
   }
 
@@ -88,6 +87,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   unsafeROField("messages.tlog") { (o) =>
+    warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
     contentType = Mission.mimeType
     OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("tlog not found")), o.tlogId.get.toString + ".tlog")
   }
