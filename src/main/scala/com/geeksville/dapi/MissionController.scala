@@ -87,7 +87,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       "Content-Disposition" -> ("attachment; filename=\"" + filename + "\"")))
   }
 
-  roField("messages.tlog") { (o) =>
+  unsafeROField("messages.tlog") { (o) =>
     contentType = Mission.mimeType
     OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("tlog not found")), o.tlogId.get.toString + ".tlog")
   }
@@ -119,7 +119,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     new KMLFactory(getModel(o)).toKMLBytes(uriBase)
   }
 
-  roField("messages.kmz") { (o) =>
+  unsafeROField("messages.kmz") { (o) =>
     contentType = "application/vnd.google-earth.kmz"
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
@@ -258,7 +258,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   /// Parameters as a loadable param file
-  roField("parameters.complete") { (o) =>
+  unsafeROField("parameters.complete") { (o) =>
     genParams(o, true)
   }
 

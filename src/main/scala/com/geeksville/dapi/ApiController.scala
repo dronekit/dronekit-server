@@ -123,6 +123,15 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     }
   }
 
+  /**
+   * FIXME - remove after release 1 - temp hack to allow kmz/tlog fetches to not need API keys
+   */
+  def unsafeROField[R](name: String)(getter: T => R) {
+    get("/:id/" + name) {
+      getter(unprotectedFindById)
+    }
+  }
+
   /// Generate a wo attribute on this rest endpoint of the form /:id/name.
   /// call getter and setter as needed
   /// FIXME - move this great utility somewhere else
@@ -245,10 +254,15 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Get the object associated with the provided id param (or fatally end the request with a 404)
    */
   protected def findById(implicit request: HttpServletRequest) = {
-    val id = params("id")
-    val r = companion.find(id).getOrElse(haltNotFound(s"$id not found"))
+    requireReadAccess(unprotectedFindById(request))
+  }
 
-    requireReadAccess(r)
+  /**
+   * This accessor does not confirm that the user has read access
+   */
+  protected def unprotectedFindById(implicit request: HttpServletRequest) = {
+    val id = params("id")
+    companion.find(id).getOrElse(haltNotFound(s"$id not found"))
   }
 
   private lazy val createByIdOp =
