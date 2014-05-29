@@ -215,7 +215,8 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     val vehicleId = UUID.randomUUID.toString
 
     post(s"/api/v1/mission/upload/$vehicleId", params, Map("payload" -> payload), headers = commonHeaders) {
-      checkStatusOk()
+      // checkStatusOk()
+      status should equal(406) // The tlog we are sending should be considered uninteresting by the server
       info("View URL is " + body)
     }
   }
