@@ -46,7 +46,14 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
       // FIXME - we really need a scheme to cache all these db objects
       u.lastLoginAddr = request.getRemoteAddr
-      u.lastLoginDate = new Date
+      val now = new Date
+
+      // We only bump up login count once per hr (multiple auths per app session)
+      val span = now.getTime - u.lastLoginDate.getTime
+      if (span > 60 * 60 * 1000L)
+        u.numberOfLogins += 1
+
+      u.lastLoginDate = now
       u.save
     }
     r

@@ -64,6 +64,8 @@ case class User(@Required @Unique login: String,
   /// If set this was the time the password reset started (used to ignore 'too old' reset tokens)
   var passwordResetDate: Option[Date] = None
 
+  var numberOfLogins = 0
+
   /**
    * A URL of a small jpg for this user
    */
