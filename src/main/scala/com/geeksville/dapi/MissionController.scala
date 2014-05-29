@@ -135,7 +135,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   roField("messages.geo.json") { (o) =>
     // FIXME - we should pull our static content (icons etc... from a cdn)
-    new GeoJSONFactory(getModel(o)).toGeoJSON()
+    new GeoJSONFactory(getModel(o)).toGeoJSON().getOrElse(haltGone("No position data found"))
   }
 
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially

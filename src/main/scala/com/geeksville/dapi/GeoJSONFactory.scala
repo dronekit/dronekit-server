@@ -3,11 +3,15 @@ package com.geeksville.dapi
 import com.geeksville.json.GeoJSON
 import org.json4s.JsonAST.JObject
 import com.geeksville.flight.LiveOrPlaybackModel
+import grizzled.slf4j.Logging
 
-class GeoJSONFactory(model: PlaybackModel) {
+class GeoJSONFactory(model: PlaybackModel) extends Logging {
   import model._
 
-  def toGeoJSON(): JObject = {
+  /**
+   * @return None if we can't make sen
+   */
+  def toGeoJSON(): Option[JObject] = {
     import GeoJSON._
 
     val bbox = new BoundingBox(0.005)
@@ -80,7 +84,13 @@ class GeoJSONFactory(model: PlaybackModel) {
     val modeLayer = makeFeatureCollection(modeMarkers: _*)
     val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines), wptLineStyle): _*)
     val topLevel = makeFeatureCollection(modeLayer, wptLayer, tracklog)
-    addBoundingBox(topLevel, bbox)
+    if (bbox.isValid)
+      Some(addBoundingBox(topLevel, bbox))
+    else {
+      warn(s"Can not make GeoJSON for $model")
+      None
+    }
+
   }
 
 }
