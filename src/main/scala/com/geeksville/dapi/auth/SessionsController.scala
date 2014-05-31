@@ -96,9 +96,13 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   post("/pwreset/:login") {
     val u = User.find(params("login")).getOrElse(haltNotFound("login not found"))
-    u.beginPasswordReset()
-    MailTools.sendPasswordReset(u)
-    "Password reset started"
+    if (!u.email.isDefined)
+      haltBadRequest("No email address known for this account, sorry.")
+    else {
+      u.beginPasswordReset()
+      MailTools.sendPasswordReset(u)
+      "Password reset started"
+    }
   }
 
   /**

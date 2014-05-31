@@ -42,6 +42,8 @@ object MailTools extends Logging {
   def sendPasswordReset(u: User) {
     import Global._
 
+    val email = u.email.getOrElse(throw new Exception("No email address available"))
+
     using(new MailgunClient()) { client =>
       val fullname = u.fullName.getOrElse(u.login)
       val code = u.beginPasswordReset()
@@ -63,7 +65,7 @@ object MailTools extends Logging {
         with questions or comments.<p/>
         </body></html>
 
-      val r = client.sendHtml(senderEmail, u.email.get, s"$appName password reset",
+      val r = client.sendHtml(senderEmail, email, s"$appName password reset",
         bodyText, testing = ScalatraTools.isTesting)
       debug("Mailgun reply: " + r)
     }
