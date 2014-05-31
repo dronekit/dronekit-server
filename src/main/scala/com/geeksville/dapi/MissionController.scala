@@ -33,7 +33,14 @@ case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolea
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
   private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
   atmosphere("/live", operation(liveOp)) {
-    new AtmosphereLive(tryLogin())
+    dumpRequest()
+
+    // We support customizing the feed for a particular user (note - this customization doesn't guarantee the user is really logged in or 
+    // their password is valid.  (FIXME - atmo headers need to include valid cookies etc...)
+    // val login = tryLogin()
+    val login = params.get("login").flatMap(User.find)
+    warn(s"Passing into atmo $login")
+    new AtmosphereLive(login)
   }
 }
 

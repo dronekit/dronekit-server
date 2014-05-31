@@ -195,6 +195,20 @@ case class User(@Required @Unique login: String,
     v
   }
 
+  /**
+   * Return the most recent flight for this user (if known)
+   */
+  def newestMission: Option[Mission] = {
+    implicit def dateOrdering: Ordering[Timestamp] = Ordering.fromLessThan(_ before _)
+
+    // FIXME - this could be slow
+    val m = vehicles.flatMap(_.missions).toSeq
+    if (m.isEmpty)
+      None
+    else
+      Some(m.minBy(_.createdAt))
+  }
+
   override def toString() = s"User:$login(group=$groupId, email=$email, fullName=$fullName)"
 }
 

@@ -37,6 +37,7 @@ import com.geeksville.util.RingBuffer
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ScalatraTools
+import com.geeksville.dapi.model.User
 
 /// for json encoding
 private case class Attitude(roll: Double, pitch: Double, yaw: Double)
@@ -90,22 +91,19 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
    * This is the state we keep for each vehicle connection.
    */
   private class MissionHistory(val missionId: Long) {
-    private var vehicle: Option[Vehicle] = None
     private var mission: Option[Mission] = None
     private val history = new RingBuffer[AtmosphereUpdate](maxRecordsPerVehicle)
 
     def numMessages = history.size
 
-    def setSummary(m: SpaceSummary) {
-      mission = Some(m.mission)
-      vehicle = m.vehicle
+    def setSummary(m: Mission) {
+      mission = Some(m)
     }
 
-    def addStop(mopt: Option[SpaceSummary]) {
+    def addStop(mopt: Option[Mission]) {
       mopt.foreach { m =>
         // Update with latest data
-        mission = Some(m.mission)
-        vehicle = m.vehicle
+        mission = Some(m)
       }
       recentMissions += this // We will be getting removed from our collection soon
     }
@@ -118,7 +116,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     def updates = {
       // Always include a start msg if we can
       val summary = mission.map { m =>
-        AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(SpaceSummary(vehicle, m)))))
+        AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(m))))
       }
 
       summary ++ history
@@ -179,10 +177,15 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     publishUpdate("stop", preferredSender = aref)
 
     // Move the mission to recent flights
-    val summary = mopt.map { mission => SpaceSummary(mission.vehicle, mission) }
+    val summary = mopt
     actorToMission.remove(aref).foreach { info =>
       info.addStop(summary)
     }
+  }
+
+  def sendMissionSummary(typ: String, mission: Mission) = {
+    publishUpdate(typ, mission)
+    mission
   }
 
   def receive = {
@@ -191,7 +194,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     // Messages from REST endpoints appear below
     //
 
-    case SendToAtmosphereMessage(dest) =>
+    case SendToAtmosphereMessage(dest, user) =>
       log.info(s"Resending to new client $dest")
 
       allMissions.foreach { info =>
@@ -200,6 +203,16 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
           //log.debug(s"Resending $u")
           AtmosphereTools.sendTo(dest, u.typ, u.payload)
         }
+      }
+
+      // Also send the most recent flight for this user (if possible)
+      val latestFlight = user.flatMap(_.newestMission)
+      latestFlight.foreach { mission =>
+        log.warning(s"Send user's flight $mission")
+
+        // FIXME this copypasta is nasty
+        val o = SpaceEnvelope(mission.id, Option(mission))
+        AtmosphereTools.sendTo(dest, "user", Extraction.decompose(o))
       }
 
     //
@@ -213,18 +226,14 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     case MissionStart(mission) =>
       log.debug(s"Received start of $mission from $sender")
       val info = new MissionHistory(mission.id)
-      val summary = SpaceSummary(mission.vehicle, mission)
-      info.setSummary(summary)
       actorToMission(sender) = info
+      info.setSummary(sendMissionSummary("start", mission))
       watch(sender)
-      publishUpdate("start", summary)
 
     case MissionUpdate(mission) =>
       // log.debug(s"Applying mission update $mission")
       val history = actorToMission(sender)
-      val summary = SpaceSummary(mission.vehicle, mission)
-      history.setSummary(summary)
-      publishUpdate("update", summary)
+      history.setSummary(sendMissionSummary("update", mission))
 
     case MissionStop(mission) =>
       log.debug(s"Received stop of $mission")
@@ -270,7 +279,7 @@ object SpaceSupervisor {
   private val actors = new NamedActorClient("space")
 
   /// Resend any old messages to this new client
-  case class SendToAtmosphereMessage(dest: AtmosphereLive)
+  case class SendToAtmosphereMessage(dest: AtmosphereLive, user: Option[User])
 
   // Most space notifications come due to subscribing to particlar live vehicles
   // However, if someone manually uploads a tlog via the REST api, we want to consider that

@@ -38,11 +38,12 @@ class AtmosphereLive(user: Option[User]) extends PlatformAtmosphereClient(user) 
   def mySpace = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
   // user location
 
+  info(s"Live space stream for user $user")
   override def onConnect() {
     super.onConnect()
 
     // Ask for any old msgs
-    mySpace ! SpaceSupervisor.SendToAtmosphereMessage(this)
+    mySpace ! SpaceSupervisor.SendToAtmosphereMessage(this, user)
   }
 }
 
