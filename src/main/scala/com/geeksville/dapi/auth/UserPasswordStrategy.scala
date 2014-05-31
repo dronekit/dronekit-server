@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import com.geeksville.dapi.model.User
 import grizzled.slf4j.Logging
 
-class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: HttpServletRequest, response: HttpServletResponse)
+class UserPasswordStrategy(protected val app: ScalatraBase)
   extends ScentryStrategy[User] {
   import UserPasswordStrategy._
 
@@ -15,8 +15,8 @@ class UserPasswordStrategy(protected val app: ScalatraBase)(implicit request: Ht
 
   override def name: String = "UserPassword"
 
-  private def login = app.params.getOrElse(loginKey, "")
-  private def password = app.params.getOrElse(passwordKey, "")
+  private def login(implicit request: HttpServletRequest) = app.params.getOrElse(loginKey, "")
+  private def password(implicit request: HttpServletRequest) = app.params.getOrElse(passwordKey, "")
 
   /**
    * *

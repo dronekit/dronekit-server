@@ -9,7 +9,7 @@ import grizzled.slf4j.Logging
 import org.apache.commons.codec.binary.Base64
 import java.security.MessageDigest
 
-class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: HttpServletRequest, response: HttpServletResponse)
+class RememberMeStrategy(protected val app: ScalatraBase)
   extends ScentryStrategy[User] with Logging {
 
   override def name: String = "RememberMe"
@@ -29,7 +29,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
    * *
    * Grab the value of the rememberMe cookie token.
    */
-  private def tokenVal = {
+  private def tokenVal(implicit request: HttpServletRequest) = {
     Option(app.cookies).flatMap(_.get(cookieKey)) match {
       case Some(token) => token
       case None => ""
@@ -179,7 +179,7 @@ class RememberMeStrategy(protected val app: ScalatraBase)(implicit request: Http
   }
 
   /// Set the cookie indicating that this user is logged in
-  def setCookie(user: User) {
+  def setCookie(user: User)(implicit request: HttpServletRequest) {
     if (shouldUseCookies) {
       logger.trace("rememberMe: setting cookie")
       val token = makeToken(user)
