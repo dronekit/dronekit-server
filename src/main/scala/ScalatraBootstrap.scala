@@ -42,6 +42,7 @@ import scala.util.Success
 import scala.util.Failure
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.NewRelicAnalyticsAdapter
+import akka.actor.ActorRef
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -95,6 +96,10 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 
+    // startSimVehicles(tcpGCSActor)
+  }
+
+  private def startSimVehicles(tcpGCSActor: ActorRef) {
     import system._
     // Start up a few sim vehicles that are always running
     AkkaTools.waitAlive(tcpGCSActor) onComplete {
