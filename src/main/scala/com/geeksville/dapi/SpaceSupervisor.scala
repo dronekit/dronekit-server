@@ -188,6 +188,30 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     mission
   }
 
+  private def handleSendAll(dest: AtmosphereLive, user: Option[User]) {
+    log.info(s"Resending to new client $dest")
+
+    // BEFORE sending other starts the client expects any "user" flight to be sent
+    // Also send the most recent flight for this user (if possible)
+    val latestFlight = user.flatMap(_.newestMission)
+    latestFlight.foreach { mission =>
+      log.debug(s"Send user's flight $mission")
+
+      // FIXME this copypasta is nasty
+      val o = SpaceEnvelope(mission.id, Option(mission))
+      AtmosphereTools.sendTo(dest, "user", Extraction.decompose(o))
+    }
+
+    log.debug(s"Sending ${allMissions.size} old missions to atmosphere client")
+    allMissions.foreach { info =>
+      //log.debug(s"Resending from $info")
+      info.updates.foreach { u =>
+        //log.debug(s"Resending $u")
+        AtmosphereTools.sendTo(dest, u.typ, u.payload)
+      }
+    }
+  }
+
   def receive = {
 
     //
@@ -195,25 +219,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     //
 
     case SendToAtmosphereMessage(dest, user) =>
-      log.info(s"Resending to new client $dest")
-
-      allMissions.foreach { info =>
-        //log.debug(s"Resending from $info")
-        info.updates.foreach { u =>
-          //log.debug(s"Resending $u")
-          AtmosphereTools.sendTo(dest, u.typ, u.payload)
-        }
-      }
-
-      // Also send the most recent flight for this user (if possible)
-      val latestFlight = user.flatMap(_.newestMission)
-      latestFlight.foreach { mission =>
-        log.warning(s"Send user's flight $mission")
-
-        // FIXME this copypasta is nasty
-        val o = SpaceEnvelope(mission.id, Option(mission))
-        AtmosphereTools.sendTo(dest, "user", Extraction.decompose(o))
-      }
+      handleSendAll(dest, user)
 
     //
     // Messages from LiveVehicleActors appear below
