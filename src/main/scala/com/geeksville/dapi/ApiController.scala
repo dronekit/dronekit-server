@@ -111,9 +111,9 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   /// Generate a ro attribute on this rest endpoint of the form /:id/name.
   /// call getter as needed
   /// FIXME - move this great utility somewhere else
-  def roField[R](name: String)(getter: T => R) {
+  def roField[R: Manifest](name: String)(getter: T => R) {
     val getInfo =
-      (apiOperation[T]("get" + URLUtil.capitalize(name))
+      (apiOperation[R]("get" + URLUtil.capitalize(name))
         summary s"Get the $name for the specified $aName"
         parameters (
           pathParam[String]("id").description(s"Id of $aName to be read")))
