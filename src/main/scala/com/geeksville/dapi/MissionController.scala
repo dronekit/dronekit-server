@@ -246,6 +246,10 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val model = getModel(o)
 
     val unfiltered = model.parameters
+
+    if (unfiltered.isEmpty)
+      haltGone("This flight log did not include parameters")
+
     val ps = if (complete)
       unfiltered
     else
@@ -261,7 +265,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     }
     val sorted = unsorted.sorted
     val header = "# Auto generated from " + viewUrl(o)
-    val r = header + "\n" + sorted.mkString("\n")
+    header + "\n" + sorted.mkString("\n")
   }
 
   /// Parameters as a loadable param file
