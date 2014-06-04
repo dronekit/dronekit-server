@@ -44,12 +44,12 @@ class RememberMeStrategy(protected val app: ScalatraBase)
     // Find referer for api checking - we prefer 'Origin' as the new preferred but will fall back to Referer
     val originOpt = Option(request.getHeader("Origin"))
     val referer = originOpt.orElse(Option(request.getHeader("Referer"))).map { url =>
-      url.filter { c => // remove http:// from front - only allow alpha,digits and dots
-        c.isLetter | c.isDigit | c == '.'
+      url.filter { c => // remove http:// from front - only allow alpha and digits
+        c.isLetter | c.isDigit
       }
     }
 
-    "api-" + referer.getOrElse("unknown")
+    referer.getOrElse("unknown") + "API"
   }
 
   /**
