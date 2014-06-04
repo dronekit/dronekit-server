@@ -94,7 +94,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
 
     // Center our vehicles around various world points
     val centerLocations = Seq((21.2966980, -157.8480360), // HI
-      (37.517, -122.29), // Belmont
+      // (37.517, -122.29), // SF Bay area
       (51.500, -0.1262), // London
       (35.68, 139.69) // Tokyo
       )
