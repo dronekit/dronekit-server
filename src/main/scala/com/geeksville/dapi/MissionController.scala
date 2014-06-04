@@ -29,6 +29,9 @@ import org.scalatra.swagger.StringResponseMessage
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
+// Helper class for generating json
+case class MessageJson(time: Long, msg: String)
+
 /// Atmosphere doesn't work in the test framework so we split it out
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
   private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
@@ -98,9 +101,6 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     contentType = Mission.mimeType
     OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("tlog not found")), o.tlogId.get.toString + ".tlog")
   }
-
-  // Helper class for generating json
-  case class MessageJson(time: Long, msg: String)
 
   roField[Seq[MessageJson]]("messages.json") { (o) =>
     val m = getModel(o)
@@ -358,5 +358,20 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
     o
   }
+
+  /* Does not work - bug in activerecord
+  override protected def getFiltered() = {
+    // For now we strip out test accounts
+    var r = super.getFiltered.includes(_.vehicle)
+
+    User.find("test-bob").foreach { u =>
+      r = r.not(_.vehicle.userId === u.id)
+    }
+    // 
+
+    r
+  }
+  * 
+  */
 }
 
