@@ -57,12 +57,20 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     // Make sure this app is allowed to login users
     requireServiceAuth("user/login")
 
-    val user = scentry.authenticate("Password")
+    val u = if (user != null && user.isAdmin) {
+      val login = params("login")
+      warn(s"Admin $user is impersonating $login")
+      val newuser = User.findByLoginOrEmail(login).getOrElse(haltNotFound(s"Can't impersonate: $login not found"))
+      user = newuser // Mark the session that this user is logged in
+      rememberMe.setCookie(newuser)
+      Some(newuser)
+    } else {
+      val u = scentry.authenticate("Password")
 
-    // User just tried to login - if login has failed tell them they can't access the site
-    if (!user.isDefined)
-      haltForbidden("Invalid login")
-    /*
+      // User just tried to login - if login has failed tell them they can't access the site
+      if (!u.isDefined)
+        haltForbidden("Invalid login")
+      /*
     If we were using HTML this is what we would give
     
     if (isAuthenticated) {
@@ -71,8 +79,10 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
       redirect("/sessions/new")
     }
     * */
+      u
+    }
 
-    Extraction.decompose(user)(userJsonFormat)
+    Extraction.decompose(u)(userJsonFormat)
   }
 
   private lazy val loginOp = (

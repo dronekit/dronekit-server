@@ -56,10 +56,7 @@ object UserPasswordStrategy extends Logging {
    * email address.
    */
   def getValidatedUser(login: String, password: String) = {
-    var userOpt = User.find(login).orElse {
-      logger.warn(s"Username $login not found, now searching for email $login")
-      User.findByEmail(login)
-    }
+    var userOpt = User.findByLoginOrEmail(login)
 
     userOpt.filter { user =>
       if (user.isPasswordGood(password)) {
