@@ -248,7 +248,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val unfiltered = model.parameters
 
     if (unfiltered.isEmpty)
-      haltGone("This flight log did not include parameters")
+      haltNotFound("This flight log did not include parameters")
 
     val ps = if (complete)
       unfiltered
