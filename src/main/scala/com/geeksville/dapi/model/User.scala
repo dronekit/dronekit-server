@@ -199,14 +199,22 @@ case class User(@Required @Unique login: String,
    * Return the most recent flight for this user (if known)
    */
   def newestMission: Option[Mission] = {
-    implicit def dateOrdering: Ordering[Timestamp] = Ordering.fromLessThan(_ before _)
+    implicit def dateOrdering: Ordering[Timestamp] = Ordering.fromLessThan(_ after _)
 
     // FIXME - this could be slow
-    val m = vehicles.flatMap(_.missions).toSeq
-    if (m.isEmpty)
+    val missions = vehicles.flatMap(_.missions).toSeq
+
+    val r = if (missions.isEmpty)
       None
     else
-      Some(m.minBy(_.createdAt))
+      Some(missions.minBy { m =>
+        val d = m.summary.startTime.getOrElse(m.createdAt)
+        debug(s"For $m using $d")
+        d
+      })
+
+    debug(s"Returning newest mission for user: $r")
+    r
   }
 
   override def toString() = s"User:$login(group=$groupId, email=$email, fullName=$fullName)"
@@ -275,7 +283,7 @@ object User extends DapiRecordCompanion[User] with Logging {
     this.where(_.email === email.toLowerCase).headOption
 
   /**
-   * Find a user (creating the root acct if necessary)
+   * Find a user by their login name (creating the root acct if necessary)
    */
   override def find(id: String): Option[User] = {
     this.where(_.login === id.toLowerCase).headOption.orElse {
@@ -293,6 +301,12 @@ object User extends DapiRecordCompanion[User] with Logging {
       }
     }
   }
+
+  def findByLoginOrEmail(login: String) =
+    User.find(login).orElse {
+      logger.warn(s"Username $login not found, now searching for email $login")
+      User.findByEmail(login)
+    }
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
     val u = User(login.trim.toLowerCase, email.map(_.trim.toLowerCase), fullName.map(_.trim))
