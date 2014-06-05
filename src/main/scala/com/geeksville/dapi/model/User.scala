@@ -256,6 +256,7 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
         }.toSeq
 
         var r = ("login" -> u.login) ~
+          ("id" -> u.id) ~ // Frontend currently uses this for isMine() test - not sure if that is a good idea
           ("fullName" -> u.fullName) ~
           ("isAdmin" -> u.isAdmin) ~
           ("avatarImage" -> u.avatarImageURL) ~
