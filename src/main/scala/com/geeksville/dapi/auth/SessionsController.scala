@@ -62,7 +62,9 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
       warn(s"Admin $user is impersonating $login")
       val newuser = User.findByLoginOrEmail(login).getOrElse(haltNotFound(s"Can't impersonate: $login not found"))
       user = newuser // Mark the session that this user is logged in
-      rememberMe.setCookie(newuser)
+
+      // try not changing the cookie - so we can just refresh the app and be back to being root
+      // rememberMe.setCookie(newuser)
       Some(newuser)
     } else {
       val u = scentry.authenticate("Password")
