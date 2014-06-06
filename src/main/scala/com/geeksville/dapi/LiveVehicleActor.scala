@@ -227,7 +227,8 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
   def summary = MissionSummary(startTime.map { t => new Timestamp(TimestampedMessage.usecsToMsecs(t)) },
     currentTime.map { t => new Timestamp(TimestampedMessage.usecsToMsecs(t)) },
-    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
+    maxAltitude, maxGroundSpeed, maxAirSpeed, -1, flightDuration, endPosition.map(_.lat), endPosition.map(_.lon), parameters.size,
+    softwareVersion = buildVersion, softwareGit = buildGit)
 
   private def sendMissionUpdate() {
 

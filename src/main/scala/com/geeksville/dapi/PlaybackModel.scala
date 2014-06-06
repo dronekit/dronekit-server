@@ -102,7 +102,9 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
     MissionSummary(start,
       end,
       maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
-      endPosition.map(_.lat), endPosition.map(_.lon), softwareVersion = buildVersion, softwareGit = buildGit)
+      endPosition.map(_.lat), endPosition.map(_.lon),
+      parameters.size,
+      softwareVersion = buildVersion, softwareGit = buildGit)
   }
 
   def modeChanges = modeChangeMsgs.map { m =>
@@ -153,9 +155,11 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
         }
       case msg: msg_param_value =>
         // We fill any missing positions with None
-        while (parameters.size < msg.param_index + 1)
-          parameters.append(new ROParamValue)
-        parameters(msg.param_index).raw = Some(msg)
+        if (msg.param_index != 65535) { // Some vehicles send param msgs with bogus indexes
+          while (parameters.size < msg.param_index + 1)
+            parameters.append(new ROParamValue)
+          parameters(msg.param_index).raw = Some(msg)
+        }
 
       case _ =>
     }

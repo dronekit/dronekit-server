@@ -31,7 +31,9 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
       "ALTER TABLE users ADD want_emails BOOLEAN NOT NULL DEFAULT true"),
     Migrator(9,
       "ALTER TABLE mission_summaries ADD text VARCHAR(80)"),
-    Migrator(10, "ALTER TABLE users ADD number_of_logins INTEGER NOT NULL DEFAULT 0"))
+    Migrator(10, "ALTER TABLE users ADD number_of_logins INTEGER NOT NULL DEFAULT 0"),
+    Migrator(11,
+      "ALTER TABLE mission_summaries ADD num_parameters INTEGER NOT NULL DEFAULT -1"))
 
   case class Migrator(newVerNum: Int, sql: String*) {
     def run() {

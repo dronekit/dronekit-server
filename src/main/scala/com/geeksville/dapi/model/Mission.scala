@@ -52,6 +52,12 @@ case class MissionSummary(
   var flightDuration: Option[Double] = None,
   var latitude: Option[Double] = None,
   var longitude: Option[Double] = None,
+
+  /**
+   * How many parameter records did we find?
+   */
+  var numParameters: Int,
+
   // Autopilot software version #
   var softwareVersion: Option[String] = None,
   // Autopilot software version #
@@ -76,7 +82,7 @@ case class MissionSummary(
     val mins = minutes.map(_.toString).getOrElse("unknown")
     val loc = text.getOrElse("unknown")
 
-    s"MissionSummary(at ${startTime.getOrElse("no-date")}, alt=$maxAlt, mins=$mins, loc=$loc)"
+    s"MissionSummary(at ${startTime.getOrElse("no-date")}, alt=$maxAlt, mins=$mins, loc=$loc, params=$numParameters)"
   }
 
   /**
@@ -169,18 +175,30 @@ case class Mission(
     PlaybackModel.fromBytes(bytes, false)
   }
 
+  def numParameters = {
+    if (!summary.headOption.isDefined || summary.numParameters == -1) {
+      warn("Forcing regen because numParams is invalid")
+      regenSummary(true)
+    }
+    summary.numParameters
+  }
+
   /**
    *  FIXME - figure out when to call this
    */
-  def regenSummary() {
-    if (!summary.headOption.isDefined) {
+  def regenSummary(forceRegen: Boolean = false) {
+    if (!summary.headOption.isDefined || forceRegen) {
       //warn("Mission summary missing")
       model.foreach { m =>
         val s = m.summary
         s.create
+        summary.delete() // Get rid of the old summary record
         s.mission := this
+        summary := s
         s.regenText()
-        s.save
+
+        warn(s"New summary is $s")
+
         vehicle.updateFromMission(m)
 
         // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
@@ -281,7 +299,7 @@ case class Mission(
   def viewURL = {
     import Global._
 
-    s"$scheme://$hostname/#/mission/$id"
+    s"$scheme://$hostname/mission/$id"
   }
 
   override def toString = s"Mission id=$id, tlog=$tlogId, summary=${summary.getOrElse("(No summary)")}"
@@ -344,7 +362,9 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         Some(u.vehicle.text),
         Some(u.vehicle.user.login),
         u.vehicle.user.avatarImageURL)
-      Extraction.decompose(m)
+      val r = Extraction.decompose(m).asInstanceOf[JObject]
+
+      r ~ ("numParameters" -> u.numParameters)
   }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
