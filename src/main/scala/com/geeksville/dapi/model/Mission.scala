@@ -176,8 +176,9 @@ case class Mission(
   }
 
   def numParameters = {
-    if (!summary.headOption.isDefined || summary.numParameters == -1) {
-      warn("Forcing regen because numParams is invalid")
+    // FIXME - move this into a more general validation of summary (we now check for empty summary text as well)
+    if (!summary.headOption.isDefined || summary.numParameters == -1 || !summary.text.isDefined) {
+      warn("Forcing summary regen due to stale state")
       regenSummary(true)
     }
     summary.numParameters
@@ -191,11 +192,11 @@ case class Mission(
       //warn("Mission summary missing")
       model.foreach { m =>
         val s = m.summary
+        s.regenText()
         s.create
         summary.delete() // Get rid of the old summary record
         s.mission := this
         summary := s
-        s.regenText()
 
         warn(s"New summary is $s")
 
