@@ -43,6 +43,7 @@ import scala.util.Failure
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.NewRelicAnalyticsAdapter
 import akka.actor.ActorRef
+import com.geeksville.dapi.RedirectController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -72,7 +73,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Don't start old nestor stuff for now
     //context.mount(new DeviceServlet, "/api/*")
-    //context.mount(new MainServlet, "/*")
+    context.mount(new RedirectController, "/*")
 
     // Auth controller
     context.mount(new SessionsController, "/api/v1/auth/*")
