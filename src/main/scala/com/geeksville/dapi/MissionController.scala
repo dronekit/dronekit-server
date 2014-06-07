@@ -121,13 +121,20 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   roField("messages.kml") { (o) =>
     contentType = "application/vnd.google-earth.kml+xml"
+    applyMissionCache()
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
     new KMLFactory(getModel(o)).toKMLBytes(uriBase)
   }
 
+  /// Allow some mission data to be cached up to an hr
+  def applyMissionCache() {
+    applyCache(60 * 60)
+  }
+
   unsafeROField("messages.kmz") { (o) =>
     contentType = "application/vnd.google-earth.kmz"
+    applyMissionCache()
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
     new KMLFactory(getModel(o)).toKMZBytes(uriBase, false)
@@ -135,18 +142,23 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   roField("messages.gmaps.kmz") { (o) =>
     contentType = "application/vnd.google-earth.kmz"
+    applyMissionCache()
 
     // FIXME - we should pull our static content (icons etc... from a cdn)
     new KMLFactory(getModel(o)).toKMZBytes(uriBase, true)
   }
 
   roField("messages.geo.json") { (o) =>
+    applyMissionCache()
+
     // FIXME - we should pull our static content (icons etc... from a cdn)
     new GeoJSONFactory(getModel(o)).toGeoJSON().getOrElse(haltGone("No position data found"))
   }
 
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
   roField("dseries") { (o) =>
+    applyMissionCache()
+
     val model = getModel(o)
     val msgs = model.messages // .take(10000) // FIXME, temp limit for testing
 
@@ -222,6 +234,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   roField("parameters.json") { (o) =>
+    applyMissionCache()
+
     val model = getModel(o)
     val ps = model.parameters
     val unsorted = ps.flatMap { a =>
@@ -241,6 +255,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   private def genParams(o: Mission, complete: Boolean) = {
+    applyMissionCache()
     contentType = "application/vnd.diydrones.param+text"
 
     val model = getModel(o)

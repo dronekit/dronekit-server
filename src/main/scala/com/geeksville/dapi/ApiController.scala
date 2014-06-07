@@ -29,8 +29,6 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
   protected lazy val applicationDescription = s"The $aName API. It exposes operations for browsing and searching lists of $aName, and retrieving single $aName."
 
-  private val expire = new Date().toString
-
   /// Utility glue to make easy documentation boilerplate
   def aNames = aName + "s"
   def aCamel = URLUtil.capitalize(aName)
@@ -45,11 +43,29 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   /**
    * Used to prevent caching
    */
-  def applyNoCache(response: HttpServletResponse) {
-    response.addHeader("Expires", expire)
-    response.addHeader("Last-Modified", expire)
-    response.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-    response.addHeader("Pragma", "no-cache")
+  def applyNoCache(implicit response: HttpServletResponse) {
+    val expire = new Date().toString
+
+    // This was an http 1.0 header
+    response.setHeader("Expires", expire)
+    response.setHeader("Last-Modified", expire)
+    response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+
+    // this was only for http 1.0 and only for requests, not responses
+    // response.addHeader("Pragma", "no-cache")
+  }
+
+  /**
+   * Used to prevent caching
+   */
+  def applyCache(numSecs: Int)(implicit response: HttpServletResponse) {
+    val now = new Date().toString
+    val expire = new Date(System.currentTimeMillis + numSecs * 1000).toString
+
+    // This was an http 1.0 header
+    response.setHeader("Expires", expire)
+    response.setHeader("Last-Modified", now)
+    response.setHeader("Cache-Control", s"private, max-age=$numSecs")
   }
 
   protected def requireReadAllAccess() = {
