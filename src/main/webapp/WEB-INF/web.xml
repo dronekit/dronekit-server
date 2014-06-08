@@ -4,6 +4,18 @@
       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
       version="3.0">
 
+  <!-- Detect loss of client connections -->
+  <init-param>
+      <param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
+      <param-value>30000</param-value>
+  </init-param>
+
+  <!-- Timeout on broadcaster writes -->
+  <init-param>
+      <param-name>org.atmosphere.cpr.Broadcaster.writeTimeout</param-name>
+      <param-value>30000</param-value>
+  </init-param>
+        
   <!-- So atmosphere can see session objects -->
   <context-param>
          <param-name>org.atmosphere.cpr.sessionSupport</param-name>
