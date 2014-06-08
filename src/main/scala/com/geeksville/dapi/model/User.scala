@@ -209,7 +209,7 @@ case class User(@Required @Unique login: String,
     else
       Some(missions.minBy { m =>
         val d = m.summary.startTime.getOrElse(m.createdAt)
-        debug(s"For $m using $d")
+        //debug(s"For $m using $d")
         d
       })
 
