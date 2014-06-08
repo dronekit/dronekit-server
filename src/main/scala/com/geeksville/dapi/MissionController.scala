@@ -103,6 +103,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   roField[Seq[MessageJson]]("messages.json") { (o) =>
+    applyMissionCache()
     val m = getModel(o)
     var msgs = m.messages
 
