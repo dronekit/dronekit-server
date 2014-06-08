@@ -23,7 +23,7 @@ class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient 
     case Disconnected(disconnector, Some(error)) =>
       info(s"Atmosphere Disconnected $disconnector")
     case Error(Some(ex)) =>
-      error(s"Atmosphere error $ex")
+      warn(s"Atmosphere error $ex")
     case TextMessage(text) =>
       debug(s"Received text from client $text")
     case JsonMessage(json) =>
@@ -40,10 +40,13 @@ class AtmosphereLive(user: Option[User]) extends PlatformAtmosphereClient(user) 
 
   info(s"Live space stream for user $user")
   override def onConnect() {
+
     super.onConnect()
 
     // Ask for any old msgs
-    mySpace ! SpaceSupervisor.SendToAtmosphereMessage(this, user)
+    val dest = mySpace
+    info(s"Asking space supervisor $dest to send old messages to $this")
+    dest ! SpaceSupervisor.SendToAtmosphereMessage(this, user)
   }
 }
 
