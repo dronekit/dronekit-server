@@ -84,9 +84,6 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
   private val recentMissions = new RingBuffer[MissionHistory](maxStoppedMissions)
 
-  // Send live and then ended flights
-  private def allMissions = actorToMission.values ++ recentMissions
-
   /**
    * This is the state we keep for each vehicle connection.
    */
@@ -123,10 +120,16 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     }
   }
 
+  // Do an initial fetch of the most recent missions on disk
+  initSpace()
+
   /**
    * The LiveVehicleActors we are monitoring
    */
   private val actorToMission = HashMap[ActorRef, MissionHistory]()
+
+  // Send live and then ended flights
+  private def allMissions = actorToMission.values ++ recentMissions
 
   protected def publishEvent(a: Any) { eventStream.publish(a) }
 
@@ -136,6 +139,18 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   private def withMission(s: ActorRef)(cb: MissionHistory => Unit) {
     actorToMission.get(s).map { m => cb(m) }.getOrElse {
       log.warning(s"Ignoring from $s")
+    }
+  }
+
+  def initSpace() {
+    import com.geeksville.dapi.test.SimGCSClient.loginName
+
+    Mission.collection.orderBy(_.createdAt desc).limit(20).foreach { mission =>
+      if (!mission.cleanupOrphan()) {
+        log.info(s"Seeding space with $mission")
+        val info = new MissionHistory(mission.id)
+        info.addStop(Some(mission)) // This is a kinda yucky way to do this - it implicitly adds to recent missions
+      }
     }
   }
 
