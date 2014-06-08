@@ -176,12 +176,16 @@ case class Mission(
   }
 
   def numParameters = {
+    fixupAsNeeded()
+    summary.numParameters
+  }
+
+  private def fixupAsNeeded() {
     // FIXME - move this into a more general validation of summary (we now check for empty summary text as well)
     if (!summary.headOption.isDefined || summary.numParameters == -1 || !summary.text.isDefined) {
-      warn("Forcing summary regen due to stale state")
+      //warn(s"Forcing stale summary regen: $this")
       regenSummary(true)
     }
-    summary.numParameters
   }
 
   /**
@@ -269,6 +273,27 @@ case class Mission(
   }
 
   /**
+   * @return true if we had to delete the mission
+   */
+  def cleanupOrphan() = {
+    if (isLive) {
+      // This can happen if server is killed while a mission was getting uploaded
+
+      isLive = false
+      if (!this.keep) {
+        warn(s"Supposedly live mission doesn't have an actor: $this - deleting")
+        delete()
+        true
+      } else {
+        warn(s"Supposedly live mission doesn't have an actor: $this - fixing")
+        save()
+        false
+      }
+    } else
+      false
+  }
+
+  /**
    * this function is potentially expensive - it will read from S3 (subject to a small shared cache)
    */
   def tlogBytes = try {
@@ -280,7 +305,9 @@ case class Mission(
       val actor = LiveVehicleActor.find(vehicle)
       actor match {
         case None =>
-          error(s"Supposedly live mission doesn't have an actor: $this")
+          if (cleanupOrphan())
+            throw new Exception("Forced discard of old mission")
+
           None
 
         case Some(a) =>
