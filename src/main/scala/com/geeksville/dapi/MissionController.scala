@@ -38,6 +38,13 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
   atmosphere("/live", operation(liveOp)) {
     dumpRequest()
 
+    request.header("Via").foreach { f =>
+      if (f == "HTTP/1.1 NetScaler") {
+        Thread.sleep(5 * 60 * 1000) // Keep the client from trying again for 5 minutes
+        haltBadRequest("Sorry, our (beta) server really doesn't like your firewall.  Would you mind emailing support@droneshare.com and we can debug it?")
+      }
+    }
+
     // We support customizing the feed for a particular user (note - this customization doesn't guarantee the user is really logged in or 
     // their password is valid.  (FIXME - atmo headers need to include valid cookies etc...)
     // val login = tryLogin()
