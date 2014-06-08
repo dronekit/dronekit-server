@@ -138,7 +138,8 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     }
 
     private def startConnection() {
-      val loginName = "test-bob"
+      import SimGCSClient.loginName
+
       val email = "test-bob@3drobotics.com"
       val password = "sekrit"
 
@@ -315,6 +316,8 @@ class PlaybackGCSClient(host: String) extends DebuggableActor with ActorLogging 
 object SimGCSClient extends Logging {
   case class RunTest(numVehicles: Int, numSeconds: Int)
   case object StopAllTests
+
+  val loginName = "test-bob"
 
   /// We use this to ensure each new run of the simulator picks a different set of UUIDs - but we want to always start from
   /// the same set so the DB doesn't fill with a zilliong records
