@@ -74,6 +74,8 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     dbVer.save
   }
 
+  def allowAutoWipe = false
+
   def update() {
     val curver = try {
       find().currentVersion
@@ -84,11 +86,16 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     }
 
     if (curver < dbWipeVersion) {
-      error("WIPING TABLES DUE TO MIGRATION!")
-      Tables.reset
+      if (!allowAutoWipe) {
+        error("DB schema invalid, but autowipe is false - please fix DB")
+        throw new Exception("DB invalid")
+      } else {
+        error("WIPING TABLES DUE TO MIGRATION!")
+        Tables.reset
 
-      // A wipe implies no need to run migrations
-      setVersion(math.max(dbWipeVersion, requiredVersion))
+        // A wipe implies no need to run migrations
+        setVersion(math.max(dbWipeVersion, requiredVersion))
+      }
     } else
       migrations.filter(curver < _.newVerNum).foreach(_.run())
   }
