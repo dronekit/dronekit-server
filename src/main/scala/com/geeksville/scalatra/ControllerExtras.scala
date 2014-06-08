@@ -13,6 +13,8 @@ import com.geeksville.util.AnalyticsService
 import scala.collection.JavaConverters._
 import org.scalatra.ActionResult
 import org.scalatra.ResponseStatus
+import org.eclipse.jetty.io.EofException
+import org.scalatra.BadRequest
 
 /**
  * For some strange reason the scalatra folks made their HaltException private.  If you want to throw an exception but include
@@ -58,6 +60,11 @@ trait ControllerExtras extends ScalatraBase with Logging {
   super[ScalatraBase].error {
     case e: WebException =>
       ActionResult(ResponseStatus(e.code, e.getMessage), e.getMessage, Map.empty)
+
+    case e: EofException =>
+      // This failure can occur while parsing FileUploadSupport if the client closes the stream
+      error("Client dropped connection")
+      BadRequest("Client dropped connection - good bye")
 
     case e: Exception =>
       contentType = "text/html"
