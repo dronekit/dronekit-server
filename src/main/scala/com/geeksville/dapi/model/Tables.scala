@@ -30,7 +30,7 @@ object Tables extends ActiveRecordTables with ScalatraSupport {
       }
 
       val conf = new BoneCPConfig
-      conf.setConnectionTimeoutInMs(60 * 1000L) // The default of 1sec is too short -kevinh
+      conf.setConnectionTimeoutInMs(5 * 60 * 1000L) // The default of 1sec is too short -kevinh
       conf.setJdbcUrl(jdbcurl)
       username.foreach(conf.setUsername)
       password.foreach(conf.setPassword)
