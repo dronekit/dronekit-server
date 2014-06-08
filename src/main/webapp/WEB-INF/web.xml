@@ -5,23 +5,45 @@
       version="3.0">
 
   <!-- Detect loss of client connections -->
-  <init-param>
+  <context-param>
       <param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
-      <param-value>30000</param-value>
-  </init-param>
+      <param-value>300000</param-value>
+  </context-param>
 
   <!-- Timeout on broadcaster writes -->
-  <init-param>
+  <context-param>
       <param-name>org.atmosphere.cpr.Broadcaster.writeTimeout</param-name>
       <param-value>30000</param-value>
-  </init-param>
+  </context-param>
         
-  <!-- So atmosphere can see session objects -->
+  <!-- We don't need to let atmosphere see session objects? -->
   <context-param>
          <param-name>org.atmosphere.cpr.sessionSupport</param-name>
          <param-value>true</param-value>
   </context-param>
-        
+
+  <!-- Per the atmosphere tuning guide - limit number of threads -->
+  <context-param>
+      <param-name>org.atmosphere.cpr.broadcaster.maxProcessingThreads</param-name>
+      <param-value>10</param-value>
+  </context-param>
+  <context-param>
+      <param-name>org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads</param-name>
+      <param-value>10</param-value>
+  </context-param>
+  
+  <!-- If messages arrive out of order our clients will cope -->
+  <context-param>
+    <param-name>org.atmosphere.cpr.Broadcaster.supportOutOfOrderBroadcast</param-name>
+    <param-value>true</param-value>
+  </context-param>
+  
+  <!-- We don't need broadcast caching - we always send new messages when client connects -->
+  <!--  <context-param>
+      <param-name>org.atmosphere.cpr.broadcasterCacheClass</param-name>
+      <param-value></param-value>
+  </context-param>  -->
+          
   <!--
     This listener loads a class in the default package called Scalatra.
     That class should implement org.scalatra.LifeCycle.  Your app can be
