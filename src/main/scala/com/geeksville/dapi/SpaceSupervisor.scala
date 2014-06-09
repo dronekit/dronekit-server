@@ -234,7 +234,12 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     //
 
     case SendToAtmosphereMessage(dest, user) =>
-      handleSendAll(dest, user)
+      try {
+        handleSendAll(dest, user)
+      } catch {
+        case ex: Exception =>
+          log.error(s"Failed sending old atmosphere messages to $dest due to $ex")
+      }
 
     //
     // Messages from LiveVehicleActors appear below
