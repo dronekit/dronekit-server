@@ -7,7 +7,7 @@
   <!-- Detect loss of client connections -->
   <context-param>
       <param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
-      <param-value>300000</param-value>
+      <param-value>1200000</param-value>
   </context-param>
 
   <!-- Timeout on broadcaster writes -->
