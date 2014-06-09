@@ -373,6 +373,9 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   {
     case u: Mission =>
       val s = u.summary.headOption
+
+      // Instead of DB creation time we prefer to use the time from the summary (from tlog data)
+      val flightDate = s.flatMap(_.startTime).getOrElse(u.createdAt)
       val m = MissionJson(u.id, u.notes, u.isLive, Some(AccessCode.valueOf(u.viewPrivacy)), u.vehicleId,
         s.map(_.maxAlt),
         s.map(_.maxGroundSpeed),
@@ -383,7 +386,8 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         s.flatMap(_.longitude),
         s.flatMap(_.softwareVersion),
         s.flatMap(_.softwareGit),
-        Some(u.createdAt), Some(u.updatedAt),
+        Some(flightDate),
+        Some(u.updatedAt),
         s.flatMap(_.text),
         u.mapThumbnailURL,
         Some(u.viewURL),
@@ -392,7 +396,7 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         u.vehicle.user.avatarImageURL)
       val r = Extraction.decompose(m).asInstanceOf[JObject]
 
-      r ~ ("numParameters" -> u.numParameters)
+      r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType)
   }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
