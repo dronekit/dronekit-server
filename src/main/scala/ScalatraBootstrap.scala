@@ -73,7 +73,8 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Don't start old nestor stuff for now
     //context.mount(new DeviceServlet, "/api/*")
-    context.mount(new RedirectController, "/*")
+    // No longer needed - we now use nginix for this hack
+    // context.mount(new RedirectController, "/*")
 
     // Auth controller
     context.mount(new SessionsController, "/api/v1/auth/*")
