@@ -53,7 +53,12 @@ trait ControllerExtras extends ScalatraBase with Logging {
     if (request.contentType.getOrElse("") == "multipart/form-data")
       debug(s"  Parts: " + request.getParts.asScala.mkString(","))
 
-    debug(s"  ClientIP: ${request.getRemoteHost}")
+    debug(s"  ClientIP: $clientIP")
+  }
+
+  /// Return the client's IP address (being careful to work if we are behind a load balancer)
+  def clientIP = {
+    request.header("X-Real-IP").getOrElse(request.getRemoteAddr)
   }
 
   /// Better error messages for the user

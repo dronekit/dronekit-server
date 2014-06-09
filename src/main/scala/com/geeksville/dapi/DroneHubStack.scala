@@ -23,7 +23,7 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
 
   before() {
     logger.debug("Handle " + request)
-    AnalyticsService.addBreadcrumb("clientIP", request.getRemoteAddr)
+    AnalyticsService.addBreadcrumb("clientIP", clientIP)
   }
 
   /// We allow CORS requests from anywhere - FIXME - check if secure?
