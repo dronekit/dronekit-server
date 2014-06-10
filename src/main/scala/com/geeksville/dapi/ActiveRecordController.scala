@@ -74,4 +74,11 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
   protected def getFiltered() = {
     myCompanion.collection
   }
+
+  /// Subclasses can provide suitable behavior if they want to allow DELs to /:id to result in deleting objects
+  override protected def doDelete(o: T): Any = {
+    val desc = o.toString
+    o.delete()
+    s"Deleted $desc"
+  }
 }
