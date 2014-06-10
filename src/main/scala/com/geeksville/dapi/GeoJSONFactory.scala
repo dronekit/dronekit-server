@@ -54,7 +54,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
       p.loc
     }
 
-    val wptBbox = new BoundingBox
+    val wptBbox = new BoundingBox(0.005)
 
     // we exclude home from our wpt bbox because later we check if all of the !home wpts are outside of the tracklog
     // if so, the wpts are probably from an old mission
