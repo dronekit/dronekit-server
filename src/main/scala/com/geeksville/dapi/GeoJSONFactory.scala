@@ -93,7 +93,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
 
     // If we are disabling wpts don't draw a line from home to the first wpt
     val wptLines = {
-      val toprocess = if (disablingWaypoints)
+      val toprocess = if (disablingWaypoints && waypointsForMap.size > 1)
         waypointsForMap.tail
       else
         waypointsForMap
