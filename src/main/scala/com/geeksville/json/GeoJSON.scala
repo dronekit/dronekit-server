@@ -8,8 +8,11 @@ import org.json4s.native.Serialization
 import com.geeksville.flight.Location
 import org.json4s.CustomSerializer
 import org.json4s.Extraction
+import grizzled.slf4j.Logging
 
-object GeoJSON {
+case class LatLngAlt(var lat: Double, var lon: Double, var alt: Double)
+
+object GeoJSON extends Logging {
 
   class LocationSerializer extends CustomSerializer[Location](format => (
     {
@@ -108,30 +111,67 @@ object GeoJSON {
     makeFeature(geo, props)
   }
 
-  class BoundingBox(pad: Double) {
-    case class LatLngAlt(var lat: Double, var lon: Double, var alt: Double)
+  class BoundingBox(pad: Double = 0) {
     var southWest = LatLngAlt(Double.MaxValue, Double.MaxValue, Double.MaxValue)
     var northEast = LatLngAlt(Double.MinValue, Double.MinValue, Double.MinValue)
 
     /// Does this bounding box contain at least one good point?
     var isValid = false
 
+    // Derrived from our two primary points
+    def northWest = LatLngAlt(northEast.lat, southWest.lon, southWest.alt)
+    def southEast = LatLngAlt(southWest.lat, northEast.lon, southWest.alt)
+
     def range = Seq(southWest.lon, southWest.lat, southWest.alt,
       northEast.lon, northEast.lat, northEast.alt)
 
     def toJSON: JObject = ("bbox" -> range)
 
-    /// Expand the bounding box to include the specified point
-    def addPoint(l: Location) {
+    override def toString = if (isValid)
+      s"Bbox(sw=$southWest,ne=$northEast)"
+    else
+      "BBox(invalid)"
+
+    def inside(p: LatLngAlt) = {
+      val r = p.lat >= southWest.lat && p.lat <= northEast.lat &&
+        p.lon >= southWest.lon && p.lon <= northEast.lon
+
+      debug(s"$p inside=$r for $this")
+      r
+    }
+
+    def intersectsWith(b: BoundingBox) = {
+      if (!b.isValid || !isValid)
+        false
+      else
+        inside(b.southWest) || inside(b.northEast) || inside(b.northWest) || inside(b.southEast) ||
+          b.inside(southWest) || b.inside(northEast) || b.inside(northWest) || b.inside(southEast)
+    }
+    /**
+     * Expand this bounding box to include another
+     */
+    def union(b: BoundingBox) {
+      if (b.isValid) {
+        addPoint(b.southWest)
+        addPoint(b.northEast)
+      }
+    }
+
+    private def addPoint(l: LatLngAlt) {
       southWest.lat = math.min(l.lat - pad, southWest.lat)
       southWest.lon = math.min(l.lon - pad, southWest.lon)
-      southWest.alt = math.min(l.alt.getOrElse(0.0), southWest.alt)
+      southWest.alt = math.min(l.alt, southWest.alt)
 
       northEast.lat = math.max(l.lat + pad, northEast.lat)
       northEast.lon = math.max(l.lon + pad, northEast.lon)
-      northEast.alt = math.max(l.alt.getOrElse(0.0), northEast.alt)
+      northEast.alt = math.max(l.alt, northEast.alt)
 
       isValid = true
+    }
+
+    /// Expand the bounding box to include the specified point
+    def addPoint(l: Location) {
+      addPoint(LatLngAlt(l.lat, l.lon, l.alt.getOrElse(0.0)))
     }
   }
 

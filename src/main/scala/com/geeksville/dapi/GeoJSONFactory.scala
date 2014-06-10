@@ -7,41 +7,19 @@ import grizzled.slf4j.Logging
 
 class GeoJSONFactory(model: PlaybackModel) extends Logging {
   import model._
+  import GeoJSON._
+
+  val wptColor = Some("#000099")
+  val wptDisabledColor = Some("#9999D6") // Used when we suspect the wpts were too far from the current mission
+  val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
+  val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
+  val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
+  val wptDisabledLineStyle = lineStyles(color = Some("#9999D6"), opacity = Some(0.5))
 
   /**
    * @return None if we can't make sen
    */
   def toGeoJSON(): Option[JObject] = {
-    import GeoJSON._
-
-    val bbox = new BoundingBox(0.005)
-
-    val wptColor = Some("#000099")
-    val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
-    val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
-    val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
-
-    // Symbol names documented here: https://www.mapbox.com/maki/
-    val wptMarkers = waypointsForMap.map { wp =>
-      bbox.addPoint(wp.location)
-
-      // If the waypoint has interesting text, show it
-      val desc = if (wp.shortString != "Waypoint")
-        Some(wp.shortString)
-      else
-        None
-
-      val (name, symbol) = if (wp.isHome)
-        ("Home", "building")
-      else
-        // Just cycle the wpt numbers from 0 to ten over and over again
-        //val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
-        ("Waypoint #" + wp.seq, (wp.seq % 10).toString)
-
-      makeMarker(wp.location, name, color = wptColor, description = desc, symbol = Some(symbol))
-    }
-
-    val wptLines = waypointsForMap.map(_.location)
 
     // State for advancing modes
     val modeIterator = modeChanges.iterator
@@ -54,10 +32,11 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     }
     advanceMode()
 
-    var modeMarkers: List[JObject] = Nil
-
+    // Process the tracklog
     // As we iterate through the locations, look to see if we've crossed a mode change timestamp and emit a proper marker
-    val locations = positions.view.map { p =>
+    var modeMarkers: List[JObject] = Nil
+    val tracklogBbox = new BoundingBox
+    val locations = positions.map { p =>
       val crossedModeChange = nextMode.map {
         case (t, m) =>
           t < p.time
@@ -71,8 +50,54 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
         advanceMode()
       }
 
-      bbox.addPoint(p.loc)
+      tracklogBbox.addPoint(p.loc)
       p.loc
+    }
+
+    val wptBbox = new BoundingBox
+
+    // we exclude home from our wpt bbox because later we check if all of the !home wpts are outside of the tracklog
+    // if so, the wpts are probably from an old mission
+    waypointsForMap.foreach { wp =>
+      val isHome = wp.isHome || wp.seq == 0
+      if (!isHome)
+        wptBbox.addPoint(wp.location)
+    }
+
+    val disablingWaypoints = !wptBbox.intersectsWith(tracklogBbox)
+    debug(s"disabling=$disablingWaypoints, from wpts $wptBbox and tlog $tracklogBbox")
+
+    // Symbol names documented here: https://www.mapbox.com/maki/
+    val wptMarkers = waypointsForMap.map { wp =>
+      // If the waypoint has interesting text, show it
+      val desc = if (wp.shortString != "Waypoint")
+        Some(wp.shortString)
+      else
+        None
+
+      // Some mission records seem to be forgetting to set the isHome bit
+      val isHome = wp.isHome || wp.seq == 0
+      val (name, symbol) = if (isHome)
+        ("Home", "building")
+      else
+        // Just cycle the wpt numbers from 0 to ten over and over again
+        //val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
+        ("Waypoint #" + wp.seq, (wp.seq % 10).toString)
+
+      val wcolor = if (isHome || !disablingWaypoints)
+        wptColor
+      else
+        wptDisabledColor
+      makeMarker(wp.location, name, color = wcolor, description = desc, symbol = Some(symbol))
+    }
+
+    // If we are disabling wpts don't draw a line from home to the first wpt
+    val wptLines = {
+      val toprocess = if (disablingWaypoints)
+        waypointsForMap.tail
+      else
+        waypointsForMap
+      toprocess.map(_.location)
     }
 
     // The lines along the tracklog
@@ -82,8 +107,16 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     val tracklog = makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
 
     val modeLayer = makeFeatureCollection(modeMarkers: _*)
-    val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines), wptLineStyle): _*)
+    val wlineStyle = if (disablingWaypoints)
+      wptDisabledLineStyle
+    else
+      wptLineStyle
+    val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines), wlineStyle): _*)
     val topLevel = makeFeatureCollection(modeLayer, wptLayer, tracklog)
+
+    val bbox = new BoundingBox(0.005)
+    bbox.union(tracklogBbox)
+    // bbox.union(wptBbox) We no longer grow to include the wpts because old wpts in vehicle look bad on the map
     if (bbox.isValid)
       Some(addBoundingBox(topLevel, bbox))
     else {
