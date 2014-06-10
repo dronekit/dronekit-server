@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse
 import java.util.Date
 import org.json4s.Extraction
 import org.json4s.JsonAST.JValue
+import grizzled.slf4j.Logging
 
 /**
  * A base class for REST endpoints that contain various fields
@@ -76,10 +77,19 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * Filter read access to a potentially protected record.  Subclasses can override if they want to restrict reads based on user or object
    * If not allowed, override should call haltUnauthorized()
    */
-  protected def requireReadAccess(o: T) = {
+  protected final def requireReadAccess(o: T) = {
     requireServiceAuth(aName + "/read")
-    o
+
+    filterForReadAccess(o, true).getOrElse(haltUnauthorized("You can not access this record"))
+    // Since we have an absolute record ID, we assume the caller has the URL somehow
   }
+
+  /**
+   * Return a view of this object that is appropriate for read access viewing.  Or None if no access should be allowed
+   * @param isSharedLink is true if we know for sure that the URL came from a particular URL (for semi-private sharing, otherwise false)
+   */
+  protected def filterForReadAccess(o: T, isSharedLink: Boolean = false): Option[T] =
+    Some(o)
 
   /// Subclasses can overide to limit access for creating new records
   protected def requireCreateAccess() = {
@@ -114,13 +124,17 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   /**
    * Check if the specified owned resource can be accessed by the current user given an AccessCode
    */
-  protected def requireAccessCode(ownerId: Long, privacyCode: Int, defaultPrivacy: Int) {
+  protected def isAccessAllowed(ownerId: Long, privacyCode: Int, defaultPrivacy: Int, isSharedLink: Boolean) = {
     val u = tryLogin()
     val isOwner = u.map(_.id == ownerId).getOrElse(false)
     val isResearcher = u.map(_.isResearcher).getOrElse(false)
     val isAdmin = u.map(_.isAdmin).getOrElse(false)
 
-    if (!ApiController.isAccessAllowed(privacyCode, isOwner || isAdmin, isResearcher, defaultPrivacy))
+    ApiController.isAccessAllowed(privacyCode, isOwner || isAdmin, isResearcher, defaultPrivacy, isSharedLink)
+  }
+
+  private def requireAccessCode(ownerId: Long, privacyCode: Int, defaultPrivacy: Int, isSharedLink: Boolean) {
+    if (!isAccessAllowed(ownerId, privacyCode, defaultPrivacy, isSharedLink))
       haltUnauthorized("You do not have adequate permissions")
   }
 
@@ -234,7 +248,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   get("/", operation(getOp)) {
     //dumpRequest()
     requireReadAllAccess()
-    val r = getAll
+    val r = getAll.flatMap(filterForReadAccess(_, false))
+
     // We do the json conversion here - so that it happens inside of our try/catch block
     toJSON(r)
   }
@@ -324,15 +339,18 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 }
 
-object ApiController {
+object ApiController extends Logging {
   /**
    * Does the user have appropriate access to see the specified AccessCode?
    */
-  def isAccessAllowed(requiredIn: Int, isOwner: Boolean, isResearcher: Boolean, default: Int) = {
-    val required = if (requiredIn == AccessCode.DEFAULT_VALUE)
+  def isAccessAllowed(requiredIn: Int, isOwner: Boolean, isResearcher: Boolean, default: Int, isSharedLink: Boolean) = {
+    val required = if (requiredIn == AccessCode.DEFAULT_VALUE) {
+      debug(s"Checking for access, default sharing so using ${AccessCode.valueOf(default)}")
       default
-    else
+    } else {
+      debug(s"Checking for access, using ${AccessCode.valueOf(requiredIn)}")
       requiredIn
+    }
 
     required match {
       case AccessCode.DEFAULT_VALUE =>
@@ -342,7 +360,7 @@ object ApiController {
       case AccessCode.PUBLIC_VALUE =>
         true
       case AccessCode.SHARED_VALUE =>
-        true // If they got here they must have the URL
+        isSharedLink
       case AccessCode.RESEARCHER_VALUE =>
         isOwner || isResearcher
     }

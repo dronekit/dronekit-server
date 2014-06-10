@@ -3,7 +3,7 @@
 To install on a new server
 
 * Install various dependencies
-apt-get install mysql-client mysql-server openjdk-7-jdk unzip build-essential uuid-dev
+apt-get install mysql-client mysql-server openjdk-7-jdk unzip build-essential uuid-dev nginx
 (you will be prompted to choose a root db psw)
 
 * Install lib ZeroMQ

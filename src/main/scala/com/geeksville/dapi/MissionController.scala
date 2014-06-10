@@ -67,11 +67,23 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */
-  override protected def requireReadAccess(o: Mission) = {
-    val userId = missionUserId(o)
+  override protected def filterForReadAccess(oin: Mission, isSharedLink: Boolean = false) = {
+    val r = super.filterForReadAccess(oin).flatMap { o =>
+      val userId = missionUserId(o)
 
-    requireAccessCode(userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
-    super.requireReadAccess(o)
+      // Use the privacy setting from the vehicle if the mission specifies default sharing
+      var vehiclePrivacy = o.vehicle.viewPrivacy
+      if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
+        vehiclePrivacy = ApiController.defaultVehicleViewAccess
+
+      if (isAccessAllowed(userId.getOrElse(-1L), o.viewPrivacy, vehiclePrivacy, isSharedLink))
+        Some(o)
+      else
+        None
+    }
+
+    debug(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
+    r
   }
 
   /**

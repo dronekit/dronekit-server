@@ -34,9 +34,13 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
    */
-  override protected def requireReadAccess(o: Vehicle) = {
-    requireAccessCode(o.userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess)
-    super.requireReadAccess(o)
+  override protected def filterForReadAccess(oin: Vehicle, isSharedLink: Boolean = false) = {
+    super.filterForReadAccess(oin).flatMap { o =>
+      if (isAccessAllowed(o.userId.getOrElse(-1L), o.viewPrivacy, ApiController.defaultVehicleViewAccess, isSharedLink))
+        Some(o)
+      else
+        None
+    }
   }
 
   /**
