@@ -23,7 +23,7 @@ class PlatformAtmosphereClient(val user: Option[User]) extends AtmosphereClient 
     case Disconnected(disconnector, Some(error)) =>
       info(s"Atmosphere Disconnected $disconnector")
     case Error(Some(ex)) =>
-      warn(s"Atmosphere error $ex")
+      error(s"Atmosphere error $ex")
     case TextMessage(text) =>
       debug(s"Received text from client $text")
     case JsonMessage(json) =>
