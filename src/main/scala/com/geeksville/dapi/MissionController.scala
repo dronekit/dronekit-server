@@ -40,9 +40,9 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
 
     request.header("Via").foreach { f =>
       if (f == "HTTP/1.1 NetScaler") {
-        error("Bad atmo client - placing in PENALTY BOX!")
-        Thread.sleep(5 * 60 * 1000) // Keep the client from trying again for 5 minutes
-        haltBadRequest("Sorry, our (beta) server really doesn't like your firewall.  Would you mind emailing support@droneshare.com and we can debug it?")
+        error("Bad atmo client - not placing in PENALTY BOX!")
+        //Thread.sleep(5 * 60 * 1000) // Keep the client from trying again for 5 minutes
+        //haltBadRequest("Sorry, our (beta) server really doesn't like your firewall.  Would you mind emailing support@droneshare.com and we can debug it?")
       }
     }
 
