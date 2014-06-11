@@ -40,8 +40,9 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
           else
             payload.contentType.getOrElse(haltBadRequest("content-type not set"))
         }
+
         if (Mission.mimeType != ctype) {
-          setErr(s"${payload.name} did not seem to be a TLOG")
+          setErr(s"${payload.name} is not a TLOG")
           None
         } else {
           info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
@@ -66,23 +67,27 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
             val space = SpaceSupervisor.find()
             SpaceSupervisor.tellMission(space, m)
             Some(m)
-          } else
+          } else {
+            setErr("No location data was found in that log, ignoring")
             None
+          }
         }
     }.toList
 
-    if (created.isEmpty)
-      haltNotAcceptable("Log file was empty or uninteresting, ignoring")
-
-    // If we had exactly one bad file, tell the client there was a problem via an error code.
-    // Otherwise, claim success (this allows users to drag and drop whole directories and we'll cope with
-    // just the tlogs).
     errMsg.foreach { msg =>
-      if (tlogs.size == 1)
+      // If the user submitted at least one valid tlog, but we didn't find it interesting, show a less severe
+      // error message
+      if (!tlogs.isEmpty && created.isEmpty)
+        haltNotAcceptable(msg)
+
+      // If we had exactly one bad file, tell the client there was a problem via an error code.
+      // Otherwise, claim success (this allows users to drag and drop whole directories and we'll cope with
+      // just the tlogs).
+      if (tlogs.size <= 1)
         haltBadRequest(msg)
     }
 
-    warn(s"Returning ${created.mkString(", ")}")
+    warn(s"Considered ${tlogs.mkString(", ")} - returning ${created.mkString(", ")}")
 
     // Return the missions that were created
     created
