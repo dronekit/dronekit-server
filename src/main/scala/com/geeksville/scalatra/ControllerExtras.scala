@@ -15,6 +15,8 @@ import org.scalatra.ActionResult
 import org.scalatra.ResponseStatus
 import org.eclipse.jetty.io.EofException
 import org.scalatra.BadRequest
+import org.json4s.JsonAST.JString
+import org.json4s.JsonAST.JObject
 
 /**
  * For some strange reason the scalatra folks made their HaltException private.  If you want to throw an exception but include
@@ -100,17 +102,22 @@ trait ControllerExtras extends ScalatraBase with Logging {
     super.halt(status, body, headers, reason)
   }
 
+  // We return the error message in the body
+  private def verboseHalt(status: JInteger, reason: String) = {
+    halt(status, reason = reason, body = JObject("message" -> JString(reason)))
+  }
+
   /// syntatic sugar
-  def haltUnauthorized(reason: String) = halt(401, reason = reason)
-  def haltForbidden(reason: String) = halt(403, reason = reason)
-  def haltQuotaExceeded(reason: String) = halt(403, reason = reason)
-  def haltNotFound(reason: String) = halt(404, reason = reason)
-  def haltMethodNotAllowed(reason: String) = halt(405, reason = reason)
-  def haltNotAcceptable(reason: String) = halt(406, reason = reason)
-  def haltConflict(reason: String) = halt(409, reason = reason)
-  def haltGone(reason: String) = halt(410, reason = reason)
-  def haltBadRequest(reason: String) = halt(400, reason = reason)
-  def haltNotImplemented(reason: String) = halt(501, reason = reason)
-  def haltInternalServerError(reason: String) = halt(500, reason = reason)
+  def haltUnauthorized(reason: String) = verboseHalt(401, reason = reason)
+  def haltForbidden(reason: String) = verboseHalt(403, reason = reason)
+  def haltQuotaExceeded(reason: String) = verboseHalt(403, reason = reason)
+  def haltNotFound(reason: String) = verboseHalt(404, reason = reason)
+  def haltMethodNotAllowed(reason: String) = verboseHalt(405, reason = reason)
+  def haltNotAcceptable(reason: String) = verboseHalt(406, reason = reason)
+  def haltConflict(reason: String) = verboseHalt(409, reason = reason)
+  def haltGone(reason: String) = verboseHalt(410, reason = reason)
+  def haltBadRequest(reason: String) = verboseHalt(400, reason = reason)
+  def haltNotImplemented(reason: String) = verboseHalt(501, reason = reason)
+  def haltInternalServerError(reason: String) = verboseHalt(500, reason = reason)
 }
 
