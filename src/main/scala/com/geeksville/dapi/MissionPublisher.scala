@@ -13,6 +13,9 @@ import com.geeksville.dapi.model.MissionSummary
 case class MissionStart(mission: Mission)
 case class MissionStop(mission: Mission)
 
+// Tell the space supervisor that a mission has been deleted
+case class MissionDelete(missionId: Long)
+
 // Every few minutes we will send an update - so that summary stats are available to newly connected browsers
 case class MissionUpdate(mission: Mission)
 

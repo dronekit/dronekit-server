@@ -36,6 +36,9 @@ import akka.util.Timeout
 import com.geeksville.dapi.Global
 import com.geeksville.apiproxy.APIConstants
 import java.sql.Timestamp
+import com.geeksville.dapi.SpaceSupervisor
+import com.geeksville.dapi.MissionDelete
+import com.geeksville.util.AnalyticsService
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -237,6 +240,7 @@ case class Mission(
     val uninteresting = !isInteresting
     if (uninteresting) {
       warn(s"Deleting uninteresting mission $this")
+      Thread.dumpStack()
       this.delete()
     } else
       debug(s"Keeping interesting mission $this")
@@ -286,7 +290,14 @@ case class Mission(
         true
       } else {
         warn(s"Supposedly live mission doesn't have an actor: $this - fixing")
-        save()
+        try {
+          // Hmm - sometimes we get a strange SquerylSQLException: failed to update.  Expected 1 row, got 0 during initial space 
+          // seeding when deleting abandoned live missions
+          save()
+        } catch {
+          case ex: Exception =>
+            AnalyticsService.reportException("Mystery bug during cleanup", ex)
+        }
         false
       }
     } else
@@ -321,6 +332,16 @@ case class Mission(
     case ex: Exception =>
       error(s"S3 can't find tlog ${tlogId.get} due to $ex")
       None
+  }
+
+  // If we delete a mission tell the space supervisor
+  override def delete() = {
+    val r = super.delete()
+
+    // FIXME - it is yucky to have the model reaching 'up' into the land of space supervisors
+    val space = SpaceSupervisor.find()
+    space ! MissionDelete(id)
+    r
   }
 
   /// A user visible URL that can be used to view this mission

@@ -88,7 +88,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
    * This is the state we keep for each vehicle connection.
    */
   private class MissionHistory(val missionId: Long) {
-    private var mission: Option[Mission] = None
+    var mission: Option[Mission] = None
     private val history = new RingBuffer[AtmosphereUpdate](maxRecordsPerVehicle)
 
     def numMessages = history.size
@@ -171,20 +171,31 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     }
   }
 
+  /**
+   * @param pIn is the payload to send, if not specified we will send the mission object
+   */
+  private def publishMission(typ: String, senderMission: MissionHistory, pIn: Product = null) {
+    val p = if (pIn == null)
+      senderMission.mission
+    else
+      pIn
+
+    //log.debug(s"Publishing $typ")
+    msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+      log.debug(s"Published space $typ, $p (and $numIgnored others)")
+    }
+
+    val o = SpaceEnvelope(senderMission.missionId, Option(p))
+    publishEvent(o) // Tell any interested subscribers
+    val v = Extraction.decompose(o)
+    senderMission.addUpdate(AtmosphereUpdate(typ, v))
+    //log.debug(s"To client: " + v)
+    updateAtmosphere(typ, v)
+  }
+
   private def publishUpdate(typ: String, p: Product = null, preferredSender: ActorRef = sender) {
     withMission(preferredSender) { senderMission =>
-
-      //log.debug(s"Publishing $typ")
-      msgLogThrottle.withIgnoreCount { numIgnored: Int =>
-        log.debug(s"Published space $typ, $p (and $numIgnored others)")
-      }
-
-      val o = SpaceEnvelope(senderMission.missionId, Option(p))
-      publishEvent(o) // Tell any interested subscribers
-      val v = Extraction.decompose(o)
-      senderMission.addUpdate(AtmosphereUpdate(typ, v))
-      //log.debug(s"To client: " + v)
-      updateAtmosphere(typ, v)
+      publishMission(typ, senderMission, p)
     }
   }
 
@@ -195,6 +206,23 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     val summary = mopt
     actorToMission.remove(aref).foreach { info =>
       info.addStop(summary)
+    }
+  }
+
+  /**
+   * Someone deleted a mission - make sure to scrub it from space, and notify any clients which might be showing it
+   */
+  private def handleDelete(id: Long) {
+    log.debug(s"Perhaps deleting $id")
+    val indexToDelete = recentMissions.zipWithIndex.find {
+      case (history, index) =>
+        (history.missionId == id)
+    }.map(_._2)
+
+    indexToDelete.foreach { i =>
+      val history = recentMissions.remove(i)
+      log.debug(s"Publishing delete $id")
+      publishMission("delete", history)
     }
   }
 
@@ -265,6 +293,9 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       log.debug(s"Received stop of $mission")
       unwatch(sender)
       handleStop(sender, Some(mission))
+
+    case MissionDelete(missionId) =>
+      handleDelete(missionId)
 
     case l: Location =>
       publishUpdate("loc", l)
