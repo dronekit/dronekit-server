@@ -344,6 +344,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
         }
       }
       missionOpt = None
+      tlogId = None
     }
   }
 }
