@@ -124,7 +124,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   roField[Seq[MessageJson]]("messages.json") { (o) =>
     applyMissionCache()
-    val m = getModel(o)
+    val m = getTLOGModel(o)
     var msgs = m.messages
 
     params.get("page_size").foreach { numrecs =>
@@ -135,7 +135,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     msgs.map { a => MessageJson(a.time, a.msg.toString) }
   }
 
-  private def getModel(o: Mission) = o.model.getOrElse(haltNotFound("no tlog found"))
+  private def getModel(o: Mission) = o.model.getOrElse(haltNotFound("no logs found"))
+  private def getTLOGModel(o: Mission) = o.tlogModel.getOrElse(haltNotFound("no tlog found"))
 
   /// A recommended end user visible (HTML) view to see this mission
   private def viewUrl(o: Mission) = publicUriBase.resolve("/view/" + o.id)
@@ -180,7 +181,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   roField("dseries") { (o) =>
     applyMissionCache()
 
-    val model = getModel(o)
+    val model = getTLOGModel(o)
     val msgs = model.messages // .take(10000) // FIXME, temp limit for testing
 
     // Parse strings like the following: "MAVLINK_MSG_ID_PARAM_VALUE : param_value=0.0 bob=45"

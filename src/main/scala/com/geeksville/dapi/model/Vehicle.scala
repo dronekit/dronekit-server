@@ -15,6 +15,7 @@ import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import org.json4s._
 import java.util.Date
+import com.geeksville.flight.HasVehicleType
 
 /**
  * A vehicle model
@@ -88,7 +89,7 @@ case class Vehicle(
   /**
    * Reverse engineer vehicle data from a recent mission upload
    */
-  def updateFromMission(m: LiveOrPlaybackModel) {
+  def updateFromMission(m: HasVehicleType) {
     var dirty = false
 
     if (!vehicleType.isDefined && m.humanVehicleType.isDefined) {

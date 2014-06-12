@@ -18,7 +18,7 @@ import com.geeksville.util.Using
 import com.google.common.io.ByteStreams
 import java.io.InputStream
 import grizzled.slf4j.Logging
-import com.geeksville.dapi.PlaybackModel
+import com.geeksville.dapi.TLOGPlaybackModel
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import java.io.ByteArrayInputStream
 import com.github.aselab.activerecord.ActiveRecord
@@ -39,6 +39,7 @@ import java.sql.Timestamp
 import com.geeksville.dapi.SpaceSupervisor
 import com.geeksville.dapi.MissionDelete
 import com.geeksville.util.AnalyticsService
+import com.geeksville.dapi.PlaybackModel
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -162,6 +163,11 @@ case class Mission(
   var keep: Boolean = true
 
   /**
+   * Note: this is no longer just for tlogs.  The rules are as follows:
+   *
+   * If the string ends with a suffix (.log or .bog) then they are data flash (or some other data file format).  If
+   * no suffix is used a tlog is assumed.
+   *
    * If the tlog is stored to s3 this is the ID
    * Normally this is a UUID, but for old droneshare records it might be some other sort of unique string
    */
@@ -169,14 +175,30 @@ case class Mission(
   @Length(max = 40)
   var tlogId: Option[String] = None
 
+  def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(".log")
+
   /**
    * A reconstructed playback model for this vehicle - note: calling this function is _expensive_
    * CPU and ongoing memory
    */
-  def model = tlogBytes.map { bytes =>
-    warn(s"Regenerating model for $this, numBytes=${bytes.size}")
-    PlaybackModel.fromBytes(bytes, false)
+  def model: Option[PlaybackModel] = tlogBytes.flatMap { bytes =>
+    if (isDataflashText) {
+      warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
+      Some(TLOGPlaybackModel.fromBytes(bytes, false))
+    } else {
+      tlogModel
+    }
   }
+
+  /// Return a TLOG backed model if we have one
+  def tlogModel = if (isDataflashText) {
+    warn(s"We don't have a TLOG for $this")
+    None
+  } else
+    tlogBytes.map { bytes =>
+      warn(s"Regenerating TLOG model for $this, numBytes=${bytes.size}")
+      TLOGPlaybackModel.fromBytes(bytes, false)
+    }
 
   def numParameters = {
     fixupAsNeeded()
@@ -437,18 +459,21 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   }
 
   /**
+   * Note, that due to an accident of history tlogs are stored without a .tlog extension.  All other files receive an extension
    * Get bytes from the cache or S3
    */
   private def getBytes(id: String) = {
     Option(bytesCache.getUnchecked(id))
   }
 
+  // Note, that due to an accident of history tlogs are stored without a .tlog extension.  All other files receive an extension
   def putBytes(id: String, src: InputStream, srcLen: Long) {
     info(s"Uploading to s3: $id (numBytes=$srcLen)")
     S3Client.tlogBucket.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
   }
 
   /**
+   * Note, that due to an accident of history tlogs are stored without a .tlog extension.  All other files receive an extension
    * Put tlog data into the cache and s3
    */
   def putBytes(id: String, bytes: Array[Byte]) {
@@ -466,6 +491,7 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
     r
   }
 
+  // This is only used by the nestor importer
   def findByTlogId(id: String): Option[Mission] = {
     collection.where(_.tlogId === id).headOption
   }
