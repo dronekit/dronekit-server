@@ -156,8 +156,14 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   /**
    * FIXME - remove after release 1 - temp hack to allow kmz/tlog fetches to not need API keys
    */
-  def unsafeROField[R](name: String)(getter: T => R) {
-    get("/:id/" + name) {
+  def unsafeROField[R: Manifest](name: String)(getter: T => R) {
+    val getInfo =
+      (apiOperation[R]("get" + URLUtil.capitalize(name))
+        summary s"Get the $name for the specified $aName"
+        parameters (
+          pathParam[String]("id").description(s"Id of $aName to be read")))
+
+    get("/:id/" + name, operation(getInfo)) {
       getter(unprotectedFindById)
     }
   }
