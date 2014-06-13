@@ -262,7 +262,6 @@ case class Mission(
     val uninteresting = !isInteresting
     if (uninteresting) {
       warn(s"Deleting uninteresting mission $this")
-      Thread.dumpStack()
       this.delete()
     } else
       debug(s"Keeping interesting mission $this")

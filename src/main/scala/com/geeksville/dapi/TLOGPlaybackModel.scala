@@ -60,7 +60,6 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  var maxG = 0.0
   var gcsType = "TBD"
 
   private val waypointOpt = ArrayBuffer[Option[Waypoint]]()
@@ -77,35 +76,6 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   } yield {
     messages.filter { m => m.time >= s && m.time <= e }
   }).getOrElse(Seq())
-
-  private def checkTime(date: Timestamp) = {
-    val calendar = Calendar.getInstance
-    calendar.setTime(date)
-    val y = calendar.get(Calendar.YEAR)
-
-    if (y < 1975) {
-      warn(s"Bogus timestamp in past: $date")
-      None
-    } else if (y > TLOGPlaybackModel.currentYear + 1) {
-      warn("Bogus timestamp in future")
-      None
-    } else
-      Some(date)
-  }
-
-  def summary = {
-    val start = startTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
-    val end = currentTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
-    warn(s"Creating NEW summary, start=$start, end=$end")
-
-    // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
-    MissionSummary(start,
-      end,
-      maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
-      endPosition.map(_.lat), endPosition.map(_.lon),
-      parameters.size,
-      softwareVersion = buildVersion, softwareGit = buildGit)
-  }
 
   def modeChanges = modeChangeMsgs.map { m =>
     val code = m.msg.asInstanceOf[msg_heartbeat].custom_mode.toInt

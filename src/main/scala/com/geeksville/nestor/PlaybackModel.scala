@@ -80,7 +80,6 @@ class PlaybackModel extends WaypointsForMap with LiveOrPlaybackModel with Parame
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  var maxG = 0.0
   var gcsType = "TBD"
 
   private val waypointOpt = ArrayBuffer[Option[Waypoint]]()
