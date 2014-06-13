@@ -32,6 +32,9 @@ import com.geeksville.json.GeoJSON
 import com.geeksville.flight.LiveOrPlaybackModel
 import java.sql.Timestamp
 
+/**
+ * @param time in usecs
+ */
 case class TimestampedLocation(time: Long, loc: Location)
 
 /**

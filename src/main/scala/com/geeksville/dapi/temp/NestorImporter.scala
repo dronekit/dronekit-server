@@ -78,7 +78,7 @@ class NestorImporter extends Actor with ActorLogging {
         try {
           tlog.bytes.foreach { bytes =>
             if (bytes.size > 0) {
-              val m = vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogId = tlog.id)
+              val m = vehicle.createMission(bytes, Some("Imported from Droneshare"), tlogIdIn = tlog.id)
 
               // Make this new mission show up on the recent flights list
               if (!m.deleteIfUninteresting())

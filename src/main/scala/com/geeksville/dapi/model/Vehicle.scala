@@ -67,10 +67,14 @@ case class Vehicle(
   /// Create a new mission as a child of this vehicle (given tlog bytes)
   def createMission(bytes: Array[Byte],
     notes: Option[String] = None,
-    tlogId: String = UUID.randomUUID().toString,
+    tlogIdIn: String = UUID.randomUUID().toString,
     mimeType: String = APIConstants.tlogMimeType) = {
+
+    // We add a suffix to our log UUID showing type of log
+    val tlogId = tlogIdIn + APIConstants.mimeTypeToExtension(mimeType)
+
     // Copy over tlog
-    Mission.putBytes(tlogId + APIConstants.mimeTypeToExtension(mimeType), bytes, mimeType)
+    Mission.putBytes(tlogId, bytes, mimeType)
 
     // Create mission record
     val m = Mission.create(this)
