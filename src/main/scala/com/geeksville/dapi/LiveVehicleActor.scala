@@ -29,6 +29,7 @@ import scala.concurrent.duration._
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.mavlink.FlushNowMessage
 import java.sql.Timestamp
+import com.geeksville.apiproxy.APIConstants
 
 /// Sent when a vehicle connects to the server
 case class VehicleConnected()
@@ -191,7 +192,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
         log.debug(s"Copying to s3: $tlogId")
         // Copy to S3
         val src = new BufferedInputStream(new FileInputStream(file), 8192)
-        Mission.putBytes(tlogId.get.toString, src, file.length())
+        Mission.putBytes(tlogId.get.toString, src, file.length(), APIConstants.flogMimeType)
       } else
         log.warning("Mission marked as no-keep - not copying to S3")
 

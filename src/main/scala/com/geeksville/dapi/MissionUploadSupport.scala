@@ -5,6 +5,7 @@ import org.scalatra.servlet.FileUploadSupport
 import com.geeksville.scalatra.ControllerExtras
 import com.geeksville.dapi.model.Mission
 import com.geeksville.util.FileTools
+import com.geeksville.apiproxy.APIConstants
 
 /**
  * This is a mixin that is shared by both the vehicle and mission endpoints (because they both allow slightly
@@ -25,42 +26,38 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
       errMsg = Some(msg)
     }
 
-    val tlogs = if (request.contentType == Some(Mission.mimeType)) {
+    val requestType = request.contentType.getOrElse("")
+    val tlogs = if (APIConstants.isValidMimeType(requestType)) {
       // Just pull out one file
       val bytes = FileTools.toByteArray(request.getInputStream)
-      Seq(None -> bytes)
+      Seq((None, requestType, bytes))
     } else {
       val files = fileMultiParams.values.flatMap { s => s }
 
       files.flatMap { payload =>
         warn(s"Considering ${payload.name} ${payload.fieldName} ${payload.contentType}")
-        val ctype = {
-          if (payload.name.endsWith(".tlog")) // In case the client isn't smart enough to set mime types
-            Mission.mimeType
-          else
-            payload.contentType.getOrElse(haltBadRequest("content-type not set"))
-        }
+        val ctype = payload.contentType.orElse(APIConstants.extensionToMimeType(payload.name)).getOrElse(haltBadRequest("content-type not set"))
 
-        if (Mission.mimeType != ctype) {
-          setErr(s"${payload.name} is not a TLOG")
+        if (!APIConstants.isValidMimeType(ctype)) {
+          setErr(s"${payload.name} is not a log file")
           None
         } else {
           info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
 
-          Some(Some(payload.name) -> payload.get)
+          Some((Some(payload.name), ctype, payload.get))
         }
       }
     }
 
     // Create missions for each tlog
     val created = tlogs.flatMap {
-      case (name, payload) =>
+      case (name, mimeType, payload) =>
 
         if (payload.isEmpty) {
           setErr(s"$name is empty")
           None
         } else {
-          val m = v.createMission(payload, name)
+          val m = v.createMission(payload, name, mimeType = mimeType)
 
           if (!m.deleteIfUninteresting()) {
             // Make this new mission show up on the recent flights list

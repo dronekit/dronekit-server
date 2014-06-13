@@ -40,6 +40,7 @@ import com.geeksville.dapi.SpaceSupervisor
 import com.geeksville.dapi.MissionDelete
 import com.geeksville.util.AnalyticsService
 import com.geeksville.dapi.PlaybackModel
+import com.geeksville.dapi.DataflashPlaybackModel
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -175,7 +176,13 @@ case class Mission(
   @Length(max = 40)
   var tlogId: Option[String] = None
 
-  def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(".log")
+  def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(APIConstants.flogExtension)
+
+  /// Return the logfile with a suitable extension
+  def logfileName = if (isDataflashText)
+    tlogId // These files _do_ have a suffix already
+  else
+    tlogId.map(_ + ".tlog") // Due to an accident of history we don't include a suffix on tlog ids
 
   /**
    * A reconstructed playback model for this vehicle - note: calling this function is _expensive_
@@ -184,7 +191,7 @@ case class Mission(
   def model: Option[PlaybackModel] = tlogBytes.flatMap { bytes =>
     if (isDataflashText) {
       warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
-      Some(TLOGPlaybackModel.fromBytes(bytes, false))
+      Some(DataflashPlaybackModel.fromBytes(bytes))
     } else {
       tlogModel
     }
@@ -442,8 +449,6 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
-  val mimeType = APIConstants.tlogMimeType
-
   // We use a cache to avoid (slow) rereading of s3 data if we can help it
   private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: String) => readBytesByPath(S3Client.tlogPrefix + key) }
 
@@ -466,8 +471,9 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
   }
 
   // Note, that due to an accident of history tlogs are stored without a .tlog extension.  All other files receive an extension
-  def putBytes(id: String, src: InputStream, srcLen: Long) {
+  def putBytes(id: String, src: InputStream, srcLen: Long, mimeType: String) {
     info(s"Uploading to s3: $id (numBytes=$srcLen)")
+
     S3Client.tlogBucket.uploadStream(S3Client.tlogPrefix + id, src, mimeType, srcLen)
   }
 
@@ -475,9 +481,9 @@ object Mission extends DapiRecordCompanion[Mission] with Logging {
    * Note, that due to an accident of history tlogs are stored without a .tlog extension.  All other files receive an extension
    * Put tlog data into the cache and s3
    */
-  def putBytes(id: String, bytes: Array[Byte]) {
+  def putBytes(id: String, bytes: Array[Byte], mimeType: String) {
     val src = new ByteArrayInputStream(bytes)
-    putBytes(id, src, bytes.length)
+    putBytes(id, src, bytes.length, mimeType)
     // Go ahead and update our cache
     bytesCache.put(id, bytes)
   }

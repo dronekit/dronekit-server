@@ -31,7 +31,7 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
       Some(date)
   }
 
-  def summary = {
+  final def summary = {
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
     val start = startTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
     val end = currentTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
@@ -52,11 +52,6 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
 
   def waypoints: Seq[Waypoint]
 
-  def parameters: Seq[ROParamValue]
-
-  def startTime: Option[Long]
-
-  def startPosition: Option[Location]
-  def endPosition: Option[Location]
+  def parameters: Iterable[ROParamValue]
 }
 

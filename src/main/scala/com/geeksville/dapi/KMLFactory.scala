@@ -107,7 +107,7 @@ class KMLFactory(model: PlaybackModel) {
 
       wpts.foreach { w => waypointcoords.add(toCoord(w.location)) }
 
-      makePlace(folder, "Start", startPosition.get)
+      // makePlace(folder, "Start", startPosition.get)
       makePlace(folder, "End", endPosition.get)
     }
 

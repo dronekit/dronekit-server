@@ -23,6 +23,7 @@ import com.geeksville.dapi.model.UserJson
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.dapi.model.VehicleJson
 import java.util.UUID
+import com.geeksville.apiproxy.APIConstants
 
 /**
  * These tests can be disabled by adding an argument to the constructor.
@@ -194,7 +195,7 @@ class ServletTests /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite
     val is = getClass.getResourceAsStream(name)
     val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
     is.close()
-    BytesPart(name, bytes, Mission.mimeType)
+    BytesPart(name, bytes, APIConstants.tlogMimeType)
   }
 
   ignore("tlog-upload-to-vehicle") {

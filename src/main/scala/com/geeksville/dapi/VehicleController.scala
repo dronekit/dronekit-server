@@ -15,6 +15,7 @@ import org.json4s.JsonAST.JObject
 import java.util.UUID
 import org.scalatra.swagger.SwaggerSupportSyntax.ModelParameterBuilder
 import org.scalatra.swagger.DataType
+import com.geeksville.apiproxy.APIConstants
 
 /// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 @MultipartConfig(maxFileSize = 1024 * 1024)
@@ -86,7 +87,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   private val addMissionInfo =
     (apiOperation[List[MissionJson]]("addMission")
       summary s"Add a new mission (as a tlog, bog or log)"
-      consumes (Mission.mimeType)
+      consumes (APIConstants.flogMimeType, APIConstants.blogMimeType, APIConstants.tlogMimeType)
       parameters (
         (new ModelParameterBuilder(DataType("file"))).description("log file as a standard html form upload POST").fromBody,
         pathParam[String]("id").description(s"Id of $aName to be have mission added")))

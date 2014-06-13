@@ -16,6 +16,7 @@ import org.json4s.JsonDSL._
 import org.json4s._
 import java.util.Date
 import com.geeksville.flight.HasVehicleType
+import com.geeksville.apiproxy.APIConstants
 
 /**
  * A vehicle model
@@ -64,9 +65,12 @@ case class Vehicle(
   }
 
   /// Create a new mission as a child of this vehicle (given tlog bytes)
-  def createMission(bytes: Array[Byte], notes: Option[String] = None, tlogId: String = UUID.randomUUID().toString) = {
+  def createMission(bytes: Array[Byte],
+    notes: Option[String] = None,
+    tlogId: String = UUID.randomUUID().toString,
+    mimeType: String = APIConstants.tlogMimeType) = {
     // Copy over tlog
-    Mission.putBytes(tlogId, bytes)
+    Mission.putBytes(tlogId, bytes, mimeType)
 
     // Create mission record
     val m = Mission.create(this)

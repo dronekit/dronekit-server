@@ -26,6 +26,7 @@ import java.util.UUID
 import org.scalatra.swagger.DataType
 import org.scalatra.swagger.SwaggerSupportSyntax.ModelParameterBuilder
 import org.scalatra.swagger.StringResponseMessage
+import com.geeksville.apiproxy.APIConstants
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -118,8 +119,10 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   unsafeROField("messages.tlog") { (o) =>
     warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
-    contentType = Mission.mimeType
-    OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("tlog not found")), o.tlogId.get.toString + ".tlog")
+    o.logfileName.foreach { logname =>
+      contentType = APIConstants.extensionToMimeType(logname).getOrElse(APIConstants.tlogMimeType)
+      OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("log not found")), logname)
+    }
   }
 
   roField[Seq[MessageJson]]("messages.json") { (o) =>
@@ -272,7 +275,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
           a.docs.map(_.documentation).getOrElse(""), a.isInRange, range)
       }
     }
-    val sorted = unsorted.sortWith { case (a, b) => a.id < b.id }
+    val sorted = unsorted.toSeq.sortWith { case (a, b) => a.id < b.id }
     sorted
   }
 
@@ -300,7 +303,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         "%s,%s".format(id, v)
       }
     }
-    val sorted = unsorted.sorted
+    val sorted = unsorted.toSeq.sorted
     val header = "# Auto generated from " + viewUrl(o)
     header + "\n" + sorted.mkString("\n")
   }

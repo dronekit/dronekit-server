@@ -48,9 +48,6 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
    */
   val positions = ArrayBuffer[TimestampedLocation]()
 
-  /// First found position
-  var startPosition: Option[Location] = None
-
   var messages: scala.collection.Seq[TimestampedMessage] = Seq[TimestampedMessage]()
   var modeChangeMsgs = Seq[TimestampedMessage]()
 
@@ -85,9 +82,6 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
 
   private def addPosition(raw: TimestampedMessage, l: Location) {
     if (l.lat != 0 && l.lon != 0) {
-      if (!startPosition.isDefined)
-        startPosition = Some(l)
-
       positions.append(TimestampedLocation(raw.time, l))
       l.alt.foreach { a => maxAltitude = math.max(maxAltitude, a) }
     }
