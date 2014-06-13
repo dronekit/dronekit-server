@@ -36,8 +36,14 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
 
       files.flatMap { payload =>
         warn(s"Considering ${payload.name} ${payload.fieldName} ${payload.contentType}")
-        val ctype = payload.contentType.orElse(APIConstants.extensionToMimeType(payload.name)).getOrElse(haltBadRequest("content-type not set"))
-
+        val requestedType = payload.contentType.flatMap { c =>
+          if (c == "application/octet-stream") // If it is this the client doesn't really know
+            None
+          else
+            Some(c)
+        }
+        val ctype = requestedType.orElse(APIConstants.extensionToMimeType(payload.name)).getOrElse(haltBadRequest("content-type not set"))
+        debug(s"Upload mime type is $ctype for ${payload.name}")
         if (!APIConstants.isValidMimeType(ctype)) {
           setErr(s"${payload.name} is not a log file")
           None
