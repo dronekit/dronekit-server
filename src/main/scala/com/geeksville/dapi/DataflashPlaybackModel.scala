@@ -59,11 +59,23 @@ class DataflashPlaybackModel extends PlaybackModel {
           } yield {
             if (lat != 0.0 && lon != 0.0) {
               val loc = Location(lat, lon, m.altOpt)
+              m.altOpt.foreach { a =>
+                maxAltitude = math.max(maxAltitude, a)
+              }
+              m.spdOpt.foreach { a =>
+                maxGroundSpeed = math.max(maxGroundSpeed, a)
+              }
+
               val tm = TimestampedLocation(nowUsec, loc)
               //debug(s"Adding location $tm")
               positions.append(tm)
               endPosition = Some(loc)
             }
+          }
+
+        case NTUN =>
+          m.arspdOpt.foreach { a =>
+            maxAirSpeed = math.max(maxAirSpeed, a)
           }
 
         case CMD =>
