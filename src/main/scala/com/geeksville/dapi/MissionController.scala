@@ -156,6 +156,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   def applyMissionCache() {
     if (!isAppDeveloper)
       applyCache(60 * 60)
+    else
+      debug("Suppressing caching - in developer mode")
   }
 
   unsafeROField("messages.kmz") { (o) =>

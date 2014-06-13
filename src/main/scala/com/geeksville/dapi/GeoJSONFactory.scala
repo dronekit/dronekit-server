@@ -36,6 +36,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     // As we iterate through the locations, look to see if we've crossed a mode change timestamp and emit a proper marker
     var modeMarkers: List[JObject] = Nil
     val tracklogBbox = new BoundingBox
+    debug(s"Generating GeoJSON for ${positions.size} points")
     val locations = positions.map { p =>
       val crossedModeChange = nextMode.map {
         case (t, m) =>

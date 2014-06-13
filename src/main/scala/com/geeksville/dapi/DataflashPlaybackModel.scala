@@ -15,11 +15,11 @@ class DataflashPlaybackModel extends PlaybackModel {
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  def modeChanges: Seq[(Long, String)] = Seq.empty
+  val modeChanges: Seq[(Long, String)] = Seq.empty
 
-  def positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
+  val positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
 
-  def waypoints: Seq[Waypoint] = Seq.empty
+  val waypoints: Seq[Waypoint] = Seq.empty
 
   private val params = HashMap[String, ROParamValue]()
 
