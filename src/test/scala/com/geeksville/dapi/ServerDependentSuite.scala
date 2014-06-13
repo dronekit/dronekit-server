@@ -24,6 +24,7 @@ import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.dapi.model.VehicleJson
 import java.util.UUID
 import com.geeksville.apiproxy.APIConstants
+import com.geeksville.util.ThreadTools
 
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
@@ -74,7 +75,9 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
   override def afterAll() {
     super.afterAll()
 
-    activeRecordTables.cleanup
+    ThreadTools.catchIgnore {
+      activeRecordTables.cleanup
+    }
   }
 
   def jsonGet(uri: String) = {

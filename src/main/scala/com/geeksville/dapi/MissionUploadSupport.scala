@@ -42,7 +42,7 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
           setErr(s"${payload.name} is not a log file")
           None
         } else {
-          info(s"Processing tlog upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
+          info(s"Processing upload for vehicle $v, numBytes=${payload.get.size}, notes=${payload.name}")
 
           Some((Some(payload.name), ctype, payload.get))
         }

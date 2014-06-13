@@ -70,7 +70,7 @@ case class Vehicle(
     tlogId: String = UUID.randomUUID().toString,
     mimeType: String = APIConstants.tlogMimeType) = {
     // Copy over tlog
-    Mission.putBytes(tlogId, bytes, mimeType)
+    Mission.putBytes(tlogId + APIConstants.mimeTypeToExtension(mimeType), bytes, mimeType)
 
     // Create mission record
     val m = Mission.create(this)
