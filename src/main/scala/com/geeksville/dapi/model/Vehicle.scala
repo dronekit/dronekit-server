@@ -144,7 +144,7 @@ class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle]
   {
     case u: Vehicle =>
       // u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)
-      val missions = u.missions.map { v =>
+      val missions = u.missions.orderBy(_.createdAt desc).map { v =>
         if (fullMissions)
           Extraction.decompose(v)
         else

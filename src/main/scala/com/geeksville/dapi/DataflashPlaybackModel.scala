@@ -15,7 +15,7 @@ class DataflashPlaybackModel extends PlaybackModel {
   var vehicleType: Option[Int] = None
   var autopilotType: Option[Int] = None
 
-  val modeChanges: Seq[(Long, String)] = Seq.empty
+  val modeChanges: ArrayBuffer[(Long, String)] = ArrayBuffer.empty
 
   val positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
 
@@ -57,11 +57,13 @@ class DataflashPlaybackModel extends PlaybackModel {
             lat <- m.latOpt
             lon <- m.lngOpt
           } yield {
-            val loc = Location(lat, lon, m.altOpt)
-            val tm = TimestampedLocation(nowUsec, loc)
-            //debug(s"Adding location $tm")
-            positions.append(tm)
-            endPosition = Some(loc)
+            if (lat != 0.0 && lon != 0.0) {
+              val loc = Location(lat, lon, m.altOpt)
+              val tm = TimestampedLocation(nowUsec, loc)
+              //debug(s"Adding location $tm")
+              positions.append(tm)
+              endPosition = Some(loc)
+            }
           }
 
         case CMD =>
@@ -105,6 +107,7 @@ class DataflashPlaybackModel extends PlaybackModel {
 
         case MODE =>
           dumpMessage()
+          modeChanges.append(nowUsec -> m.mode)
 
         case PARM =>
           // dumpMessage()

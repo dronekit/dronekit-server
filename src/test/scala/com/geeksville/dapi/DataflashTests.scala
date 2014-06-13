@@ -28,7 +28,7 @@ import com.geeksville.apiproxy.APIConstants
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
+class DataflashTests(disabled: Boolean) /* (disabled: Boolean) */ extends ServerDependentSuite {
 
   test("flog-upload-easy with user create") {
     val login = "test-uploader-" + uniqueSuffix
