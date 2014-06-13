@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream
 import com.geeksville.dataflash.DFReader
 import scala.io.Source
 import com.geeksville.dataflash.DFMessage
-import org.mavlink.messages.ardupilotmega.msg_param_value
+import org.mavlink.messages.ardupilotmega._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import com.geeksville.flight.Location
@@ -19,7 +19,7 @@ class DataflashPlaybackModel extends PlaybackModel {
 
   val positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
 
-  val waypoints: Seq[Waypoint] = Seq.empty
+  val waypoints: ArrayBuffer[Waypoint] = ArrayBuffer.empty
 
   private val params = HashMap[String, ROParamValue]()
 
@@ -62,6 +62,39 @@ class DataflashPlaybackModel extends PlaybackModel {
             //debug(s"Adding location $tm")
             positions.append(tm)
             endPosition = Some(loc)
+          }
+
+        case CMD =>
+          dumpMessage()
+          for {
+            // TimeMS,CTot,CNum,CId,Prm1,Prm2,Prm3,Prm4,Lat,Lng,Alt
+            // 11725, 5, 1, 16, 0.000000, 0.000000, 0.000000, 0.000000, 39.98196, -87.85937, 80.00000
+            ctot <- m.ctotOpt
+            cnum <- m.cnumOpt
+
+            cid <- m.cidOpt
+
+            prm1 <- m.prm1Opt
+            prm2 <- m.prm2Opt
+            prm3 <- m.prm3Opt
+            prm4 <- m.prm4Opt
+            lat <- m.latOpt
+            lon <- m.lngOpt
+            alt <- m.altOpt
+          } yield {
+            val msg = new msg_mission_item(0, 0)
+            msg.param1 = prm1.toFloat
+            msg.param2 = prm2.toFloat
+            msg.param3 = prm3.toFloat
+            msg.param4 = prm4.toFloat
+            msg.seq = cnum
+            msg.command = cid
+            msg.x = lat.toFloat
+            msg.y = lon.toFloat
+            msg.z = alt.toFloat
+            val w = new Waypoint(msg)
+            debug(s"Adding $w")
+            waypoints.append(w)
           }
 
         case IMU =>
