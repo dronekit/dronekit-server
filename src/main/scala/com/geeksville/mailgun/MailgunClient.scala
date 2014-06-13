@@ -63,7 +63,7 @@ class MailgunClient(myDomain: String = "droneshare.com")
    */
   def sendHtml(from: String, to: String, subject: String, bodyHtml: Node, tag: String = "default", testing: Boolean = false) = {
     val body = bodyHtml.toString
-    println("Sending email: " + body)
+    println(s"Sending email to $to, subject $subject")
     var options = Seq("from" -> from, "to" -> to, "subject" -> subject, "html" -> body, "o:tag" -> tag)
 
     if (testing)
