@@ -74,7 +74,7 @@ class DataflashPlaybackModel extends PlaybackModel {
           dumpMessage()
 
         case PARM =>
-          dumpMessage()
+          // dumpMessage()
 
           val msg = new msg_param_value(0, 0) // FIXME - params shouldn't assume mavlink msgs, but for now...
           val name = m.name
