@@ -42,6 +42,9 @@ trait ControllerExtras extends ScalatraBase with Logging {
     url.toURI
   }
 
+  /// Is the user app running on something served from localhost?  If so, they are a developer - so turn off caching etc...
+  def isAppDeveloper = request.referer.getOrElse("").startsWith("http://localhost")
+
   def dumpRequest() {
     debug(s"Request dump: $request")
 

@@ -154,7 +154,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   /// Allow some mission data to be cached up to an hr
   def applyMissionCache() {
-    applyCache(60 * 60)
+    if (!isAppDeveloper)
+      applyCache(60 * 60)
   }
 
   unsafeROField("messages.kmz") { (o) =>
