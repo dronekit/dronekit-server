@@ -49,9 +49,11 @@ class DataflashPlaybackModel extends PlaybackModel {
           //dumpMessage()
 
           // Cancel out the last known msec offset, using GPS time as the new zero
-          gpsOffsetUsec = m.gpsTimeUsec - (nowMsec * 1000)
-          if (!startTime.isDefined)
-            startTime = Some(nowUsec)
+          m.gpsTimeUsec.foreach { t =>
+            gpsOffsetUsec = t - (nowMsec * 1000)
+            if (!startTime.isDefined)
+              startTime = Some(nowUsec)
+          }
 
           for {
             lat <- m.latOpt
@@ -120,6 +122,9 @@ class DataflashPlaybackModel extends PlaybackModel {
         case MODE =>
           dumpMessage()
           modeChanges.append(nowUsec -> m.mode)
+
+        case MSG =>
+          dumpMessage()
 
         case PARM =>
           // dumpMessage()
