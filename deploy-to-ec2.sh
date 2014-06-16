@@ -1,7 +1,7 @@
 echo "This script will deploy to ec2"
 
 set -e
-sbt assembly
+sbt clean assembly
 
 export EC2_HOSTNAME=api.3dr.com
 
