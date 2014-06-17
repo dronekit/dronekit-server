@@ -11,7 +11,6 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
 
   val wptColor = Some("#000099")
   val wptDisabledColor = Some("#9999D6") // Used when we suspect the wpts were too far from the current mission
-  val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
   val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
   val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
   val wptDisabledLineStyle = lineStyles(color = Some("#9999D6"), opacity = Some(0.5))
@@ -54,6 +53,13 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
       tracklogBbox.addPoint(p.loc)
       p.loc
     }
+
+    // The lines along the tracklog
+    val tracklogLineString = makeLineString(locations)
+
+    // Ugh - we want to draw a shadow on our tracklog - so we need to send the whole list of points _twice_
+    val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
+    val tracklog = makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
 
     val wptBbox = new BoundingBox(0.005)
 
@@ -100,12 +106,6 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
         waypointsForMap
       toprocess.map(_.location)
     }
-
-    // The lines along the tracklog
-    val tracklogLineString = makeLineString(locations)
-
-    // Ugh - we want to draw a shadow on our tracklog - so we need to send the whole list of points _twice_
-    val tracklog = makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
 
     val modeLayer = makeFeatureCollection(modeMarkers: _*)
     val wlineStyle = if (disablingWaypoints)
