@@ -61,6 +61,11 @@ trait ControllerExtras extends ScalatraBase with Logging {
     debug(s"  ClientIP: $clientIP")
   }
 
+  /// A one line log msg
+  def dumpRequestSummary() {
+    debug(s"REQ: $clientIP ${request.getMethod} ${request.getRequestURL} ")
+  }
+
   /// Return the client's IP address (being careful to work if we are behind a load balancer)
   def clientIP = {
     request.header("X-Real-IP").getOrElse(request.getRemoteAddr)

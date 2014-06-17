@@ -22,8 +22,8 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats ++ DroneModelFormats
 
   before() {
-    logger.debug("Handle " + request)
     AnalyticsService.addBreadcrumb("clientIP", clientIP)
+    dumpRequestSummary()
   }
 
   /// We allow CORS requests from anywhere - FIXME - check if secure?
