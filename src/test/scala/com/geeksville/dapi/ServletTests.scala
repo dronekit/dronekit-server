@@ -28,7 +28,7 @@ import com.geeksville.apiproxy.APIConstants
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class ServletTests /* (disabled: Boolean) */ extends ServerDependentSuite {
+class ServletTests(disabled: Boolean) extends ServerDependentSuite {
 
   // We want cookies for this test
   session {

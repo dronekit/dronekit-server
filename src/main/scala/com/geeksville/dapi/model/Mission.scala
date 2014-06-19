@@ -177,9 +177,10 @@ case class Mission(
   var tlogId: Option[String] = None
 
   def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(APIConstants.flogExtension)
+  def isDataflashBinary = tlogId.isDefined && tlogId.get.endsWith(APIConstants.blogExtension)
 
   /// Return the logfile with a suitable extension
-  def logfileName = if (isDataflashText)
+  def logfileName = if (isDataflashText || isDataflashBinary)
     tlogId // These files _do_ have a suffix already
   else
     tlogId.map(_ + ".tlog") // Due to an accident of history we don't include a suffix on tlog ids
@@ -189,16 +190,16 @@ case class Mission(
    * CPU and ongoing memory
    */
   def model: Option[PlaybackModel] = tlogBytes.flatMap { bytes =>
-    if (isDataflashText) {
+    if (isDataflashText || isDataflashBinary) {
       warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
-      Some(DataflashPlaybackModel.fromBytes(bytes))
+      Some(DataflashPlaybackModel.fromBytes(bytes, isDataflashText))
     } else {
       tlogModel
     }
   }
 
   /// Return a TLOG backed model if we have one
-  def tlogModel = if (isDataflashText) {
+  def tlogModel = if (isDataflashText || isDataflashBinary) {
     warn(s"We don't have a TLOG for $this")
     None
   } else

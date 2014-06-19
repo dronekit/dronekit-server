@@ -25,23 +25,20 @@ class DataflashPlaybackModel extends PlaybackModel {
 
   def parameters = params.values
 
-  /**
-   * Load messages from a raw mavlink tlog file
-   */
-  private def loadBytes(bytes: Array[Byte]) {
+  private def loadMessages(messages: Iterator[DFMessage]) {
     import DFMessage._
 
-    val reader = new DFReader
     var nowMsec = 0L
     var gpsOffsetUsec = 0L
     def nowUsec = gpsOffsetUsec + nowMsec * 1000
 
-    reader.parseText(Source.fromRawBytes(bytes)).foreach { m =>
+    messages.foreach { m =>
       def dumpMessage() = debug(s"Considering $m")
 
       def updateTime() {
         m.timeMSopt.foreach(nowMsec = _)
         currentTime = Some(nowUsec)
+        endOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
       }
 
       m.typ match {
@@ -51,8 +48,10 @@ class DataflashPlaybackModel extends PlaybackModel {
           // Cancel out the last known msec offset, using GPS time as the new zero
           m.gpsTimeUsec.foreach { t =>
             gpsOffsetUsec = t - (nowMsec * 1000)
-            if (!startTime.isDefined)
+            if (!startTime.isDefined) {
               startTime = Some(nowUsec)
+              startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
+            }
           }
 
           for {
@@ -103,8 +102,8 @@ class DataflashPlaybackModel extends PlaybackModel {
             msg.param2 = prm2.toFloat
             msg.param3 = prm3.toFloat
             msg.param4 = prm4.toFloat
-            msg.seq = cnum
-            msg.command = cid
+            msg.seq = cnum.toInt
+            msg.command = cid.toInt
             msg.x = lat.toFloat
             msg.y = lon.toFloat
             msg.z = alt.toFloat
@@ -127,7 +126,7 @@ class DataflashPlaybackModel extends PlaybackModel {
           dumpMessage()
 
         case PARM =>
-          // dumpMessage()
+          dumpMessage()
 
           val msg = new msg_param_value(0, 0) // FIXME - params shouldn't assume mavlink msgs, but for now...
           val name = m.name
@@ -140,15 +139,29 @@ class DataflashPlaybackModel extends PlaybackModel {
       }
     }
   }
+
+  /**
+   * Load messages from a raw mavlink tlog file
+   */
+  private def loadBytes(bytes: Array[Byte], isTextFormat: Boolean) {
+
+    val reader = new DFReader
+    warn(s"Parsing dataflash text=$isTextFormat")
+    val messages = if (isTextFormat)
+      reader.parseText(Source.fromRawBytes(bytes))
+    else
+      reader.parseBinary(new ByteArrayInputStream(bytes))
+    loadMessages(messages)
+  }
 }
 
 object DataflashPlaybackModel {
   /**
    * Fully populate a model from bytes, or return None if bytes not available
    */
-  def fromBytes(b: Array[Byte]) = {
+  def fromBytes(b: Array[Byte], isTextFormat: Boolean) = {
     val model = new DataflashPlaybackModel
-    model.loadBytes(b)
+    model.loadBytes(b, isTextFormat)
     model
   }
 

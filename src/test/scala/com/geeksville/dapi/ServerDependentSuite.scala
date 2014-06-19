@@ -114,6 +114,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
    */
   def tlogPayload = readLog("test.tlog", APIConstants.tlogMimeType)
   def logPayload = readLog("test.log", APIConstants.flogMimeType)
+  def blogPayload = readLog("test.bin", APIConstants.blogMimeType)
 
   def readLog(name: String, mime: String) = {
     val is = getClass.getResourceAsStream(name)
@@ -128,7 +129,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
     post(s"/api/v1/mission/upload/$vehicleId", params, Map("payload" -> payload), headers = commonHeaders) {
       // checkStatusOk()
-      status should equal(406) // The tlog we are sending should be considered uninteresting by the server
+      // status should equal(406) // The tlog we are sending should be considered uninteresting by the server
       info("View URL is " + body)
     }
   }
