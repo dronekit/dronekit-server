@@ -183,6 +183,19 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     new GeoJSONFactory(getModel(o)).toGeoJSON().getOrElse(haltGone("No position data found"))
   }
 
+  roField("analysis.json") { (o) =>
+    applyMissionCache()
+
+    val report = o.tlogBytes.flatMap { bytes =>
+      if (o.isDataflashText || o.isDataflashBinary)
+        new AnalysisFactory(bytes, o.isDataflashText).toJSON()
+      else
+        None
+    }
+
+    report.getOrElse(haltGone("Flight analysis not supported for this file format"))
+  }
+
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
   roField("dseries") { (o) =>
     applyMissionCache()
