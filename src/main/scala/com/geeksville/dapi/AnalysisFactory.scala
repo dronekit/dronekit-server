@@ -28,7 +28,7 @@ class AnalysisFactory(bytes: Array[Byte], isText: Boolean) extends Logging {
     * 
     */
 
-    Some(None)
+    None
   }
 }
 
