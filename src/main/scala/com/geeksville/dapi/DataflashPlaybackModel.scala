@@ -124,6 +124,7 @@ class DataflashPlaybackModel extends PlaybackModel {
 
         case MSG =>
           dumpMessage()
+          filterMessage(m.message)
 
         case PARM =>
           dumpMessage()
@@ -147,11 +148,11 @@ class DataflashPlaybackModel extends PlaybackModel {
 
     val reader = new DFReader
     warn(s"Parsing dataflash text=$isTextFormat")
-    val messages = if (isTextFormat)
+    if (isTextFormat)
       reader.parseText(Source.fromRawBytes(bytes))
     else
       reader.parseBinary(new ByteArrayInputStream(bytes))
-    loadMessages(messages)
+    loadMessages(reader.messages)
   }
 }
 
