@@ -109,20 +109,6 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     f
   }
 
-  /**
-   * Get test tlog data that can be posted to the server
-   */
-  def tlogPayload = readLog("test.tlog", APIConstants.tlogMimeType)
-  def logPayload = readLog("test.log", APIConstants.flogMimeType)
-  def blogPayload = readLog("test.bin", APIConstants.blogMimeType)
-
-  def readLog(name: String, mime: String) = {
-    val is = getClass.getResourceAsStream(name)
-    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
-    is.close()
-    BytesPart(name, bytes, mime)
-  }
-
   def testEasyUpload(params: Map[String, String], payload: BytesPart) {
     // Set the payload
     val vehicleId = UUID.randomUUID.toString
@@ -132,5 +118,21 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
       // status should equal(406) // The tlog we are sending should be considered uninteresting by the server
       info("View URL is " + body)
     }
+  }
+}
+
+object ServerDependentSuite {
+  /**
+   * Get test tlog data that can be posted to the server
+   */
+  lazy val tlogPayload = readLog("test.tlog", APIConstants.tlogMimeType)
+  lazy val logPayload = readLog("test.log", APIConstants.flogMimeType)
+  lazy val blogPayload = readLog("test.bin", APIConstants.blogMimeType)
+
+  def readLog(name: String, mime: String) = {
+    val is = getClass.getResourceAsStream(name)
+    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    is.close()
+    BytesPart(name, bytes, mime)
   }
 }

@@ -7,15 +7,27 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
+import scala.sys.process._
+import java.io.ByteArrayInputStream
+import com.geeksville.util.Using
 
 case class ResultJSON(name: String, status: String, message: String, data: Option[String])
 
 class AnalysisFactory(bytes: Array[Byte], isText: Boolean) extends Logging {
 
-  def toJSON(): Option[JObject] = {
+  val toolPath = "/home/kevinh/development/drone/ardupilot/Tools/LogAnalyzer/LogAnalyzer.py"
+  val toolArgs = "-q -x - -" // quiet, xml to std out, read from stdin
 
-    val str = bytes.map(_.toChar).mkString
-    Some(AnalysisFactory.decodeToolResponse(str))
+  def toJSON(): Option[JObject] = {
+    warn("Running analysis tool")
+
+    Using.using(new ByteArrayInputStream(bytes)) { instream =>
+      val result = (toolPath + " " + toolArgs) #< instream !!
+
+      debug(s"Analysis returned $result")
+
+      Some(AnalysisFactory.decodeToolResponse(result))
+    }
   }
 }
 
@@ -29,7 +41,7 @@ object AnalysisFactory {
     val results = xml \\ "result"
 
     val resultsJson = results.map { r =>
-      val j = ResultJSON(r \ "name" toString, r \ "name" toString, r \ "name" toString, r \ "name" map (_.toString) headOption)
+      val j = ResultJSON(r \ "name" toString, r \ "status" toString, r \ "message" toString, r \ "data" map (_.toString) headOption)
       Extraction.decompose(j).asInstanceOf[JObject]
     }
     println(s"Returning json: $resultsJson")

@@ -24,7 +24,7 @@ FMT, 6, 19, PM, BBHHIhBHB, RenCnt,RenBlw,NLon,NLoop,MaxT,PMT,I2CErr,INSErr,INAVE
 FMT, 145, 41, CMD, IHHHfffffff, TimeMS,CTot,CNum,CId,Prm1,Prm2,Prm3,Prm4,Lat,Lng,Alt
 FMT, 1, 19, ATT, IccccCC, TimeMS,DesRoll,Roll,DesPitch,Pitch,DesYaw,Yaw
 FMT, 3, 6, MODE, Mh, Mode,ThrCrs
-FMT, 10, 3, STRT, ,
+FMT, 10, 3, STRT, II, Arg1,Arg2
 FMT, 13, 4, EV, B, Id
 FMT, 20, 6, D16, Bh, Id,Value
 FMT, 21, 6, DU16, BH, Id,Value

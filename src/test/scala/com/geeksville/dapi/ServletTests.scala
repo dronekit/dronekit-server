@@ -112,7 +112,7 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
   ignore("tlog-upload-to-vehicle") {
     userSession {
       // Set the payload
-      val payload = tlogPayload
+      val payload = ServerDependentSuite.tlogPayload
 
       post("/api/v1/vehicle/1/missions", Iterable.empty, Map("payload" -> payload), headers = commonHeaders) {
         checkStatusOk()
@@ -123,7 +123,7 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
 
   test("tlog-upload-easy without user create") {
     val params = loginInfo
-    testEasyUpload(params, tlogPayload)
+    testEasyUpload(params, ServerDependentSuite.tlogPayload)
   }
 
   test("tlog-upload-easy with user create") {
@@ -132,7 +132,7 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
     val email = s"kevin+$login@3drobotics.com"
 
     val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
-    testEasyUpload(params, tlogPayload)
+    testEasyUpload(params, ServerDependentSuite.tlogPayload)
   }
 
   test("mission") {

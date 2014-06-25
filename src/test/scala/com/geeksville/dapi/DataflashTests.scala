@@ -36,7 +36,7 @@ class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
     val email = s"kevin+$login@3drobotics.com"
 
     val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
-    testEasyUpload(params, logPayload)
+    testEasyUpload(params, ServerDependentSuite.logPayload)
   }
 
   test("blog-upload-easy with user create") {
@@ -45,6 +45,6 @@ class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
     val email = s"kevin+$login@3drobotics.com"
 
     val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
-    testEasyUpload(params, blogPayload)
+    testEasyUpload(params, ServerDependentSuite.blogPayload)
   }
 }

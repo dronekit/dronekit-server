@@ -187,7 +187,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     applyMissionCache()
 
     val report = o.tlogBytes.flatMap { bytes =>
-      if (o.isDataflashText || o.isDataflashBinary)
+      if (o.isDataflashText)
         new AnalysisFactory(bytes, o.isDataflashText).toJSON()
       else
         None

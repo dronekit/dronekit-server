@@ -437,4 +437,8 @@ class AnalysisFactoryTests extends FunSuite with Logging with GivenWhenThen {
     println(r)
   }
 
+  test("analysis-running") {
+    val t = new AnalysisFactory(ServerDependentSuite.logPayload.content, true)
+    println(t.toJSON())
+  }
 }
