@@ -41,7 +41,7 @@ object AnalysisFactory {
     val results = xml \\ "result"
 
     val resultsJson = results.map { r =>
-      val j = ResultJSON(r \ "name" toString, r \ "status" toString, r \ "message" toString, r \ "data" map (_.toString) headOption)
+      val j = ResultJSON(r \ "name" text, r \ "status" text, r \ "message" text, r \ "data" map (_.text) headOption)
       Extraction.decompose(j).asInstanceOf[JObject]
     }
     println(s"Returning json: $resultsJson")
