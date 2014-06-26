@@ -61,10 +61,12 @@ class DataflashPlaybackModel extends PlaybackModel {
 
           // Cancel out the last known msec offset, using GPS time as the new zero
           m.gpsTimeUsec.foreach { t =>
-            gpsOffsetUsec = t - (nowMsec * 1000)
-            if (!startTime.isDefined) {
-              startTime = Some(nowUsec)
-              startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
+            if (t != 0) { // GPS reports 0 before lock for some types of GPSes
+              gpsOffsetUsec = t - (nowMsec * 1000)
+              if (!startTime.isDefined) {
+                startTime = Some(nowUsec)
+                startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
+              }
             }
           }
 
