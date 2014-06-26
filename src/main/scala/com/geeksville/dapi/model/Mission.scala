@@ -102,9 +102,9 @@ case class MissionSummary(
   def createText() = {
     try {
       // unused
-      def vehicle: Vehicle = mission.vehicle
-      def user: User = vehicle.user
-      def username = user.login
+      //def vehicle: Vehicle = mission.vehicle
+      //def user: User = vehicle.user
+      //def username = user.login
 
       val unknown = "at an unknown location"
       val needGeocoding = !text.isDefined || text.get == unknown
@@ -151,7 +151,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 1
+  val currentVersion = 2
 }
 
 /**

@@ -9,11 +9,25 @@ import org.mavlink.messages.ardupilotmega._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import com.geeksville.flight.Location
+import org.mavlink.messages.MAV_TYPE
+import org.mavlink.messages.MAV_AUTOPILOT
 
 class DataflashPlaybackModel extends PlaybackModel {
   /// A MAV_TYPE vehicle code
-  var vehicleType: Option[Int] = None
-  var autopilotType: Option[Int] = None
+  var vehicleType: Option[Int] = buildName.flatMap {
+    case "ArduPlane" => Some(MAV_TYPE.MAV_TYPE_FIXED_WING)
+    case "ArduCopter" => Some(MAV_TYPE.MAV_TYPE_QUADROTOR)
+    case "ArduRover2" => Some(MAV_TYPE.MAV_TYPE_GROUND_ROVER)
+    case _ => None
+  }
+
+  var autopilotType: Option[Int] = hardwareString.flatMap { s =>
+    if (s.startsWith("APM"))
+      Some(MAV_AUTOPILOT.MAV_AUTOPILOT_ARDUPILOTMEGA)
+    else if (s.startsWith("PX4"))
+      Some(MAV_AUTOPILOT.MAV_AUTOPILOT_PIXHAWK)
+    else None
+  }
 
   val modeChanges: ArrayBuffer[(Long, String)] = ArrayBuffer.empty
 
