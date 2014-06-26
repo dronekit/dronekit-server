@@ -3,8 +3,6 @@ package com.geeksville.dapi
 import com.geeksville.akka.MockAkka
 import akka.actor.Props
 import com.geeksville.dapi.test.SimGCSClient
-import com.geeksville.dapi.temp.NestorImporter
-import com.geeksville.dapi.temp.DoImport
 import com.geeksville.dapi.model.Tables
 import com.geeksville.akka.AkkaReflector
 import scala.concurrent.Await
@@ -40,8 +38,6 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   override protected val applicationName = Some("api/v1/admin")
   protected lazy val applicationDescription = s"Adminstrator API operations."
 
-  lazy val nestorImport = system.actorOf(Props(new NestorImporter), "importer")
-
   lazy val akkaReflect = system.actorOf(Props(new AkkaReflector), "akkaReflect")
 
   def host() = multiParams("host").headOption.getOrElse("localhost")
@@ -59,17 +55,6 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
       case ex: Exception =>
         haltUnauthorized(ex.getMessage)
     }
-  }
-
-  private lazy val importOp =
-    (apiOperation[String]("import")
-      summary "Migrate flights from the old droneshare"
-      parameters (
-        pathParam[Int]("count").description(s"Number of old flights to import")))
-
-  post("/import/:count", operation(importOp)) {
-    nestorImport ! DoImport(params("count").toInt)
-    "started import"
   }
 
   private lazy val simOp = apiOperation[String]("sim") summary "Simulate a flight"
