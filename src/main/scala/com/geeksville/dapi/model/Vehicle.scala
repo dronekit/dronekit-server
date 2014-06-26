@@ -100,6 +100,7 @@ case class Vehicle(
   def updateFromMission(m: HasVehicleType) {
     var dirty = false
 
+    info(s"Perhaps updaing vehicle from ${m.humanVehicleType}, vehicleType was $vehicleType")
     if (!vehicleType.isDefined && m.humanVehicleType.isDefined) {
       vehicleType = m.humanVehicleType
       dirty = true

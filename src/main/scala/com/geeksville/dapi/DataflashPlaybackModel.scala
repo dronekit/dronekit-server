@@ -11,17 +11,19 @@ import scala.collection.mutable.ArrayBuffer
 import com.geeksville.flight.Location
 import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_AUTOPILOT
+import java.util.Date
 
 class DataflashPlaybackModel extends PlaybackModel {
   /// A MAV_TYPE vehicle code
-  var vehicleType: Option[Int] = buildName.flatMap {
-    case "ArduPlane" => Some(MAV_TYPE.MAV_TYPE_FIXED_WING)
-    case "ArduCopter" => Some(MAV_TYPE.MAV_TYPE_QUADROTOR)
-    case "ArduRover2" => Some(MAV_TYPE.MAV_TYPE_GROUND_ROVER)
-    case _ => None
-  }
+  override def vehicleType: Option[Int] =
+    buildName.flatMap {
+      case "ArduPlane" => Some(MAV_TYPE.MAV_TYPE_FIXED_WING)
+      case "ArduCopter" => Some(MAV_TYPE.MAV_TYPE_QUADROTOR)
+      case "ArduRover2" => Some(MAV_TYPE.MAV_TYPE_GROUND_ROVER)
+      case _ => None
+    }
 
-  var autopilotType: Option[Int] = hardwareString.flatMap { s =>
+  override def autopilotType: Option[Int] = hardwareString.flatMap { s =>
     if (s.startsWith("APM"))
       Some(MAV_AUTOPILOT.MAV_AUTOPILOT_ARDUPILOTMEGA)
     else if (s.startsWith("PX4"))
@@ -57,16 +59,16 @@ class DataflashPlaybackModel extends PlaybackModel {
 
       m.typ match {
         case GPS =>
-          //dumpMessage()
+          // dumpMessage()
 
           // Cancel out the last known msec offset, using GPS time as the new zero
           m.gpsTimeUsec.foreach { t =>
-            if (t != 0) { // GPS reports 0 before lock for some types of GPSes
-              gpsOffsetUsec = t - (nowMsec * 1000)
-              if (!startTime.isDefined) {
-                startTime = Some(nowUsec)
-                startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
-              }
+            m.tOpt.foreach(nowMsec = _) // If this GPS msg included a msec timestamp update our offset
+            gpsOffsetUsec = t - (nowMsec * 1000)
+            if (!startTime.isDefined) {
+              warn(s"Setting start to $nowUsec / " + (new Date(nowUsec / 1000)))
+              startTime = Some(nowUsec)
+              startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
             }
           }
 
@@ -96,7 +98,7 @@ class DataflashPlaybackModel extends PlaybackModel {
           }
 
         case CMD =>
-          dumpMessage()
+          //dumpMessage()
           for {
             // TimeMS,CTot,CNum,CId,Prm1,Prm2,Prm3,Prm4,Lat,Lng,Alt
             // 11725, 5, 1, 16, 0.000000, 0.000000, 0.000000, 0.000000, 39.98196, -87.85937, 80.00000
@@ -124,8 +126,13 @@ class DataflashPlaybackModel extends PlaybackModel {
             msg.y = lon.toFloat
             msg.z = alt.toFloat
             val w = new Waypoint(msg)
-            debug(s"Adding $w")
-            waypoints.append(w)
+
+            // We might have multiple wpt mentions in the log file - just replace old defs with new ones based on seq #
+            //debug(s"Adding $w")
+            val seq = msg.seq
+            while (waypoints.size < seq + 1)
+              waypoints.append(w)
+            waypoints(seq) = w
           }
 
         case IMU =>
@@ -139,11 +146,11 @@ class DataflashPlaybackModel extends PlaybackModel {
           modeChanges.append(nowUsec -> m.mode)
 
         case MSG =>
-          dumpMessage()
+          //dumpMessage()
           filterMessage(m.message)
 
         case PARM =>
-          dumpMessage()
+          //dumpMessage()
 
           val msg = new msg_param_value(0, 0) // FIXME - params shouldn't assume mavlink msgs, but for now...
           val name = m.name

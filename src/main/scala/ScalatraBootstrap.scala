@@ -26,7 +26,6 @@ import com.geeksville.dapi.TCPGCSActor
 import org.scalatra.LifeCycle
 import com.geeksville.apiproxy.APIConstants
 import com.github.aselab.activerecord.scalatra.ActiveRecordLifeCycle
-import com.geeksville.dapi.temp._
 import com.geeksville.dapi.Global
 import com.geeksville.dapi.auth.SessionsController
 import com.geeksville.dapi.AdminController

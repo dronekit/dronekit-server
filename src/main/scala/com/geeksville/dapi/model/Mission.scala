@@ -93,7 +93,7 @@ case class MissionSummary(
     val mins = minutes.map(_.toString).getOrElse("unknown")
     val loc = text.getOrElse("unknown")
 
-    s"MissionSummary(at ${startTime.getOrElse("no-date")}, alt=$maxAlt, mins=$mins, loc=$loc, params=$numParameters)"
+    s"MissionSummary(at ${startTime.getOrElse("no-date")}, alt=$maxAlt, mins=$mins, flt=$flightDuration, loc=$loc, params=$numParameters)"
   }
 
   /**
@@ -151,7 +151,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 2
+  val currentVersion = 8
 }
 
 /**
@@ -252,6 +252,7 @@ case class Mission(
 
         case Some(m) =>
 
+          warn(s"Updating vehicle from new summary: ${m.summary}")
           vehicle.updateFromMission(m)
 
           // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
