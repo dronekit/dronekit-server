@@ -184,16 +184,18 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   roField("analysis.json") { (o) =>
-    applyMissionCache()
+    this.synchronized { // FIXME: For now we only allow one user to be downloading an analysis plot at a time - just in case the python tool starts spinnig
+      applyMissionCache()
 
-    val report = o.tlogBytes.flatMap { bytes =>
-      if (o.isDataflashText || o.isDataflashBinary)
-        new AnalysisFactory(bytes, o.isDataflashText).toJSON()
-      else
-        None
+      val report = o.tlogBytes.flatMap { bytes =>
+        if (o.isDataflashText || o.isDataflashBinary)
+          new AnalysisFactory(bytes, o.isDataflashText).toJSON()
+        else
+          None
+      }
+
+      report.getOrElse(haltGone("Flight analysis is only supported for dataflash files"))
     }
-
-    report.getOrElse(haltGone("Flight analysis is only supported for dataflash files"))
   }
 
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
