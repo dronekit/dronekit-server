@@ -3,8 +3,11 @@
 To install on a new server
 
 * Install various dependencies
-apt-get install mysql-client mysql-server openjdk-7-jdk unzip build-essential uuid-dev nginx
+apt-get install mysql-client mysql-server openjdk-7-jdk unzip build-essential uuid-dev nginx python-pip python-numpy
 (you will be prompted to choose a root db psw)
+
+* Install tools needed for LogAnalyzer
+sudo pip install MAVProxy
 
 * Install lib ZeroMQ
 Ubuntu 14.04 or later

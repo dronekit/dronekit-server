@@ -16,12 +16,27 @@ import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.io.PipedInputStream
 import com.geeksville.util.ThreadTools
+import java.io.File
 
 case class ResultJSON(name: String, status: String, message: String, data: Option[String])
 
 class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
 
-  val toolPath = "/home/kevinh/development/drone/ardupilot/Tools/LogAnalyzer/LogAnalyzer.py"
+  val toolPath = {
+    val ec2loc = new File("/home/ubuntu/LogAnalyzer")
+    val devLoc = new File("/home/kevinh/development/drone/ardupilot/Tools/LogAnalyzer")
+
+    val dir = if (ec2loc.exists)
+      ec2loc
+    else
+      devLoc
+
+    if (!dir.exists)
+      throw new Exception(s"LogAnalyzer not found in $dir")
+
+    (new File(dir, "LogAnalyzer.py")).toString
+  }
+
   val toolArgs = "-q -s -x - -" // quiet, xml to std out, read from stdin
 
   private def binToText() = {
