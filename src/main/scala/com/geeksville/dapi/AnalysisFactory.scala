@@ -66,12 +66,18 @@ class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
     else
       binToText()
 
-    using(stream) { instream =>
-      val result = (toolPath + " " + toolArgs) #< instream !!
+    try {
+      using(stream) { instream =>
+        val result = (toolPath + " " + toolArgs) #< instream !!
 
-      debug(s"Analysis returned $result")
+        debug(s"Analysis returned $result")
 
-      Some(AnalysisFactory.decodeToolResponse(result))
+        Some(AnalysisFactory.decodeToolResponse(result))
+      }
+    } catch {
+      case ex: Exception =>
+        error(s"Analysis tool failed: $ex")
+        None
     }
   }
 }
