@@ -61,7 +61,7 @@ case class MissionSummary(
   /**
    * How many parameter records did we find?
    */
-  var numParameters: Int,
+  var numParameters: Int = 0,
 
   // Autopilot software version #
   var softwareVersion: Option[String] = None,
@@ -75,6 +75,11 @@ case class MissionSummary(
    * A heristically generated user friendly string describing this flight (shown in GUI)
    */
   var text: Option[String] = None
+
+  /**
+   * We support the notion of a summary version, so if we make our parser better we can regen old summaries only as needed
+   */
+  var summaryVersion: Int = MissionSummary.currentVersion
 
   def isSummaryValid = startTime.isDefined
 
@@ -93,7 +98,7 @@ case class MissionSummary(
   /**
    * Regenerate the summary text
    */
-  def regenText() {
+  def createText() = {
     try {
       // unused
       def vehicle: Vehicle = mission.vehicle
@@ -131,11 +136,13 @@ case class MissionSummary(
         // $username flew their 
         // s"${vehicle.text} 
         // $timestr
-        text = Some(s"$locstr")
-      }
+        Some(s"$locstr")
+      } else
+        None
     } catch {
       case ex: Exception =>
         error("TextRegen failed", ex)
+        None
     }
   }
 }
@@ -143,6 +150,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
+  val currentVersion = 1
 }
 
 /**
@@ -189,62 +197,79 @@ case class Mission(
    * A reconstructed playback model for this vehicle - note: calling this function is _expensive_
    * CPU and ongoing memory
    */
-  def model: Option[PlaybackModel] = tlogBytes.flatMap { bytes =>
+  def model: Option[PlaybackModel] =
     if (isDataflashText || isDataflashBinary) {
-      warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
-      Some(DataflashPlaybackModel.fromBytes(bytes, isDataflashText))
+      dataflashModel
     } else {
       tlogModel
     }
+
+  private def dataflashModel = try {
+    tlogBytes.flatMap { bytes =>
+      warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
+      Some(DataflashPlaybackModel.fromBytes(bytes, isDataflashText))
+    }
+  } catch {
+    case ex: Exception =>
+      error(s"Unparsable flash log, not generating model: $ex")
+      None
   }
 
   /// Return a TLOG backed model if we have one
-  def tlogModel = if (isDataflashText || isDataflashBinary) {
-    warn(s"We don't have a TLOG for $this")
-    None
-  } else
-    tlogBytes.map { bytes =>
-      warn(s"Regenerating TLOG model for $this, numBytes=${bytes.size}")
-      TLOGPlaybackModel.fromBytes(bytes, false)
-    }
-
-  def numParameters = {
-    fixupAsNeeded()
-    summary.numParameters
+  def tlogModel = try {
+    if (isDataflashText || isDataflashBinary) {
+      warn(s"We don't have a TLOG for $this")
+      None
+    } else
+      tlogBytes.map { bytes =>
+        warn(s"Regenerating TLOG model for $this, numBytes=${bytes.size}")
+        TLOGPlaybackModel.fromBytes(bytes, false)
+      }
+  } catch {
+    case ex: Exception =>
+      error(s"Unparsable TLOG, not generating model: $ex")
+      None
   }
 
-  private def fixupAsNeeded() {
-    // FIXME - move this into a more general validation of summary (we now check for empty summary text as well)
-    if (!summary.headOption.isDefined || summary.numParameters == -1 || !summary.text.isDefined) {
-      //warn(s"Forcing stale summary regen: $this")
-      regenSummary(true)
-    }
+  def numParameters = {
+    regenSummary()
+    summary.numParameters
   }
 
   /**
    *  FIXME - figure out when to call this
    */
-  def regenSummary(forceRegen: Boolean = false) {
-    if (!summary.headOption.isDefined || forceRegen) {
-      //warn("Mission summary missing")
-      model.foreach { m =>
-        val s = m.summary
-        s.regenText()
-        s.create
-        summary.delete() // Get rid of the old summary record
-        s.mission := this
-        summary := s
+  def regenSummary() {
+    if (!summary.headOption.isDefined || summary.summaryVersion < MissionSummary.currentVersion || !summary.text.isDefined) {
+      warn("Recreating mission summary")
 
-        warn(s"New summary is $s")
+      // Get the new summary
+      val s = model match {
+        case None =>
+          error(s"Model generation failed, creating invalid summary.")
+          MissionSummary()
 
-        vehicle.updateFromMission(m)
+        case Some(m) =>
 
-        // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
-        m.startTime.foreach { date => createdAt = new Timestamp(date / 1000L) }
-        this.save
+          vehicle.updateFromMission(m)
 
-        warn(s"Summary regened: $this")
+          // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
+          m.startTime.foreach { date => createdAt = new Timestamp(date / 1000L) }
+
+          m.summary
       }
+
+      // Install the new summary instead of the old one
+
+      // If the old summary had text - just use that (user might have edited it)
+      s.text = summary.text.orElse(s.createText())
+      s.create
+      summary.delete() // Get rid of the old summary record
+      s.mission := this
+      summary := s
+      save
+
+      warn(s"Summary regened: $this")
     }
   }
 
@@ -422,6 +447,8 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
   },
   {
     case u: Mission =>
+      u.regenSummary() // Make sure the summary has the latest representation
+
       val s = u.summary.headOption
 
       // Instead of DB creation time we prefer to use the time from the summary (from tlog data)

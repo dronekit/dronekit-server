@@ -267,7 +267,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       // Don't copy text - it will be genned as needed 
       // s.text = ns.text
 
-      s.regenText()
+      s.text = s.createText()
       s.save()
     }
   }
