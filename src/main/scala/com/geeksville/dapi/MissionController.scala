@@ -193,7 +193,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         None
     }
 
-    report.getOrElse(haltGone("Flight analysis not supported for this file format"))
+    report.getOrElse(haltGone("Flight analysis is only supported for dataflash files"))
   }
 
   /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
