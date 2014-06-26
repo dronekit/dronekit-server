@@ -41,6 +41,7 @@ import com.geeksville.dapi.MissionDelete
 import com.geeksville.util.AnalyticsService
 import com.geeksville.dapi.PlaybackModel
 import com.geeksville.dapi.DataflashPlaybackModel
+import com.github.aselab.activerecord.RecordNotFoundException
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -260,11 +261,17 @@ case class Mission(
       }
 
       // Install the new summary instead of the old one
-
-      // If the old summary had text - just use that (user might have edited it)
-      s.text = summary.text.orElse(s.createText())
+      if (summary.headOption.isDefined)
+        try {
+          // If the old summary had text - just use that (user might have edited it)
+          s.text = summary.text.orElse(s.createText())
+          summary.delete() // Get rid of the old summary record
+        } catch {
+          case ex: RecordNotFoundException =>
+            warn("No previous summary - skipping delete")
+        }
       s.create
-      summary.delete() // Get rid of the old summary record
+
       s.mission := this
       summary := s
       save
