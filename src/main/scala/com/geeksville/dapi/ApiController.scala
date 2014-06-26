@@ -254,9 +254,21 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   get("/", operation(getOp)) {
     //dumpRequest()
     requireReadAllAccess()
-    val r = getAll.flatMap(filterForReadAccess(_, false))
 
     // We do the json conversion here - so that it happens inside of our try/catch block
+
+    val r = getAll.flatMap { m =>
+      try {
+        filterForReadAccess(m, false).map(toJSON)
+      } catch {
+        case ex: Exception =>
+          error(s"getall error on record - skipping: $ex")
+          None
+      }
+    }
+
+    // We convert each record indivually so that if we barf while generating JSON we can at least make the others (i.e. don't let
+    // a single bad flight break the mission list.
     toJSON(r)
   }
 
