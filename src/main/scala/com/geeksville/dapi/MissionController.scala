@@ -113,16 +113,26 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   // Send a response with a recommended filename
   def OkWithFilename(payload: Any, filename: String) = {
     Ok(payload, Map(
-      // "Content-Type"        -> (file.contentType.getOrElse("application/octet-stream")),
+      //"Content-Type" -> contentType,
       "Content-Disposition" -> ("attachment; filename=\"" + filename + "\"")))
   }
 
   unsafeROField("messages.tlog") { (o) =>
     warn("FIXME: allowing anyone to read missions to make tlog/kmz download work")
-    o.logfileName.foreach { logname =>
+    val r = o.logfileName.map { logname =>
+      debug(s"Reading from $logname")
       contentType = APIConstants.extensionToMimeType(logname).getOrElse(APIConstants.tlogMimeType)
-      OkWithFilename(o.tlogBytes.getOrElse(haltNotFound("log not found")), logname)
-    }
+      if (contentType != APIConstants.flogMimeType) {
+        // contentType = "application/octet-stream"
+        response.characterEncoding = None
+      }
+
+      val bytes = o.tlogBytes
+      debug(s"File is " + bytes.map(_.size) + s" bytes long, contenttype=$contentType")
+      OkWithFilename(bytes.getOrElse(haltNotFound("log not found")), logname)
+    }.getOrElse(haltNotFound("No logname specified"))
+
+    r
   }
 
   roField[Seq[MessageJson]]("messages.json") { (o) =>
