@@ -42,7 +42,6 @@ import scala.util.Failure
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.NewRelicAnalyticsAdapter
 import akka.actor.ActorRef
-import com.geeksville.dapi.RedirectController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
