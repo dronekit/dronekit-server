@@ -33,12 +33,6 @@ class MailgunClient(myDomain: String = "droneshare.com")
   def send(pairs: (String, String)*): JObject = {
     val transaction = new HttpPost(s"/v2/$myDomain/messages")
 
-    // The underlying HTTP connection is still held by the response object
-    // to allow the response content to be streamed directly from the network socket.
-    // In order to ensure correct deallocation of system resources
-    // the user MUST either fully consume the response content  or abort request
-    // execution by calling CloseableHttpResponse#close().
-
     val nvps = pairs.map {
       case (key, v) =>
         new BasicNameValuePair(key, v)
