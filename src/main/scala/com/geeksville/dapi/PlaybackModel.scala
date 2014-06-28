@@ -10,6 +10,9 @@ import grizzled.slf4j.Logging
 import java.util.Calendar
 import java.sql.Timestamp
 import com.geeksville.flight.HasSummaryStats
+import java.io.OutputStream
+import com.geeksville.flight.IGCWriter
+import com.geeksville.util.Using
 
 /**
  * These are common methods that must be support by all mission model files (tlog, dataflash log etc...)
@@ -53,5 +56,19 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
   def waypoints: Seq[Waypoint]
 
   def parameters: Iterable[ROParamValue]
+
+  /**
+   * Generate an IGC file representation of this model
+   */
+  def toIGC(out: OutputStream) {
+    debug(s"Emitting IGC for $this")
+
+    // val pilotName: String, val gliderType: String, val pilotId: String
+    Using.using(new IGCWriter(out, "pilotName", humanVehicleType + "/" + humanAutopilotType, "pilotId")) { writer =>
+      positions.foreach { p =>
+        writer.emitPosition(p.loc, p.time)
+      }
+    }
+  }
 }
 
