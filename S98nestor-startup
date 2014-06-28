@@ -6,4 +6,4 @@ DIR=/home/$UNAME
 sudo setcap 'cap_net_bind_service=+ep' /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
 cd $DIR
 # Note - no longer running at PORT=80 - instead we have ngnix sit in front of us
-sudo -u $UNAME -b sh -c "java -Drun.mode=prod -Xmx3G -javaagent:$DIR/newrelic/newrelic.jar -jar $DIR/apihub-assembly-0.2.0-SNAPSHOT.jar -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError=\"kill -9 %p\" </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
+sudo -u $UNAME -b sh -c "java -Drun.mode=prod -Xmx4G -javaagent:$DIR/newrelic/newrelic.jar -jar $DIR/apihub-assembly-0.2.0-SNAPSHOT.jar -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError=\"kill -9 %p\" </dev/null 1>$DIR/out.log 2>$DIR/err.log &"
