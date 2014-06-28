@@ -15,14 +15,19 @@ class UserPasswordStrategy(protected val app: ScalatraBase)
 
   override def name: String = "UserPassword"
 
-  private def login(implicit request: HttpServletRequest) = app.params.getOrElse(loginKey, "")
-  private def password(implicit request: HttpServletRequest) = app.params.getOrElse(passwordKey, "")
+  private def extractUserAndPassword(implicit request: HttpServletRequest) = {
+
+    val login = app.params.getOrElse(loginKey, "")
+    val psw = app.params.getOrElse(passwordKey, "")
+    login -> psw
+  }
 
   /**
    * *
    * Determine whether the strategy should be run for the current request.
    */
   override def isValid(implicit request: HttpServletRequest) = {
+    val (login, password) = extractUserAndPassword
     logger.debug("UserPasswordStrategy: determining isValid: " + (login != "" && password != "").toString())
     login != "" && password != ""
   }
@@ -35,6 +40,7 @@ class UserPasswordStrategy(protected val app: ScalatraBase)
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {
     logger.debug("attempting authentication")
 
+    val (login, password) = extractUserAndPassword
     UserPasswordStrategy.getValidatedUser(login, password)
   }
 
