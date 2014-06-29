@@ -81,7 +81,7 @@ trait ControllerExtras extends ScalatraBase with Logging {
       error("Client dropped connection")
       BadRequest("Client dropped connection - good bye")
 
-    case e: Exception =>
+    case e: Throwable =>
       contentType = "text/html"
 
       println(e)
