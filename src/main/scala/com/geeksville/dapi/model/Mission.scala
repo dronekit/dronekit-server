@@ -42,6 +42,9 @@ import com.geeksville.util.AnalyticsService
 import com.geeksville.dapi.PlaybackModel
 import com.geeksville.dapi.DataflashPlaybackModel
 import com.github.aselab.activerecord.RecordNotFoundException
+import com.geeksville.doarama.DoaramaClient
+import java.io.ByteArrayOutputStream
+import com.geeksville.util.ThreadTools
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -185,6 +188,8 @@ case class Mission(
   @Length(max = 40)
   var tlogId: Option[String] = None
 
+  var doaramaId: Option[Long] = None
+
   def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(APIConstants.flogExtension)
   def isDataflashBinary = tlogId.isDefined && tlogId.get.endsWith(APIConstants.blogExtension)
 
@@ -204,6 +209,34 @@ case class Mission(
     } else {
       tlogModel
     }
+
+  /// Get a doarama URL for this flight.  Uploading flight to doarama if needed
+  def doaramaURL: Option[String] = {
+    // If we fail doing all this doarama stuff - just return None
+    ThreadTools.catchOrElse(None: Option[String]) {
+      val login = vehicle.user.login
+      Using.using(new DoaramaClient(login)) { client =>
+        // Ask doarama for an idea if necessary
+        if (!doaramaId.isDefined) {
+          warn(s"No doarama ID for $this")
+
+          model.foreach { model =>
+            val out = new ByteArrayOutputStream()
+            val igc = model.toIGC(out)
+
+            doaramaId = Some(client.createAnonymousVisualization(out.toByteArray))
+            debug(s"Success!  DoaramaID $doaramaId")
+            save
+          }
+        }
+
+        // Generate a new URL
+        val r = doaramaId.map(client.getDisplayURL)
+        debug(s"Doarama URL is $r")
+        r
+      }
+    }
+  }
 
   private def dataflashModel = try {
     tlogBytes.flatMap { bytes =>
@@ -446,7 +479,7 @@ case class MissionJson(
   userAvatarImage: Option[String])
 
 /// We provide an initionally restricted view of users
-object MissionSerializer extends CustomSerializer[Mission](implicit format => (
+class MissionSerializer(useDoarama: Boolean) extends CustomSerializer[Mission](implicit format => (
   {
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
@@ -479,7 +512,10 @@ object MissionSerializer extends CustomSerializer[Mission](implicit format => (
         Some(u.vehicle.text),
         Some(u.vehicle.user.login),
         u.vehicle.user.avatarImageURL)
-      val r = Extraction.decompose(m).asInstanceOf[JObject]
+      var r = Extraction.decompose(m).asInstanceOf[JObject]
+
+      if (useDoarama)
+        r = r ~ ("doaramaURL" -> u.doaramaURL)
 
       r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType)
   }))

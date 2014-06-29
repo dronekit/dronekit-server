@@ -47,4 +47,8 @@ class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
     val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
     testEasyUpload(params, ServerDependentSuite.blogPayload)
   }
+
+  test("mission get one") {
+    println(jsonGet("/api/v1/mission/1"))
+  }
 }

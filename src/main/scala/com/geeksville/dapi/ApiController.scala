@@ -290,7 +290,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    */
   get("/:id", operation(findByIdOp)) {
     //dumpRequest()
-    toJSON(findById)
+    toSingletonJSON(findById)
   }
 
   /**
@@ -298,6 +298,12 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    * context specific json formatters
    */
   protected def toJSON(o: Any): JValue = Extraction.decompose(o)
+
+  /**
+   * This is _only_ used in the case of a direct get of a record.  Subclasses might override to provide extra information in that case (as opposed to the
+   * getAll function that might be briefer)
+   */
+  protected def toSingletonJSON(o: T): JValue = toJSON(o)
 
   /**
    * Get the object associated with the provided id param (or fatally end the request with a 404)

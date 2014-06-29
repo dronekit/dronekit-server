@@ -135,8 +135,8 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
     testEasyUpload(params, ServerDependentSuite.tlogPayload)
   }
 
-  test("mission") {
-    jsonGet("/api/v1/mission")
+  test("mission get all") {
+    println(jsonGet("/api/v1/mission"))
   }
 
 }

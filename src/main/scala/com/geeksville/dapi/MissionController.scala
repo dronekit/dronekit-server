@@ -27,6 +27,8 @@ import org.scalatra.swagger.DataType
 import org.scalatra.swagger.SwaggerSupportSyntax.ModelParameterBuilder
 import org.scalatra.swagger.StringResponseMessage
 import com.geeksville.apiproxy.APIConstants
+import org.json4s.Extraction
+import com.geeksville.json.GeeksvilleFormats
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -99,6 +101,13 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     requireBeOwnerOrAdmin(userId.getOrElse(-1L))
 
     super.requireWriteAccess(o)
+  }
+
+  /**
+   * We provide extra data in this case: the (expensive to generate) doarama URL
+   */
+  override protected def toSingletonJSON(o: Mission): JValue = {
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new MissionSerializer(true))
   }
 
   override protected def getOp = (super.getOp

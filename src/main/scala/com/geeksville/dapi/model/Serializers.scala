@@ -25,5 +25,5 @@ object `package` {
   /// We have custom JSON converters for key objects
   // new UserSerializer(None), 
   // new VehicleSerializer()
-  val DroneModelFormats = Seq(MissionSerializer, EnumSerializer.create(AccessCode))
+  val DroneModelFormats = Seq(new MissionSerializer(false), EnumSerializer.create(AccessCode))
 }
