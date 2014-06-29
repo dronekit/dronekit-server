@@ -27,6 +27,10 @@ import grizzled.slf4j.Logging
 import java.io.File
 import org.apache.http.entity.StringEntity
 import org.apache.http.client.methods.HttpRequestBase
+import java.io.InputStream
+import org.apache.http.entity.InputStreamEntity
+import org.apache.http.entity.mime.MultipartEntity
+import org.apache.http.entity.mime.content.InputStreamBody
 
 object DoaramaClient {
   val monitor = true
@@ -51,11 +55,13 @@ class DoaramaClient(val userId: String)
   private def newPost(opcode: String) = addHeaders(new HttpPost(baseUrl + opcode))
   private def newGet(opcode: String) = addHeaders(new HttpGet(baseUrl + opcode))
 
-  def uploadIGC(file: File): Long = {
+  def uploadIGC(file: InputStream): Long = {
     debug(s"Uploading IGC file")
     val transaction = newPost("activity")
 
-    transaction.setEntity(new FileEntity(file))
+    val entity = new MultipartEntity()
+    entity.addPart("gps_track", new InputStreamBody(file, "text/plain"))
+    transaction.setEntity(entity)
 
     val obj = callJson(transaction)
     debug(s"upload response: $obj")

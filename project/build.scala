@@ -115,6 +115,7 @@ object NestorBuild extends Build {
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
 
         "org.apache.httpcomponents" % "httpclient" % "4.2",
+        "org.apache.httpcomponents" % "httpmime" % "4.2",        
         //"org.apache.httpcomponents" % "httpcore" % "4.2.6",
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",

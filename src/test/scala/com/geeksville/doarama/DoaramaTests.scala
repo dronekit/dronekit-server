@@ -1,4 +1,4 @@
-package com.geeksville.dapi
+package com.geeksville.doarama
 
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
@@ -14,11 +14,13 @@ import scala.util.Random
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 
-class PlaybackModelTests extends FunSuite with Logging with GivenWhenThen {
+class DoaramaTests extends FunSuite with Logging with GivenWhenThen {
 
-  test("blog to IGC") {
-    val t = DataflashPlaybackModel.fromBytes(ServerDependentSuite.blogPayload.content, false)
-    val out = new BufferedOutputStream(new FileOutputStream("/tmp/test.igc"))
-    t.toIGC(out)
+  test("upload and get view URL") {
+    val userId = "test-bob"
+    val client = new DoaramaClient(userId)
+
+    val igc = getClass.getResourceAsStream("test.igc")
+    assert(client.uploadIGC(igc) >= 0)
   }
 }
