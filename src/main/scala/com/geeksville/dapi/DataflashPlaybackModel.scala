@@ -13,7 +13,7 @@ import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.util.Date
 
-class DataflashPlaybackModel extends PlaybackModel {
+class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   /// A MAV_TYPE vehicle code
   override def vehicleType: Option[Int] =
     buildName.flatMap {
@@ -44,9 +44,17 @@ class DataflashPlaybackModel extends PlaybackModel {
   private def loadMessages(messages: Iterator[DFMessage]) {
     import DFMessage._
 
-    var nowMsec = 0L
+    var nowMsec = defaultTime
     var gpsOffsetUsec = 0L
     def nowUsec = gpsOffsetUsec + nowMsec * 1000
+
+    def setStartOfFlight() {
+      if (!startTime.isDefined) {
+        warn(s"Setting start to $nowUsec / " + (new Date(nowUsec / 1000)))
+        startTime = Some(nowUsec)
+        startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
+      }
+    }
 
     messages.foreach { m =>
       def dumpMessage() = debug(s"Considering $m")
@@ -65,11 +73,7 @@ class DataflashPlaybackModel extends PlaybackModel {
           m.gpsTimeUsec.foreach { t =>
             m.tOpt.foreach(nowMsec = _) // If this GPS msg included a msec timestamp update our offset
             gpsOffsetUsec = t - (nowMsec * 1000)
-            if (!startTime.isDefined) {
-              warn(s"Setting start to $nowUsec / " + (new Date(nowUsec / 1000)))
-              startTime = Some(nowUsec)
-              startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
-            }
+            setStartOfFlight()
           }
 
           for {
@@ -162,6 +166,9 @@ class DataflashPlaybackModel extends PlaybackModel {
         // Ignore
       }
     }
+
+    // If we never found a GPS timestamp, just assume server time
+    setStartOfFlight()
   }
 
   /**
@@ -183,8 +190,8 @@ object DataflashPlaybackModel {
   /**
    * Fully populate a model from bytes, or return None if bytes not available
    */
-  def fromBytes(b: Array[Byte], isTextFormat: Boolean) = {
-    val model = new DataflashPlaybackModel
+  def fromBytes(b: Array[Byte], isTextFormat: Boolean, defaultTime: Long) = {
+    val model = new DataflashPlaybackModel(defaultTime)
     model.loadBytes(b, isTextFormat)
     model
   }

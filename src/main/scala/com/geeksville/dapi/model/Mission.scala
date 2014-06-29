@@ -154,7 +154,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 8
+  val currentVersion = 10
 }
 
 /**
@@ -241,7 +241,9 @@ case class Mission(
   private def dataflashModel = try {
     tlogBytes.flatMap { bytes =>
       warn(s"Regenerating dataflash model for $this, numBytes=${bytes.size}")
-      Some(DataflashPlaybackModel.fromBytes(bytes, isDataflashText))
+
+      val defaultTime = Option(createdAt).map(_.getTime).getOrElse(System.currentTimeMillis)
+      Some(DataflashPlaybackModel.fromBytes(bytes, isDataflashText, defaultTime))
     }
   } catch {
     case ex: Exception =>
