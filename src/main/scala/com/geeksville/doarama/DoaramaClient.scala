@@ -91,7 +91,7 @@ class DoaramaClient(val userId: String)
     r.toLong
   }
 
-  def getDisplyURL(visId: Long) = {
+  def getDisplayURL(visId: Long) = {
 
     val transaction = newGet(s"visualization/$visId/url")
 
