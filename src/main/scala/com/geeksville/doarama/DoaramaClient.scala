@@ -60,7 +60,7 @@ class DoaramaClient(val userId: String)
     val transaction = newPost("activity")
 
     val entity = new MultipartEntity()
-    entity.addPart("gps_track", new InputStreamBody(file, "text/plain"))
+    entity.addPart("gps_track", new InputStreamBody(file, "text/plain", "log.igc"))
     transaction.setEntity(entity)
 
     val obj = callJson(transaction)
@@ -79,16 +79,16 @@ class DoaramaClient(val userId: String)
     transaction.addHeader("Content-Type", "application/json")
     transaction.setEntity(new StringEntity("""{"activityTypeId":30}"""))
 
-    val obj = callJson(transaction)
+    val obj = call(transaction)
     debug(s"setActivityResponse: $obj")
   }
 
   def createVisualization(activityId: Long) = {
 
-    val transaction = newPost(s"visualization")
+    val transaction = newPost(s"visualisation")
 
     transaction.addHeader("Content-Type", "application/json")
-    transaction.setEntity(new StringEntity("""{"activityIds": [$activityId] }"""))
+    transaction.setEntity(new StringEntity(s"""{"activityIds": [$activityId] }"""))
 
     val obj = callJson(transaction)
     debug(s"createVisualizationResponse: $obj")
@@ -99,7 +99,7 @@ class DoaramaClient(val userId: String)
 
   def getDisplayURL(visId: Long) = {
 
-    val transaction = newGet(s"visualization/$visId/url")
+    val transaction = newGet(s"visualisation/$visId/url")
 
     val obj = callJson(transaction)
     debug(s"getURL response: $obj")

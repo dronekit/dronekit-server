@@ -21,6 +21,14 @@ class DoaramaTests extends FunSuite with Logging with GivenWhenThen {
     val client = new DoaramaClient(userId)
 
     val igc = getClass.getResourceAsStream("test.igc")
-    assert(client.uploadIGC(igc) >= 0)
+    val activity = client.uploadIGC(igc)
+    assert(activity >= 0)
+
+    client.setActivityInfo(activity)
+    val vizid = client.createVisualization(activity)
+    assert(vizid >= 0)
+
+    val url = client.getDisplayURL(vizid)
+    warn("View URL is " + url)
   }
 }
