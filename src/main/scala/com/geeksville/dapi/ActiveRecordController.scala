@@ -52,13 +52,14 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
         r = r.orderBy(orderOn, dir)
       }
 
-      // Apply paging restriction
-      for {
-        pStr <- params.get("page_size")
-      } yield {
-        val offset = params.get("page_offset").getOrElse("0").toInt
-        r = r.page(offset, pStr.toInt)
-      }
+      // Apply paging restriction - to prevent casual scraping
+      val maxPageSize = 100
+      val pagesize = params.getOrElse("page_size", (maxPageSize).toString).toInt
+      if (pagesize > maxPageSize)
+        haltBadRequest("page_size is too large")
+
+      val offset = params.get("page_offset").getOrElse("0").toInt
+      r = r.page(offset, pagesize)
 
       r.toList
     } catch {
