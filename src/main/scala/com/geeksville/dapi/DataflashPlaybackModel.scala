@@ -190,7 +190,7 @@ object DataflashPlaybackModel {
   /**
    * Fully populate a model from bytes, or return None if bytes not available
    */
-  def fromBytes(b: Array[Byte], isTextFormat: Boolean, defaultTime: Long) = {
+  def fromBytes(b: Array[Byte], isTextFormat: Boolean, defaultTime: Long = System.currentTimeMillis) = {
     val model = new DataflashPlaybackModel(defaultTime)
     model.loadBytes(b, isTextFormat)
     model
