@@ -44,9 +44,9 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   private def loadMessages(messages: Iterator[DFMessage]) {
     import DFMessage._
 
-    var nowMsec = defaultTime
+    var baseUsec = defaultTime * 1000L
     var gpsOffsetUsec = 0L
-    def nowUsec = gpsOffsetUsec + nowMsec * 1000
+    def nowUsec = gpsOffsetUsec + baseUsec
 
     def setStartOfFlight() {
       if (!startTime.isDefined) {
@@ -59,20 +59,26 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
     messages.foreach { m =>
       def dumpMessage() = debug(s"Considering $m")
 
-      def updateTime() {
-        m.timeMSopt.foreach(nowMsec = _)
+      def updateTime(newUsec: Long) {
+        baseUsec = newUsec
         currentTime = Some(nowUsec)
         endOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
       }
 
       m.typ match {
+        case TIME =>
+          m.startTimeOpt.foreach { t =>
+            updateTime(t)
+          }
+
         case GPS =>
           // dumpMessage()
 
           // Cancel out the last known msec offset, using GPS time as the new zero
           m.gpsTimeUsec.foreach { t =>
-            m.tOpt.foreach(nowMsec = _) // If this GPS msg included a msec timestamp update our offset
-            gpsOffsetUsec = t - (nowMsec * 1000)
+            // If this GPS msg included a msec timestamp update our offset
+            m.tOpt.foreach { ms => updateTime(ms * 1000) }
+            gpsOffsetUsec = t - baseUsec
             setStartOfFlight()
           }
 
@@ -80,7 +86,7 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
             lat <- m.latOpt
             lon <- m.lngOpt
           } yield {
-            if (lat != 0.0 && lon != 0.0) {
+            if (lat != 0.0 && lon != 0.0 && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0) {
               val loc = Location(lat, lon, m.altOpt)
               m.altOpt.foreach { a =>
                 maxAltitude = math.max(maxAltitude, a)
@@ -140,10 +146,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
           }
 
         case IMU =>
-          updateTime()
+          m.timeMSopt.foreach { ms => updateTime(ms * 1000) }
 
         case ATT =>
-          updateTime()
+          m.timeMSopt.foreach { ms => updateTime(ms * 1000) }
 
         case MODE =>
           dumpMessage()
@@ -152,6 +158,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
         case MSG =>
           //dumpMessage()
           filterMessage(m.message)
+
+        case VER => // A PX4 style version record
+          buildName = m.archOpt
+          buildGit = m.fwGitOpt
 
         case PARM =>
           //dumpMessage()

@@ -25,6 +25,7 @@ import com.geeksville.dapi.model.VehicleJson
 import java.util.UUID
 import com.geeksville.apiproxy.APIConstants
 import com.geeksville.util.ThreadTools
+import com.geeksville.util.FileTools
 
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
@@ -131,7 +132,7 @@ object ServerDependentSuite {
 
   def readLog(name: String, mime: String) = {
     val is = getClass.getResourceAsStream(name)
-    val bytes = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val bytes = FileTools.toByteArray(is)
     is.close()
     BytesPart(name, bytes, mime)
   }
