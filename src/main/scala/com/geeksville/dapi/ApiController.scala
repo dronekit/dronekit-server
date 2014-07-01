@@ -273,9 +273,15 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   /**
-   * Using the current query parameters, return all matching records (paging and ordering is supported as well
+   * Using the current query parameters, return all matching records (paging and ordering is supported as well.
+   *
+   * NOTE: These are raw records - unfiltered by user permissions
    */
-  protected def getAll(): List[T] = {
+  final protected def getAll(): Iterable[T] = {
+    getWithQuery(params.get("page_offset").map(_.toInt), params.get("page_size").map(_.toInt), params.get("order_by"), params.get("order_dir"))
+  }
+
+  protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None, orderBy: Option[String] = None, orderDir: Option[String] = None): Iterable[T] = {
     haltMethodNotAllowed("This endpoint does not support this operation")
   }
 

@@ -36,32 +36,30 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
     }).getOrElse(haltNotFound("object or parameter not found"))
   }
 
-  /**
-   * Using the current query parameters, return all matching records (paging and ordering is supported as well
-   */
-  final override protected def getAll(): List[T] = {
+  /// Use activerecord methods to find our records
+  final override protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None, orderBy: Option[String] = None, orderDir: Option[String] = None) = {
     try {
       var r = getFiltered
 
       // Apply ordering
       for {
-        orderOn <- params.get("order_by")
+        orderOn <- orderBy
       } yield {
-        val dir = params.get("order_dir").getOrElse("asc")
+        val dir = orderDir.getOrElse("asc")
 
         r = r.orderBy(orderOn, dir)
       }
 
       // Apply paging restriction - to prevent casual scraping
       val maxPageSize = 100
-      val pagesize = params.getOrElse("page_size", (maxPageSize).toString).toInt
+      val pagesize = pagesizeOpt.getOrElse(maxPageSize)
       if (pagesize > maxPageSize)
         haltBadRequest("page_size is too large")
 
-      val offset = params.get("page_offset").getOrElse("0").toInt
+      val offset = pageOffset.getOrElse(0)
       r = r.page(offset, pagesize)
 
-      r.toList
+      r.toIterable
     } catch {
       case ex: ActiveRecordException =>
         haltBadRequest(ex.getMessage)
