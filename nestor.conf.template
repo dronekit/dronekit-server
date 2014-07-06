@@ -1,0 +1,19 @@
+include "application"
+
+# This is the new 3dr specific keys for dronehub
+dapi {
+  # if threescale keys are not set threescale will not be used for API control
+  threescale {
+    apiKey = "FIXME"
+    serviceId = "FIXME"
+  }
+
+  aws {
+    # 3dr keys
+    secretKey = "FIXME"
+    accessKey = "FIXME"
+  }
+
+  # if you don't want server to pick a random root password set this here
+  # defaultRootPsw="FIXME"
+}
