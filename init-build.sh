@@ -4,6 +4,8 @@ echo "Prebuilding various dependencies needed for dronehub"
 # set -e
 git submodule update --recursive --init
 
+cp nestor.conf.template ~/nestor.conf
+
 mkdir dependencies
 cd dependencies
 
