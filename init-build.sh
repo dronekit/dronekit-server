@@ -1,6 +1,7 @@
 echo "Prebuilding various dependencies needed for dronehub"
 
-set -e
+# The akka build will fail on some unimportant parts
+# set -e
 git submodule update --recursive --init
 
 mkdir dependencies
