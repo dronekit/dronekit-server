@@ -4,14 +4,21 @@ include "application"
 dapi {
   # if threescale keys are not set threescale will not be used for API control
   threescale {
-    apiKey = "FIXME"
-    serviceId = "FIXME"
+    # apiKey = "FIXME"
+    # serviceId = "FIXME"
   }
 
   aws {
     # 3dr keys
-    secretKey = "FIXME"
-    accessKey = "FIXME"
+    accessKey = ${AWS_ACCESS_KEY}
+    secretKey = ${AWS_SECRET_KEY}
+  }
+
+  s3 {
+    # default value
+    bucketName = "s3-droneapi"
+    # optional environment override
+    bucketName = ${?S3_BUCKET_NAME}
   }
 
   # if you don't want server to pick a random root password set this here

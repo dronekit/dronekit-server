@@ -31,5 +31,9 @@ class ConfigCredentials(baseKey: String) extends AWSCredentials with Logging {
     //debug(s"Using AWS access key $r")
     r
   }
-  def getAWSSecretKey() = conf.getString(prefix + "aws.secretKey")
+  def getAWSSecretKey() = {
+    val r = conf.getString(prefix + "aws.secretKey")
+    //debug(s"Using AWS secret key $r")
+    r
+  }
 }
