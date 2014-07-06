@@ -34,3 +34,9 @@ cd scalatra
 sbt publishLocal
 cd ..
 
+git clone git@github.com:geeksville/scala-activerecord.git
+cd scala-activerecord
+sbt "project core" publishLocal "project generator" publishLocal "project scalatra" publishLocal "project scalatraSbt" publishLocal
+cd ..
+
+
