@@ -255,21 +255,49 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     //dumpRequest()
     requireReadAllAccess()
 
+    var offset = params.get("page_offset").map(_.toInt)
+    val pagesize = params.get("page_size").map(_.toInt)
+    val numdesired = pagesize
+
     // We do the json conversion here - so that it happens inside of our try/catch block
 
-    val r = getAll.flatMap { m =>
-      try {
-        filterForReadAccess(m, false).map(toJSON)
-      } catch {
-        case ex: Exception =>
-          error(s"getall error on record - skipping: $ex")
-          None
+    var results = Seq[JValue]()
+    var needMore = false
+
+    // We might need to do a series of queries if all the data is getting filtered by permissions
+    // FIXME - probably better to add the filter rules to the sql expression
+    do {
+      debug(s"Getting with offset=$offset, pagesize=$pagesize")
+      val unfiltered = getAll(offset, pagesize)
+
+      val filtered = unfiltered.flatMap { m =>
+        try {
+          filterForReadAccess(m, false).map(toJSON)
+        } catch {
+          case ex: Exception =>
+            error(s"getall error on record - skipping: $ex")
+            None
+        }
       }
-    }
+
+      // Adjust for new offset
+      offset = Some(offset.getOrElse(0) + unfiltered.size)
+
+      // If the user wanted a particular number of records and  we deleted some items we need to keep working
+      needMore = numdesired.isDefined && (filtered.size < unfiltered.size)
+      debug(s"needMore=$needMore")
+
+      // Keep only what we need
+      results ++= (if (numdesired.isDefined)
+        filtered.take(numdesired.get - results.size)
+      else
+        filtered)
+
+    } while (needMore)
 
     // We convert each record indivually so that if we barf while generating JSON we can at least make the others (i.e. don't let
     // a single bad flight break the mission list.
-    toJSON(r)
+    toJSON(results)
   }
 
   /**
@@ -277,8 +305,10 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
    *
    * NOTE: These are raw records - unfiltered by user permissions
    */
-  final protected def getAll(): Iterable[T] = {
-    getWithQuery(params.get("page_offset").map(_.toInt), params.get("page_size").map(_.toInt), params.get("order_by"), params.get("order_dir"))
+  final protected def getAll(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None): Iterable[T] = {
+    val offset = pageOffset.orElse(params.get("page_offset").map(_.toInt))
+    val pagesize = pagesizeOpt.orElse(params.get("page_size").map(_.toInt))
+    getWithQuery(offset, pagesize, params.get("order_by"), params.get("order_dir"))
   }
 
   protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None, orderBy: Option[String] = None, orderDir: Option[String] = None): Iterable[T] = {
