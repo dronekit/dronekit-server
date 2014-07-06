@@ -51,7 +51,8 @@ class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
     testEasyUpload(params, ServerDependentSuite.blogPayload)
   }
 
-  test("px4 native file upload") {
+  // FIXME - bin file not yet checked into source control
+  ignore("px4 native file upload") {
     val login = "test-uploader-" + uniqueSuffix
     val password = random.alphanumeric.take(8).mkString
     val email = s"kevin+$login@3drobotics.com"

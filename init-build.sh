@@ -1,5 +1,6 @@
 echo "Prebuilding various dependencies needed for dronehub"
 
+set -e
 git submodule update --recursive --init
 
 mkdir dependencies
@@ -39,4 +40,6 @@ cd scala-activerecord
 sbt "project core" publishLocal "project generator" publishLocal "project scalatra" publishLocal "project scalatraSbt" publishLocal
 cd ..
 
+echo Fixing up bad ivy files on codeship
+find ~/.ivy2/cache -name \*.original | xargs rm
 
