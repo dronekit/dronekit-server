@@ -438,12 +438,12 @@ class AnalysisFactoryTests extends FunSuite with Logging with GivenWhenThen {
   }
 
   // FIXME - LogAnalyzer ardupilot not yet in source control
-  ignore("analysis-running-text") {
+  test("analysis-running-text") {
     val t = new AnalysisFactory(ServerDependentSuite.logPayload.content, true)
     println(t.toJSON())
   }
 
-  ignore("analysis-running-binary") {
+  test("analysis-running-binary") {
     val t = new AnalysisFactory(ServerDependentSuite.blogPayload.content, false)
     println(t.toJSON())
   }
