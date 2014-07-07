@@ -17,6 +17,7 @@ import java.io.PrintWriter
 import java.io.PipedInputStream
 import com.geeksville.util.ThreadTools
 import java.io.File
+import java.net.URLDecoder
 
 case class ResultJSON(name: String, status: String, message: String, data: Option[String])
 
@@ -24,7 +25,17 @@ class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
 
   val toolPath = {
     val ec2loc = new File("/home/ubuntu/LogAnalyzer")
-    val devLoc = new File("/home/kevinh/development/drone/ardupilot/Tools/LogAnalyzer")
+    val devLoc = {
+      val path = getClass.getProtectionDomain().getCodeSource().getLocation().getPath();
+      val decodedPath = URLDecoder.decode(path, "UTF-8")
+      //debug("MY JAR path: " + decodedPath)
+
+      // In dev mode decoded path is:
+      // /home/kevinh/development/drone/droneapi-private/target/scala-2.10/classes/
+      // So we need to go up three dirs
+      val rootDir = new File(new File(decodedPath), "../../..")
+      new File(rootDir, "ardupilot/Tools/LogAnalyzer")
+    }
 
     val dir = if (ec2loc.exists)
       ec2loc
