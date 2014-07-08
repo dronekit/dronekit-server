@@ -29,6 +29,7 @@ import org.scalatra.swagger.StringResponseMessage
 import com.geeksville.apiproxy.APIConstants
 import org.json4s.Extraction
 import com.geeksville.json.GeeksvilleFormats
+import _root_.akka.pattern.ask
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -353,6 +354,17 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   /// Parameters but only with the sharable bits
   roField("parameters.share") { (o) =>
     genParams(o, false)
+  }
+
+  protected def staticMap =
+    (apiOperation[List[Mission]]("staticMap")
+      summary s"Get recent flights suitable for a global map view")
+
+  /// Provide the same information that would normally be returned in the initial atmosphere download (to allow non atmo clients to show maps)
+  get("/staticMap", operation(staticMap)) {
+    val space = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
+
+    new AsyncResult { val is = space ? SpaceSupervisor.GetInitialJSON(tryLogin()) }
   }
 
   private val addMissionInfo =

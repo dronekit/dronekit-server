@@ -17,6 +17,10 @@ import org.eclipse.jetty.io.EofException
 import org.scalatra.BadRequest
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JObject
+import akka.util.Timeout
+import scala.concurrent.duration._
+import org.scalatra.FutureSupport
+import com.geeksville.akka.MockAkka
 
 /**
  * For some strange reason the scalatra folks made their HaltException private.  If you want to throw an exception but include
@@ -27,7 +31,14 @@ case class WebException(val code: Int, msg: String) extends Exception(msg)
 /**
  * Mixin of my scalatra controller extensions
  */
-trait ControllerExtras extends ScalatraBase with Logging {
+trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
+
+  /// If any of our controllers use akka, default to a 30 second timeout before reporting fault to client
+  protected implicit val defaultTimeout = Timeout(30 seconds)
+
+  // Akka implicits for FutureSupport
+  lazy val system = MockAkka.system
+  protected implicit def executor = system.dispatcher
 
   /// Where was our app served up from?
   def uriBase = {

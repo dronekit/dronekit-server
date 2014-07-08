@@ -27,12 +27,7 @@ import com.github.aselab.activerecord.dsl._
 /**
  * Special admin operations
  */
-class AdminController(implicit val swagger: Swagger) extends DroneHubStack with FutureSupport with CorsSupport with AtmosphereSupport with SwaggerSupport {
-
-  // Akka implicits for FutureSupport
-  lazy val system = MockAkka.system
-  protected implicit def executor = system.dispatcher
-  protected implicit val timeout = Timeout(30 seconds)
+class AdminController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with AtmosphereSupport with SwaggerSupport {
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/admin")
@@ -115,11 +110,11 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
   }
 
   get("/debugInfo", operation(apiOperation[String]("akka") summary "akka debugging information")) {
-    implicit val timeout = Timeout(5 seconds)
+    val timeout = Timeout(5 seconds)
 
     akkaReflect ! AkkaReflector.PollMsg
     Thread.sleep(5000) // Super hackish way to give 5 secs for actors to reply with their ids
 
-    akkaReflect ? AkkaReflector.GetHtmlMsg
+    akkaReflect ? (AkkaReflector.GetHtmlMsg, timeout)
   }
 }

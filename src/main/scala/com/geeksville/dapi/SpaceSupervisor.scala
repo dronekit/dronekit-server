@@ -38,6 +38,7 @@ import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ScalatraTools
 import com.geeksville.dapi.model.User
+import com.geeksville.util.AnalyticsService
 
 /// for json encoding
 private case class Attitude(roll: Double, pitch: Double, yaw: Double)
@@ -255,6 +256,33 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     }
   }
 
+  private def getInitialJSON(user: Option[User]) = {
+    log.info(s"Getting initial JSON $user")
+
+    // BEFORE sending other starts the client expects any "user" flight to be sent
+    // Also send the most recent flight for this user (if possible)
+    val latestFlight = user.flatMap(_.newestMission)
+    val usersJson = latestFlight.map { mission =>
+      log.debug(s"Send user's flight $mission")
+
+      // FIXME this copypasta is nasty
+      val o = SpaceEnvelope(mission.id, Option(mission))
+      Extraction.decompose(o)
+    }
+
+    log.debug(s"Getting ${allMissions.size} old missions in initial JSON")
+    val othersJson = allMissions.flatMap { info =>
+      //log.debug(s"Resending from $info")
+      info.updates.map { u =>
+        //log.debug(s"Resending $u")
+        u.payload
+      }
+    }
+
+    val all = usersJson.toList ++ othersJson
+    JObject("missions" -> JArray(all))
+  }
+
   def receive = {
 
     //
@@ -266,7 +294,17 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
         handleSendAll(dest, user)
       } catch {
         case ex: Exception =>
-          log.error(s"Failed sending old atmosphere messages to $dest due to $ex")
+          AnalyticsService.reportException(s"Failed sending old atmosphere messages to $dest", ex)
+      }
+
+    case GetInitialJSON(user) =>
+      try {
+        val r = getInitialJSON(user)
+        log.debug(s"Initial JSON is $r")
+        sender ! r
+      } catch {
+        case ex: Exception =>
+          AnalyticsService.reportException(s"Failed sending old atmosphere messages to $user", ex)
       }
 
     //
@@ -337,6 +375,9 @@ object SpaceSupervisor {
 
   /// Resend any old messages to this new client
   case class SendToAtmosphereMessage(dest: AtmosphereLive, user: Option[User])
+
+  /// Return the initial JSON that shows the entire contents of space (used for non atomosphere based map views)
+  case class GetInitialJSON(user: Option[User])
 
   // Most space notifications come due to subscribing to particlar live vehicles
   // However, if someone manually uploads a tlog via the REST api, we want to consider that

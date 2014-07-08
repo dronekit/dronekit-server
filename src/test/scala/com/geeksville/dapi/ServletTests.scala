@@ -139,4 +139,7 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
     println(jsonGet("/api/v1/mission"))
   }
 
+  test("mission space download") {
+    println(jsonGet("/api/v1/mission/staticMap"))
+  }
 }
