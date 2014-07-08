@@ -39,6 +39,7 @@ import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ScalatraTools
 import com.geeksville.dapi.model.User
 import com.geeksville.util.AnalyticsService
+import com.geeksville.util.ThreadTools._
 
 /// for json encoding
 private case class Attitude(roll: Double, pitch: Double, yaw: Double)
@@ -249,38 +250,51 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     log.debug(s"Sending ${allMissions.size} old missions to atmosphere client")
     allMissions.foreach { info =>
       //log.debug(s"Resending from $info")
-      info.updates.foreach { u =>
-        //log.debug(s"Resending $u")
-        AtmosphereTools.sendTo(dest, u.typ, u.payload)
+      catchIgnore {
+        info.updates.foreach { u =>
+          //log.debug(s"Resending $u")
+          AtmosphereTools.sendTo(dest, u.typ, u.payload)
+        }
       }
     }
   }
 
   private def getInitialJSON(user: Option[User]) = {
-    log.info(s"Getting initial JSON $user")
+    val all = try {
+      log.info(s"Getting initial JSON $user")
 
-    // BEFORE sending other starts the client expects any "user" flight to be sent
-    // Also send the most recent flight for this user (if possible)
-    val latestFlight = user.flatMap(_.newestMission)
-    val usersJson = latestFlight.map { mission =>
-      log.debug(s"Send user's flight $mission")
+      // BEFORE sending other starts the client expects any "user" flight to be sent
+      // Also send the most recent flight for this user (if possible)
+      val latestFlight = user.flatMap(_.newestMission)
+      val usersJson = latestFlight.map { mission =>
+        log.debug(s"Send user's flight $mission")
 
-      // FIXME this copypasta is nasty
-      val o = SpaceEnvelope(mission.id, Option(mission))
-      Extraction.decompose(o)
-    }
-
-    log.debug(s"Getting ${allMissions.size} old missions in initial JSON")
-    val othersJson = allMissions.flatMap { info =>
-      //log.debug(s"Resending from $info")
-      info.updates.map { u =>
-        //log.debug(s"Resending $u")
-        u.payload
+        // FIXME this copypasta is nasty
+        val o = SpaceEnvelope(mission.id, Option(mission))
+        Extraction.decompose(o)
       }
+
+      log.debug(s"Getting ${allMissions.size} old missions in initial JSON")
+      val othersJson = allMissions.flatMap { info =>
+        log.debug(s"Resending from $info")
+
+        // We might throw while parsing these - return what we can
+        catchOrElse(Iterable.empty: Iterable[JValue]) {
+          info.updates.map { u =>
+            log.debug(s"Resending $u")
+            u.payload
+          }
+        }
+      }
+
+      usersJson.toList ++ othersJson
+    } catch {
+      case ex: Exception =>
+        AnalyticsService.reportException(s"Failed sending old atmosphere messages to $user", ex)
+        List.empty
     }
 
-    val all = usersJson.toList ++ othersJson
-    JObject("missions" -> JArray(all))
+    JObject("updates" -> JArray(all))
   }
 
   def receive = {
@@ -298,14 +312,9 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       }
 
     case GetInitialJSON(user) =>
-      try {
-        val r = getInitialJSON(user)
-        log.debug(s"Initial JSON is $r")
-        sender ! r
-      } catch {
-        case ex: Exception =>
-          AnalyticsService.reportException(s"Failed sending old atmosphere messages to $user", ex)
-      }
+      val r = getInitialJSON(user)
+      log.debug(s"Initial JSON is $r")
+      sender ! r
 
     //
     // Messages from LiveVehicleActors appear below
