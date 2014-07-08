@@ -14,7 +14,7 @@ import com.geeksville.threescale.ThreeActor
 import scala.collection.JavaConverters._
 import java.util.concurrent.TimeoutException
 import com.newrelic.api.agent.NewRelic
-import com.geeksville.threescale.WhitelistApp
+import com.geeksville.threescale.WhitelistStrict
 import com.geeksville.util.AnalyticsService
 import com.geeksville.threescale.WhitelistOkay
 
@@ -40,9 +40,10 @@ object ThreescaleSupport {
       None
 
     val whitelist = Seq(
-      WhitelistApp("eb34bd67.megadroneshare",
+      // Don't let anyone but us (or dev on local machine use the mds key)
+      WhitelistStrict("eb34bd67.megadroneshare",
         // We make local users (devs test-driving the app) use the full threescale
-        // "http://localhost:9099",
+        "http://localhost:9099",
         "http://alpha.droneshare.com/",
         "http://beta.droneshare.com/",
         "http://www.droneshare.com/"),
@@ -102,11 +103,10 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
     // FIXME include a better URL for developer site
     val req = AuthRequest(key, service, referer, metrics)
 
-    implicit val timeout = Timeout(5 seconds)
     val future = ask(threeActor, req).mapTo[AuthorizeResponse]
 
     try {
-      val result = Await.result(future, timeout.duration)
+      val result = Await.result(future, defaultTimeout.duration)
 
       // FIXME - if threescale is too slow show an error msg in logs and just let the user go
       if (!result.success) {
