@@ -13,11 +13,19 @@ import com.geeksville.flight.HasSummaryStats
 import java.io.OutputStream
 import com.geeksville.flight.IGCWriter
 import com.geeksville.util.Using
+import com.geeksville.mavlink.TimestampedAbstractMessage
+import com.geeksville.mavlink.AbstractMessage
 
 /**
  * These are common methods that must be support by all mission model files (tlog, dataflash log etc...)
  */
 trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryStats with ParametersReadOnlyModel with Logging {
+
+  // FIXME -unify with tlog messages
+  var abstractMessages: Seq[TimestampedAbstractMessage] = Seq.empty
+
+  /// A JSON readable string showing model type: TLOG, Dataflash
+  def modelType: String
 
   private def checkTime(date: Timestamp) = {
     val calendar = Calendar.getInstance

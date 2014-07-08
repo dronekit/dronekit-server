@@ -83,6 +83,8 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
     m.time -> modeToString(code)
   }
 
+  override def modelType = "TLOG"
+
   private def addPosition(raw: TimestampedMessage, l: Location) {
     if (l.lat != 0 && l.lon != 0) {
       positions.append(TimestampedLocation(raw.time, l))

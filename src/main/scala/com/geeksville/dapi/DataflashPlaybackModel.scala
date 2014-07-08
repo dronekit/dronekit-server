@@ -12,6 +12,7 @@ import com.geeksville.flight.Location
 import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.util.Date
+import com.geeksville.mavlink.TimestampedAbstractMessage
 
 class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   /// A MAV_TYPE vehicle code
@@ -41,6 +42,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
 
   def parameters = params.values
 
+  override def modelType = "Dataflash"
+
   private def loadMessages(messages: Iterator[DFMessage]) {
     import DFMessage._
 
@@ -56,7 +59,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
       }
     }
 
-    messages.foreach { m =>
+    debug(s"Decoding dataflash messages")
+    val msgIn = messages.toList // For some reason we can't just convert the map result below into a seq
+
+    abstractMessages = msgIn.map { m =>
       def dumpMessage() = debug(s"Considering $m")
 
       def updateTime(newUsec: Long) {
@@ -65,7 +71,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
         endOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
       }
 
-      m.typ match {
+      // dumpMessage()
+      m.messageType match {
         case TIME =>
           m.startTimeOpt.foreach { t =>
             updateTime(t)
@@ -175,6 +182,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
         case _ =>
         // Ignore
       }
+
+      TimestampedAbstractMessage(nowUsec, m)
     }
 
     // If we never found a GPS timestamp, just assume server time

@@ -34,7 +34,8 @@ import _root_.akka.pattern.ask
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
 // Helper class for generating json
-case class MessageJson(time: Long, msg: String)
+case class MessageJson(t: Long, typ: String, fld: List[(String, Any)])
+case class MessageHeader(modelType: String, messages: Seq[MessageJson])
 
 /// Atmosphere doesn't work in the test framework so we split it out
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
@@ -145,17 +146,22 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     r
   }
 
-  roField[Seq[MessageJson]]("messages.json") { (o) =>
+  roField[MessageHeader]("messages.json") { (o) =>
     applyMissionCache()
-    val m = getTLOGModel(o)
-    var msgs = m.messages
+    val m = getModel(o)
+    var msgs = m.abstractMessages
+
+    params.get("page_offset").foreach { numrecs =>
+      msgs = msgs.drop(numrecs.toInt)
+    }
 
     params.get("page_size").foreach { numrecs =>
       msgs = msgs.take(numrecs.toInt)
     }
 
     // FIXME - instead of passing msg content as string, it should be a json object
-    msgs.map { a => MessageJson(a.time, a.msg.toString) }
+    val json = msgs.map { a => MessageJson(a.time, a.msg.messageType, a.msg.fields.toList) }
+    MessageHeader(m.modelType, json)
   }
 
   private def getModel(o: Mission) = o.model.getOrElse(haltNotFound("no logs found"))
@@ -357,7 +363,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   protected def staticMap =
-    (apiOperation[List[Mission]]("staticMap")
+    (apiOperation[List[MissionJson]]("staticMap")
       summary s"Get recent flights suitable for a global map view")
 
   /// Provide the same information that would normally be returned in the initial atmosphere download (to allow non atmo clients to show maps)
