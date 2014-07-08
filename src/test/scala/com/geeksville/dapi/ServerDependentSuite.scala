@@ -48,7 +48,8 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   // Send this in all cases
   val commonHeaders = Map(
-    "Authorization" -> s"""DroneApi apikey="$apiKey"""")
+    "Authorization" -> s"""DroneApi apikey="$apiKey"""",
+    "Referer" -> "http://www.droneshare.com/") // Pretend to come from droneshare server
 
   val jsonHeaders = commonHeaders ++ Map(
     "Accept" -> "application/json",
