@@ -44,9 +44,9 @@ object ThreescaleSupport {
       WhitelistStrict("eb34bd67.megadroneshare",
         // We make local users (devs test-driving the app) use the full threescale
         "http://localhost:9099",
-        "http://alpha.droneshare.com/",
-        "http://beta.droneshare.com/",
-        "http://www.droneshare.com/"),
+        "http://alpha.droneshare.com",
+        "http://beta.droneshare.com",
+        "http://www.droneshare.com"),
       WhitelistOkay("eb34bd67.newrelic"))
     MockAkka.system.actorOf(Props(new ThreeActor(key, whitelist)))
   }
