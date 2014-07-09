@@ -418,7 +418,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
       if (login.isEmpty) {
         error("FIXME - temp hack to cope with buggy clients")
-        Thread.sleep(60 * 1000L)
+        //Thread.sleep(60 * 1000L)
         haltUnauthorized("Login can not be empty")
       }
 
