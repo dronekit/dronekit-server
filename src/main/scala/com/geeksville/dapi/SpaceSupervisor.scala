@@ -276,12 +276,12 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
       log.debug(s"Getting ${allMissions.size} old missions in initial JSON")
       val othersJson = allMissions.flatMap { info =>
-        log.debug(s"Resending from $info")
+        //log.debug(s"Resending from $info")
 
         // We might throw while parsing these - return what we can
         catchOrElse(Iterable.empty: Iterable[JValue]) {
           info.updates.map { u =>
-            log.debug(s"Resending $u")
+            //log.debug(s"Resending $u")
             u.payload
           }
         }
@@ -313,7 +313,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
     case GetInitialJSON(user) =>
       val r = getInitialJSON(user)
-      log.debug(s"Initial JSON is $r")
+      log.debug(s"Initial JSON sent")
       sender ! r
 
     //
