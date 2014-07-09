@@ -405,10 +405,10 @@ object ApiController extends Logging {
    */
   def isAccessAllowed(requiredIn: Int, isOwner: Boolean, isResearcher: Boolean, default: Int, isSharedLink: Boolean) = {
     val required = if (requiredIn == AccessCode.DEFAULT_VALUE) {
-      debug(s"Checking for access, default sharing so using ${AccessCode.valueOf(default)}")
+      //debug(s"Checking for access, default sharing so using ${AccessCode.valueOf(default)}")
       default
     } else {
-      debug(s"Checking for access, using ${AccessCode.valueOf(requiredIn)}")
+      //debug(s"Checking for access, using ${AccessCode.valueOf(requiredIn)}")
       requiredIn
     }
 

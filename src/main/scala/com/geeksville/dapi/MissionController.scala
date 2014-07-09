@@ -88,7 +88,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         None
     }
 
-    debug(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
+    //debug(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
     r
   }
 
