@@ -393,7 +393,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       """
       parameters (
         (new ModelParameterBuilder(DataType("file"))).description("log file as a standard html form upload POST").fromBody,
-        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added (the client should pick a stable UUID"),
+        pathParam[String]("vehicleUUID").description(s"UUID of vehicle to be have mission added (the client should pick a stable UUID)"),
         queryParam[String]("login").description(s"User login (used if not already logged-in via cookie)"),
         queryParam[String]("password").description(s"User password (used if not already logged-in via cookie)"),
         queryParam[String]("email").description(s"Email address (optional, used if user creation is required)").optional,
@@ -444,7 +444,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     if (v.userId.get != user.id)
       haltForbidden("Not your vehicle")
 
-    handleMissionUpload(v)
+    handleMissionUpload(v, privacy)
   }
 
   /// Allow web gui to update vehicle
