@@ -16,7 +16,7 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
   /**
    * @return response to client
    */
-  def handleMissionUpload(v: Vehicle) = {
+  def handleMissionUpload(v: Vehicle, privacy: AccessCode.EnumVal = AccessCode.DEFAULT) = {
     var errMsg: Option[String] = None
 
     // dumpRequest()
@@ -64,6 +64,8 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
           None
         } else {
           val m = v.createMission(payload, name, mimeType = mimeType)
+          m.viewPrivacy = privacy
+          m.save()
 
           if (!m.deleteIfUninteresting()) {
             // Make this new mission show up on the recent flights list

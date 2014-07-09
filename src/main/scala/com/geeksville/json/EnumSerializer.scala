@@ -9,13 +9,17 @@ import com.geeksville.dapi.AccessCode
 
 object EnumSerializer {
 
+  def stringToEnum[T <: Enum](typ: T, s: String) = {
+    println(s"Trying to decode $s into $typ")
+    val found = typ.values.find(_.name == s)
+    found.getOrElse(throw new Exception(s"Invalid $s not found in $typ"))
+  }
+
   def create[T <: Enum](typ: T)(implicit m: Manifest[typ.EnumVal]) = {
     class EnumSerializerImpl extends CustomSerializer[typ.EnumVal](format => (
       {
         case JString(s) =>
-          println(s"Trying to decode $s into $typ")
-          val found = typ.values.find(_.name == s)
-          found.getOrElse(throw new Exception(s"Invalid $s not found in $typ"))
+          stringToEnum(typ, s)
       },
       {
         case u: EnumLite =>

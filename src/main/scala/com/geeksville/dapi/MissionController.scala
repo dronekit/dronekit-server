@@ -30,6 +30,7 @@ import com.geeksville.apiproxy.APIConstants
 import org.json4s.Extraction
 import com.geeksville.json.GeeksvilleFormats
 import _root_.akka.pattern.ask
+import com.geeksville.json.EnumSerializer
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -397,7 +398,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         queryParam[String]("password").description(s"User password (used if not already logged-in via cookie)"),
         queryParam[String]("email").description(s"Email address (optional, used if user creation is required)").optional,
         queryParam[String]("fullName").description(s"User full name (optional, used if user creation is required)").optional,
-        queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required"))
+        queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required"),
+        queryParam[String]("privacy").description(s"The privacy setting for this flight (DEFAULT, PRIVATE, PUBLIC, SHARED, RESEARCHER)").optional)
         responseMessage (StringResponseMessage(200, """Success.  Payload will be a JSON array of mission objects.  
         		You probably want to show the user the viewURL for each file, but the other mission fields might also be interesting.""")))
 
@@ -405,6 +407,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   post("/upload/:vehicleUUID", operation(addMissionInfo)) {
     requireCreateAccess()
 
+    val privacy = EnumSerializer.stringToEnum(AccessCode, params.getOrElse("privacy", "DEFAULT"))
     val autoCreate = params.getOrElse("autoCreate", "false").toBoolean
     val user = tryLogin().getOrElse {
       if (!autoCreate)
@@ -427,7 +430,13 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       if (User.find(login).isDefined)
         haltUnauthorized("invalid password")
 
-      createUserAndWelcome(login, password, email, fullName)
+      val u = createUserAndWelcome(login, password, email, fullName)
+
+      // Set the user's default sharing perms based on how this flight was configured
+      u.defaultViewPrivacy = privacy
+      u.save()
+
+      u
     }
 
     val id = params("vehicleUUID")
