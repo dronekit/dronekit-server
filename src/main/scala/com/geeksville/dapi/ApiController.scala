@@ -267,7 +267,6 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     // We might need to do a series of queries if all the data is getting filtered by permissions
     // FIXME - probably better to add the filter rules to the sql expression
     do {
-      debug(s"Getting with offset=$offset, pagesize=$pagesize")
       val unfiltered = getAll(offset, pagesize)
 
       val filtered = unfiltered.flatMap { m =>
@@ -285,7 +284,8 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
 
       // If the user wanted a particular number of records and  we deleted some items we need to keep working
       needMore = numdesired.isDefined && (filtered.size < unfiltered.size)
-      debug(s"needMore=$needMore")
+      if (needMore)
+        debug(s"need extra read offset=$offset, pagesize=$pagesize")
 
       // Keep only what we need
       results ++= (if (numdesired.isDefined)

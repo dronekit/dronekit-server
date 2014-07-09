@@ -213,7 +213,7 @@ case class User(@Required @Unique login: String,
         d
       })
 
-    debug(s"Returning newest mission for user: $r")
+    // debug(s"Returning newest mission for user: $r")
     r
   }
 
