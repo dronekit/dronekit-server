@@ -58,7 +58,7 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
 
   /// A MAV_TYPE vehicle code
   var vehicleType: Option[Int] = None
-  var autopilotType: Option[Int] = None
+  private var heartbeatAutopilotType: Option[Int] = None
 
   var gcsType = "TBD"
 
@@ -68,6 +68,8 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   def waypoints = waypointOpt.flatten.toSeq
 
   val parameters = ArrayBuffer[ROParamValue]()
+
+  override def autopilotType = hardwareToAutopilotType.orElse(heartbeatAutopilotType)
 
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
@@ -118,7 +120,7 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
         // We don't care about the heartbeats from the GCS
         if (typ != MAV_TYPE.MAV_TYPE_GCS) {
           vehicleType = Some(typ)
-          autopilotType = Some(msg.autopilot)
+          heartbeatAutopilotType = Some(msg.autopilot)
           if (modeChangeMsgs.isEmpty || modeChangeMsgs.last.msg.asInstanceOf[msg_heartbeat].custom_mode != msg.custom_mode)
             modeChangeMsgs = modeChangeMsgs :+ raw
         }

@@ -24,14 +24,6 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
       case _ => None
     }
 
-  override def autopilotType: Option[Int] = hardwareString.flatMap { s =>
-    if (s.startsWith("APM"))
-      Some(MAV_AUTOPILOT.MAV_AUTOPILOT_ARDUPILOTMEGA)
-    else if (s.startsWith("PX4"))
-      Some(MAV_AUTOPILOT.MAV_AUTOPILOT_PIXHAWK)
-    else None
-  }
-
   val modeChanges: ArrayBuffer[(Long, String)] = ArrayBuffer.empty
 
   val positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
@@ -43,6 +35,9 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   def parameters = params.values
 
   override def modelType = "Dataflash"
+
+  // This is our only way of finding the autopilot type without heartbeat msgs
+  override def autopilotType = hardwareToAutopilotType
 
   private def loadMessages(messages: Iterator[DFMessage]) {
     import DFMessage._
