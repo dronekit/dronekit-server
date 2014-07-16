@@ -154,7 +154,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 11
+  val currentVersion = 12
 }
 
 /**
@@ -323,7 +323,7 @@ case class Mission(
     regenSummary() // Make sure we have a summary if we can
     summary.headOption match {
       case Some(s) =>
-        s.latitude != None && s.longitude != None
+        s.latitude != None && s.longitude != None && s.startTime != None && s.endTime != None
 
       case None =>
         false

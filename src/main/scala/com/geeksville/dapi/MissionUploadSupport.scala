@@ -73,7 +73,7 @@ trait MissionUploadSupport extends FileUploadSupport { self: ControllerExtras =>
             SpaceSupervisor.tellMission(space, m)
             Some(m)
           } else {
-            setErr("No location data was found in that log, ignoring")
+            setErr("Invalid location data was found in that log, ignoring")
             None
           }
         }

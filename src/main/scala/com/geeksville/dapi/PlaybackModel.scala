@@ -46,11 +46,12 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
     // There is a problem of some uploads containing crap time ranges.  If encountered don't allow the summary to be created at all
     val start = startTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
     val end = currentTime.flatMap { t => checkTime(new Timestamp(t / 1000)) }
-    warn(s"Creating NEW summary, start=$start, end=$end")
+    val duration = flightDuration
+    warn(s"Creating NEW summary, start=$start, end=$end, duration=$duration")
 
     MissionSummary(start,
       end,
-      maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, flightDuration,
+      maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, duration,
       endPosition.map(_.lat), endPosition.map(_.lon),
       parameters.size,
       softwareVersion = buildVersion, softwareGit = buildGit)
