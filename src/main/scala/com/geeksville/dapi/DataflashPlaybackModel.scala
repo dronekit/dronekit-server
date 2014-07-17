@@ -13,6 +13,8 @@ import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.util.Date
 import com.geeksville.mavlink.TimestampedAbstractMessage
+import java.io.InputStream
+import com.geeksville.util.Using._
 
 class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   /// A MAV_TYPE vehicle code
@@ -32,6 +34,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
 
   private val params = HashMap[String, ROParamValue]()
 
+  private var dfMessages: Iterable[DFMessage] = Iterable.empty
+
   def parameters = params.values
 
   override def modelType = "Dataflash"
@@ -39,7 +43,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   // This is our only way of finding the autopilot type without heartbeat msgs
   override def autopilotType = hardwareToAutopilotType
 
-  private def loadMessages(messages: Iterator[DFMessage]) {
+  /// The messages array can be _very_ large and is rarely used, so we reload it as needed by calling loadMessages
+  override def abstractMessages: Seq[TimestampedAbstractMessage] = loadMessages(dfMessages).toSeq
+
+  private def loadMessages(messages: Iterable[DFMessage]) = {
     import DFMessage._
 
     var baseUsec = defaultTime * 1000L
@@ -55,9 +62,12 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
     }
 
     debug(s"Decoding dataflash messages")
-    val msgIn = messages.toList // For some reason we can't just convert the map result below into a seq
+    // val msgIn = messages.toList // For some reason we can't just convert the map result below into a seq
+    // FIXME
 
-    abstractMessages = msgIn.map { m =>
+    // It is important to use a view here so we don't build up a HUGE list of asbtract message results
+    val abstractMsgs = messages.view.map { m =>
+
       def dumpMessage() = debug(s"Considering $m")
 
       def updateTime(newUsec: Long) {
@@ -183,10 +193,12 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
 
     // If we never found a GPS timestamp, just assume server time
     setStartOfFlight()
+
+    abstractMsgs
   }
 
   /**
-   * Load messages from a raw mavlink tlog file
+   * Load messages from a raw dflash file
    */
   private def loadBytes(bytes: Array[Byte], isTextFormat: Boolean) {
 
@@ -195,9 +207,25 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
     if (isTextFormat)
       reader.parseText(Source.fromRawBytes(bytes))
     else
-      reader.parseBinary(new ByteArrayInputStream(bytes))
+      reader.parseBinary(bytes)
     loadMessages(reader.messages)
   }
+
+  /**
+   * Load messages from a raw dflash file (we will close the input stream)
+   * (disabled until we support rewind on these streams)
+   * private def loadBytes(isin: InputStream, isTextFormat: Boolean) {
+   * using(isin) { is =>
+   * val reader = new DFReader
+   * warn(s"Parsing dataflash text=$isTextFormat")
+   * if (isTextFormat)
+   * reader.parseText(Source.fromInputStream(is))
+   * else
+   * reader.parseBinary(is)
+   * loadMessages(reader.messages)
+   * }
+   * }
+   */
 }
 
 object DataflashPlaybackModel {
@@ -210,4 +238,10 @@ object DataflashPlaybackModel {
     model
   }
 
+  /*
+  def fromInputStream(b: InputStream, isTextFormat: Boolean, defaultTime: Long = System.currentTimeMillis) = {
+    val model = new DataflashPlaybackModel(defaultTime)
+    model.loadBytes(b, isTextFormat)
+    model
+  } */
 }

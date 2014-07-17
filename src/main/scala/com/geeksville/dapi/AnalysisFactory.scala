@@ -53,7 +53,7 @@ class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
   private def binToText() = {
     val reader = new DFReader
     warn(s"Converting .bin to .log")
-    val messages = reader.parseBinary(new ByteArrayInputStream(bytes))
+    val messages = reader.parseBinary(bytes)
 
     // Return our messages as valid log lines through a piped inputstream
     val ins = new PipedInputStream()

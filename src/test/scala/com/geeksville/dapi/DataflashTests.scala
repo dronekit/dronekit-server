@@ -58,15 +58,7 @@ class DataflashTests /* (disabled: Boolean) */ extends ServerDependentSuite {
     val email = s"kevin+$login@3drobotics.com"
 
     val params = Map("login" -> login) + ("password" -> password) + ("autoCreate" -> "true") + ("email" -> email) + ("fullName" -> fullName)
-    testEasyUpload(params, px4Payload)
-  }
-
-  // A test Px4 native file
-  def px4Payload = {
-    val mime = APIConstants.blogMimeType
-    val is = new BufferedInputStream(new FileInputStream("/home/kevinh/tmp/px4.bin"))
-    val bytes = FileTools.toByteArray(is)
-    BytesPart("px4.bin", bytes, mime)
+    testEasyUpload(params, ServerDependentSuite.filesystemBlog("/home/kevinh/tmp/px4.bin"))
   }
 
   test("mission get one") {

@@ -26,6 +26,8 @@ import java.util.UUID
 import com.geeksville.apiproxy.APIConstants
 import com.geeksville.util.ThreadTools
 import com.geeksville.util.FileTools
+import java.io.BufferedInputStream
+import java.io.FileInputStream
 
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
@@ -131,10 +133,19 @@ object ServerDependentSuite {
   lazy val logPayload = readLog("test.log", APIConstants.flogMimeType)
   lazy val blogPayload = readLog("test.bin", APIConstants.blogMimeType)
 
+  // From resources
   def readLog(name: String, mime: String) = {
     val is = getClass.getResourceAsStream(name)
     val bytes = FileTools.toByteArray(is)
     is.close()
     BytesPart(name, bytes, mime)
+  }
+
+  // A blog file on the filesystem
+  def filesystemBlog(path: String) = {
+    val mime = APIConstants.blogMimeType
+    val is = new BufferedInputStream(new FileInputStream(path))
+    val bytes = FileTools.toByteArray(is)
+    BytesPart("px4.bin", bytes, mime)
   }
 }
