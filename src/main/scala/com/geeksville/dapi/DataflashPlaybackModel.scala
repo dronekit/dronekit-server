@@ -46,20 +46,21 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   /// The messages array can be _very_ large and is rarely used, so we reload it as needed by calling loadMessages
   override def abstractMessages: Seq[TimestampedAbstractMessage] = loadMessages(dfMessages).toSeq
 
+  // FIXME - these should be hidden inside the loadMessages closure
+  private var baseUsec = defaultTime * 1000L
+  private var gpsOffsetUsec = 0L
+  def nowUsec = gpsOffsetUsec + baseUsec
+
+  private def setStartOfFlight(nowUsec: Long) {
+    if (!startTime.isDefined) {
+      warn(s"Setting start to $nowUsec / " + (new Date(nowUsec / 1000)))
+      startTime = Some(nowUsec)
+      startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
+    }
+  }
+
   private def loadMessages(messages: Iterable[DFMessage]) = {
     import DFMessage._
-
-    var baseUsec = defaultTime * 1000L
-    var gpsOffsetUsec = 0L
-    def nowUsec = gpsOffsetUsec + baseUsec
-
-    def setStartOfFlight() {
-      if (!startTime.isDefined) {
-        warn(s"Setting start to $nowUsec / " + (new Date(nowUsec / 1000)))
-        startTime = Some(nowUsec)
-        startOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
-      }
-    }
 
     debug(s"Decoding dataflash messages")
     // val msgIn = messages.toList // For some reason we can't just convert the map result below into a seq
@@ -91,7 +92,7 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
             // If this GPS msg included a msec timestamp update our offset
             m.tOpt.foreach { ms => updateTime(ms * 1000) }
             gpsOffsetUsec = t - baseUsec
-            setStartOfFlight()
+            setStartOfFlight(nowUsec)
           }
 
           for {
@@ -191,9 +192,6 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
       TimestampedAbstractMessage(nowUsec, m)
     }
 
-    // If we never found a GPS timestamp, just assume server time
-    setStartOfFlight()
-
     abstractMsgs
   }
 
@@ -208,7 +206,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
       reader.parseText(Source.fromRawBytes(bytes))
     else
       reader.parseBinary(bytes)
-    loadMessages(reader.messages)
+    loadMessages(reader.messages).foreach { m => } // FIXME - crufty way to make sure we walk through all msgs
+
+    // If we never found a GPS timestamp, just assume server time
+    setStartOfFlight(nowUsec)
   }
 
   /**

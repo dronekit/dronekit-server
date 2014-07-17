@@ -24,7 +24,7 @@ class PlaybackModelTests extends FunSuite with Logging with GivenWhenThen {
     t.toIGC(out)
   }
 
-  test("px4 read") {
+  ignore("px4 read") {
     val path = "/home/kevinh/tmp/lorenz-fail.bin"
     val is = new BufferedInputStream(new FileInputStream(path))
     val bytes = ServerDependentSuite.filesystemBlog(path)
