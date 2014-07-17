@@ -88,8 +88,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
             lat <- m.latOpt
             lon <- m.lngOpt
           } yield {
-            if (lat != 0.0 && lon != 0.0 && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0) {
-              val loc = Location(lat, lon, m.altOpt)
+            val loc = Location(lat, lon, m.altOpt)
+            if (loc.isValid) {
               m.altOpt.foreach { a =>
                 maxAltitude = math.max(maxAltitude, a)
               }

@@ -88,7 +88,7 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   override def modelType = "TLOG"
 
   private def addPosition(raw: TimestampedMessage, l: Location) {
-    if (l.lat != 0 && l.lon != 0) {
+    if (l.isValid) {
       positions.append(TimestampedLocation(raw.time, l))
       l.alt.foreach { a => maxAltitude = math.max(maxAltitude, a) }
     }
