@@ -42,8 +42,7 @@ object ThreescaleSupport {
     val whitelist = Seq(
       // Don't let anyone but us (or dev on local machine use the mds key)
       WhitelistStrict("eb34bd67.megadroneshare",
-        // We make local users (devs test-driving the app) use the full threescale
-        "http://localhost:9099",
+        "http://localhost",
         "http://alpha.droneshare.com",
         "http://beta.droneshare.com",
         "http://www.droneshare.com"),
