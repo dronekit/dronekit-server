@@ -76,7 +76,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
   //val maxLiveMissions = 20
 
   // How many recent missions should we keep
-  val maxStoppedMissions = 20
+  val maxStoppedMissions = 50
 
   /// We keep the last N messages from each vehicle (for reply to new clients)
   /// 20 is too many - it swamps slow web app startup - perhaps we can revisit once FE has been optimized
