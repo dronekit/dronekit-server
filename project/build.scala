@@ -85,6 +85,8 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
 
+        "com.nulab-inc" %% "scala-oauth2-core" % "0.7.2",
+
         "xml-apis" % "xml-apis" % "2.0.2", // Needed to fix old dependency in xom (used by 3scale)
 
         // scala-activerecord support
@@ -115,7 +117,7 @@ object NestorBuild extends Build {
         "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
 
         "org.apache.httpcomponents" % "httpclient" % "4.2",
-        "org.apache.httpcomponents" % "httpmime" % "4.2",        
+        "org.apache.httpcomponents" % "httpmime" % "4.2",
         //"org.apache.httpcomponents" % "httpcore" % "4.2.6",
         //"com.amazonaws" % "aws-java-sdk" % "1.7.5" exclude ("org.apache.httpcomponents", "httpclient"),
         "com.amazonaws" % "aws-java-sdk" % "1.7.5",
