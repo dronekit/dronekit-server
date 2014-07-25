@@ -17,6 +17,8 @@ import org.json4s.Extraction
 import org.json4s.JsonAST.JValue
 import grizzled.slf4j.Logging
 
+case class LogicalBoolean(colName: String, opcode: String, cmpValue: String)
+
 /**
  * A base class for REST endpoints that contain various fields
  *
@@ -308,10 +310,19 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   final protected def getAll(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None): Iterable[T] = {
     val offset = pageOffset.orElse(params.get("page_offset").map(_.toInt))
     val pagesize = pagesizeOpt.orElse(params.get("page_size").map(_.toInt))
-    getWithQuery(offset, pagesize, params.get("order_by"), params.get("order_dir"))
+
+    val fieldPrefix = "field_"
+    val filters = params.filterKeys(_.startsWith(fieldPrefix)).map {
+      case (k, v) =>
+        LogicalBoolean(k.substring(fieldPrefix.length), "EQ", v)
+    }
+    getWithQuery(offset, pagesize, params.get("order_by"), params.get("order_dir"), filters)
   }
 
-  protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None, orderBy: Option[String] = None, orderDir: Option[String] = None): Iterable[T] = {
+  protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None,
+    orderBy: Option[String] = None,
+    orderDir: Option[String] = None,
+    whereExp: Iterable[LogicalBoolean] = Iterable.empty): Iterable[T] = {
     haltMethodNotAllowed("This endpoint does not support this operation")
   }
 

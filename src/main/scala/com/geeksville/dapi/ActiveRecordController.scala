@@ -36,10 +36,25 @@ class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger
     }).getOrElse(haltNotFound("object or parameter not found"))
   }
 
-  /// Use activerecord methods to find our records
-  final override protected def getWithQuery(pageOffset: Option[Int] = None, pagesizeOpt: Option[Int] = None, orderBy: Option[String] = None, orderDir: Option[String] = None) = {
+  /**
+   * Use activerecord methods to find our records
+   *
+   *  @param whereExp, tuples of the form (fieldname, opcode, value)
+   */
+  final override protected def getWithQuery(pageOffset: Option[Int] = None,
+    pagesizeOpt: Option[Int] = None,
+    orderBy: Option[String] = None,
+    orderDir: Option[String] = None,
+    whereExp: Iterable[LogicalBoolean] = Iterable.empty) = {
     try {
       var r = getFiltered
+
+      // FIXME - use the where expression more correctly
+      if (!whereExp.isEmpty) {
+        debug("Applying filter expressions: " + whereExp.mkString(", "))
+        val eqFilters = whereExp.map { l => (l.colName, l.cmpValue) }.toSeq
+        r = r.findAllBy(eqFilters.head, eqFilters.tail: _*)
+      }
 
       // Apply ordering
       for {
