@@ -52,4 +52,15 @@
   <listener>
     <listener-class>org.scalatra.servlet.ScalatraListener</listener-class>
   </listener>
+  
+  <servlet>
+    <servlet-name>GDatasourceServlet</servlet-name>
+    <description>Datasource provider</description>
+    <servlet-class>com.geeksville.gdatasource.GDatasourceServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>GDatasourceServlet</servlet-name>
+    <url-pattern>/datasource</url-pattern>
+  </servlet-mapping>
 </web-app>

@@ -85,6 +85,10 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
 
+        // Needed for our google datasource publishing
+        "com.google.visualization" % "visualization-datasource" % "1.1.1" withSources (),
+        "com.ibm.icu" % "icu4j" % "4.0.1",
+
         "com.nulab-inc" %% "scala-oauth2-core" % "0.7.2",
 
         "xml-apis" % "xml-apis" % "2.0.2", // Needed to fix old dependency in xom (used by 3scale)
