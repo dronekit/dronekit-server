@@ -88,7 +88,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   }
 
   private lazy val loginOp = (
-    apiOperation[User]("login") summary "POST your login parameters to this URL"
+    apiOperation[UserJson]("login") summary "POST your login parameters to this URL"
     parameters (
       formParam[String]("login").description("The loginName for the account"),
       formParam[String]("password").description("The password for the account"))
@@ -151,7 +151,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     u.confirmVerificationCode(token)
   }
 
-  private lazy val userOp = (apiOperation[User]("user")
+  private lazy val userOp = (apiOperation[UserJson]("user")
     summary "Return the user object"
     responseMessages (
       StringResponseMessage(401, "if user is not logged in")))
