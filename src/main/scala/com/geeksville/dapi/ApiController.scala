@@ -24,8 +24,9 @@ case class LogicalBoolean(colName: String, opcode: String, cmpValue: String)
  *
  * Subclasses can call roField etc... to specify handlers for particular operations
  * T is the primary type
+ * JsonT is the type used when serializing as JSON over the wire (might be different)
  */
-class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with CorsSupport with SwaggerSupport {
+class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aName: String, val swagger: Swagger, val companion: CRUDOperations[T]) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
   // This override is necessary for the swagger docgen to make correct paths
   override protected val applicationName = Some("api/v1/" + aName)
@@ -241,7 +242,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   protected def getOp =
-    (apiOperation[List[T]]("get")
+    (apiOperation[List[JsonT]]("get")
       summary s"Show all $aNames"
       notes s"Shows all the $aNames. You can search it too."
       parameters (
@@ -327,7 +328,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
   }
 
   private lazy val findByIdOp =
-    (apiOperation[T]("findById")
+    (apiOperation[JsonT]("findById")
       summary "Find by id"
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be fetched")))
@@ -371,7 +372,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     (apiOperation[String]("createById")
       summary "Create by id"
       parameters (
-        bodyParam[T],
+        bodyParam[JsonT],
         pathParam[String]("id").description(s"Id of $aName that needs to be created")))
 
   post("/:id", operation(createByIdOp)) {
@@ -382,7 +383,7 @@ class ApiController[T <: Product: Manifest](val aName: String, val swagger: Swag
     (apiOperation[String]("uodateById")
       summary "Update by id"
       parameters (
-        bodyParam[T],
+        bodyParam[JsonT],
         pathParam[String]("id").description(s"Id of $aName that needs to be updated")))
 
   put("/:id", operation(updateByIdOp)) {

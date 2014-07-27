@@ -15,7 +15,7 @@ import com.geeksville.dapi.model.Vehicle
 import com.geeksville.dapi.model.VehicleSerializer
 import java.util.UUID
 
-class UserController(implicit swagger: Swagger) extends ActiveRecordController[User]("user", swagger, User) {
+class UserController(implicit swagger: Swagger) extends ActiveRecordController[User, UserJson]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
 
   /**

@@ -8,19 +8,20 @@ import com.geeksville.json.ActiveRecordSerializer
 import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.model.DapiRecordCompanion
 import com.github.aselab.activerecord.ActiveRecordException
+import org.json4s.JsonAST.JValue
 
 /**
  * A controller that assumes the backing object comes from ActiveRecord (allows easy field finding)
  */
-class ActiveRecordController[T <: ActiveRecord: Manifest](aName: String, swagger: Swagger, protected val myCompanion: DapiRecordCompanion[T])
-  extends ApiController[T](aName, swagger, myCompanion) {
+class ActiveRecordController[T <: ActiveRecord: Manifest, JsonT <: Product: Manifest](aName: String, swagger: Swagger, protected val myCompanion: DapiRecordCompanion[T])
+  extends ApiController[T, JsonT](aName, swagger, myCompanion) {
 
   /// Fields we never want to share with clients
   /// FIXME - add annotations for this?
   def blacklist = Set[String]()
 
   private val findParamOp =
-    (apiOperation[T]("getParam")
+    (apiOperation[JValue]("getParam") // FIXME - this is not correct - the type should depend on the type of the a param itself
       summary "Get a parameter from an object"
       parameters (
         pathParam[String]("id").description(s"Id of $aName that needs to be fetched"),

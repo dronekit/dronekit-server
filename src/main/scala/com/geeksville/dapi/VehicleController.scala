@@ -19,7 +19,7 @@ import com.geeksville.apiproxy.APIConstants
 
 /// FIXME - we don't want v controller to inherit from activerecordcontroller - instead it should talk to actors to get live state
 @MultipartConfig(maxFileSize = 1024 * 1024)
-class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle]("vehicle", swagger, Vehicle) with MissionUploadSupport {
+class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle, VehicleJson]("vehicle", swagger, Vehicle) with MissionUploadSupport {
 
   override implicit val jsonFormats: Formats = super.jsonFormats + new VehicleSerializer(true)
 

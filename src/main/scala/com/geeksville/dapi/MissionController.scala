@@ -61,7 +61,7 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
   }
 }
 
-class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission]("mission", swagger, Mission) with MissionUploadSupport {
+class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission, MissionJson]("mission", swagger, Mission) with MissionUploadSupport {
 
   private def missionUserId(o: Mission) = for {
     v <- o.vehicle
