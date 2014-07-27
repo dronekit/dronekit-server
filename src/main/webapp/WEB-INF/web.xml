@@ -61,6 +61,6 @@
 
   <servlet-mapping>
     <servlet-name>GDatasourceServlet</servlet-name>
-    <url-pattern>/datasource</url-pattern>
+    <url-pattern>/api/v1/datasource</url-pattern>
   </servlet-mapping>
 </web-app>
