@@ -85,9 +85,3 @@ trait OAuthSupport extends ScalatraServlet with ControllerExtras {
   }
 }
 
-class ScalatraOAuth2Controller[U](createHandler: () => DataHandler[U]) extends OAuthSupport {
-  post("/access_token") {
-    issueAccessToken(createHandler())
-  }
-
-}

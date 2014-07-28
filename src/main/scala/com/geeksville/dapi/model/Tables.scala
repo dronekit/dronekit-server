@@ -12,6 +12,7 @@ object Tables extends ActiveRecordTables with ScalatraSupport {
   val missions = table[Mission]
   val missionSummaries = table[MissionSummary]
   val users = table[User]
+  val tokens = table[DBToken]
 
   override def loadConfig(config: Map[String, Any]) = new DefaultConfig(overrideSettings = config) {
     override def cleanup = {

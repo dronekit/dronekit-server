@@ -20,6 +20,43 @@ import com.geeksville.util.MD5Tools
 import com.geeksville.scalatra.WebException
 import java.sql.Timestamp
 
+/**
+ * Owned by a user - currently active access tokens
+ *
+ * @param clientId the appid for the requesting app
+ */
+case class DBToken(@Required @Unique accessToken: UUID, @Unique refreshToken: Option[UUID],
+  clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord {
+  /**
+   * What vehicle made me?
+   */
+  lazy val user = belongsTo[User]
+  val userId: Option[Long] = None
+}
+
+object DBToken extends DapiRecordCompanion[DBToken] {
+  // A 1 hr lease for now...
+  val leaseTime = 1000L * 60 * 60
+
+  def create(clientId: String) = {
+    val expire = new Timestamp(System.currentTimeMillis + leaseTime)
+    val token = DBToken(UUID.randomUUID(), Some(UUID.randomUUID()), clientId, None, Some(expire))
+    token.create
+    token
+  }
+
+  def findByAccessToken(token: String) = {
+    try {
+      val t = UUID.fromString(token)
+      DBToken.where(_.accessToken === t).headOption
+    } catch {
+      case ex: IllegalArgumentException =>
+        error(s"Malformed access token UUID: $token")
+        None
+    }
+  }
+}
+
 case class User(@Required @Unique login: String,
   @Unique var email: Option[String] = None, var fullName: Option[String] = None) extends DapiRecord with Logging {
   /**
@@ -29,6 +66,8 @@ case class User(@Required @Unique login: String,
   @Transient
   @Length(min = 0, max = 40)
   var password: String = _
+
+  lazy val tokens = hasMany[DBToken]
 
   /**
    * A hashed password or "invalid" if we want this password to never match
@@ -158,6 +197,15 @@ case class User(@Required @Unique login: String,
     passwordResetToken = None
     passwordResetDate = None
     save()
+  }
+
+  def createToken(clientId: String) = {
+    val token = DBToken.create(clientId)
+
+    token.user := this
+    token.save()
+    save()
+    token
   }
 
   override def beforeSave() {
@@ -319,5 +367,6 @@ object User extends DapiRecordCompanion[User] with Logging {
     debug(s"Created new user $u")
     u
   }
+
 }
 

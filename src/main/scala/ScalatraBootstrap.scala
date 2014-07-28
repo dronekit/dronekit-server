@@ -42,6 +42,7 @@ import scala.util.Failure
 import grizzled.slf4j.Logging
 import com.geeksville.dapi.NewRelicAnalyticsAdapter
 import akka.actor.ActorRef
+import com.geeksville.dapi.oauth.OAuthController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -76,6 +77,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Auth controller
     context.mount(new SessionsController, "/api/v1/auth/*")
+    context.mount(new OAuthController, "/api/v1/oauth/*")
 
     // API controllers
     context.mount(new UserController, "/api/v1/user/*")
