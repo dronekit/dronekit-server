@@ -21,6 +21,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import org.scalatra.FutureSupport
 import com.geeksville.akka.MockAkka
+import javax.servlet.http.HttpServletResponse
+import java.util.Date
 
 /**
  * For some strange reason the scalatra folks made their HaltException private.  If you want to throw an exception but include
@@ -51,6 +53,34 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
         request.getServerPort(), "")
 
     url.toURI
+  }
+
+  /**
+   * Used to prevent caching
+   */
+  def applyNoCache(implicit response: HttpServletResponse) {
+    val expire = new Date().toString
+
+    // This was an http 1.0 header
+    response.setHeader("Expires", expire)
+    response.setHeader("Last-Modified", expire)
+    response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+
+    // this was only for http 1.0 and only for requests, not responses
+    // response.addHeader("Pragma", "no-cache")
+  }
+
+  /**
+   * Used to prevent caching
+   */
+  def applyCache(numSecs: Int)(implicit response: HttpServletResponse) {
+    val now = new Date().toString
+    val expire = new Date(System.currentTimeMillis + numSecs * 1000).toString
+
+    // This was an http 1.0 header
+    response.setHeader("Expires", expire)
+    response.setHeader("Last-Modified", now)
+    response.setHeader("Cache-Control", s"private, max-age=$numSecs")
   }
 
   /// Is the user app running on something served from localhost?  If so, they are a developer - so turn off caching etc...

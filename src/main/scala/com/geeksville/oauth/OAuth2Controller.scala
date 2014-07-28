@@ -5,24 +5,47 @@ import org.scalatra.ScalatraServlet
 import com.geeksville.scalatra.ControllerExtras
 import scalaoauth2.provider.TokenEndpoint
 import scalaoauth2.provider.AuthorizationRequest
+import scalaoauth2.provider.GrantHandlerResult
+import org.json4s.CustomSerializer
+import org.json4s.JsonAST._
+import org.json4s.JsonDSL._
+import org.json4s._
+import scalaoauth2.provider.OAuthError
+import scalaoauth2.provider.AuthInfo
+import scalaoauth2.provider.ProtectedResource
+import org.scalatra.Ok
+import org.scalatra.ActionResult
+import scalaoauth2.provider.ProtectedResourceRequest
+import org.scalatra.BadRequest
+import org.scalatra.Unauthorized
 
-class ScalatraOAuth2Controller[U](createHandler: () => DataHandler[U]) extends ScalatraServlet with ControllerExtras {
-  post("/access_token") {
-    request
-    // issueAccessToken(createHandler())
+/**
+ * OAuth support for scalatra
+ */
+trait OAuthSupport extends ScalatraServlet with ControllerExtras {
+
+  // Convert to the format expected by the the auth lib
+  private def requestHeaders = request.headers.map { case (k, v) => k -> Seq(v) }.toMap
+  private def requestParams = request.parameters.map { case (k, v) => k -> Seq(v) }.toMap
+
+  def authRequest = AuthorizationRequest(requestHeaders, requestParams)
+  def protectedResourceRequest = ProtectedResourceRequest(requestHeaders, requestParams)
+
+  def responseAccessToken(r: GrantHandlerResult) = {
+
+    ("token_type" -> r.tokenType) ~
+      ("access_token" -> r.accessToken) ~
+      ("expires_in" -> r.expiresIn) ~
+      ("refresh_token" -> r.refreshToken) ~
+      ("scope" -> r.scope)
   }
 
-  def authRequest = {
-    val hdrs = request.headers.map { case (k, v) => k -> Seq(v) }.toMap
-    val params = request.parameters.map { case (k, v) => k -> Seq(v) }.toMap
-    AuthorizationRequest(hdrs, params)
+  // FIXME - use this to return error msgs to client
+  def responseOAuthErrorJson(e: OAuthError) = {
+    ("error" -> e.errorType) ~
+      ("error_description" -> e.description)
   }
 
-  /*
-    implicit def play2oauthRequest(request: RequestHeader): AuthorizationRequest = {
-    AuthorizationRequest(request.headers.toMap, request.queryString)
-  }
-    
   /**
    * Issue access token in DataHandler process and return the response to client.
    *
@@ -32,11 +55,39 @@ class ScalatraOAuth2Controller[U](createHandler: () => DataHandler[U]) extends S
    * @return Request is successful then return JSON to client in OAuth 2.0 format.
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
-  def issueAccessToken[A, U](dataHandler: DataHandler[U]): Result = {
-    TokenEndpoint.handleRequest(request, dataHandler) match {
-      case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-      case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e)).withHeaders(responseOAuthErrorHeader(e))
-      case Right(r) => Ok(Json.toJson(responseAccessToken(r))).withHeaders("Cache-Control" -> "no-store", "Pragma" -> "no-cache")
+  def issueAccessToken[A, U](dataHandler: DataHandler[U]): ActionResult = {
+    TokenEndpoint.handleRequest(authRequest, dataHandler) match {
+      case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e))
+      case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e))
+      case Right(r) =>
+        val token = responseAccessToken(r)
+        applyNoCache(response)
+        Ok(token)
     }
   }
-*/ }
+
+  /**
+   * Authorize to already created access token in DataHandler process and return the response to client.
+   *
+   * @param dataHandler Implemented DataHander for authenticate to your system.
+   * @param callback Callback is called when authentication is successful.
+   * @param request Playframework is provided HTTP request interface.
+   * @tparam A play.api.mvc.Request has type.
+   * @return Authentication is successful then the response use your API result.
+   *         Authentication is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
+   */
+  def authorize[A, U](dataHandler: DataHandler[U])(callback: AuthInfo[U] => ActionResult): ActionResult = {
+    ProtectedResource.handleRequest(protectedResourceRequest, dataHandler) match {
+      case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e))
+      case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e))
+      case Right(authInfo) => callback(authInfo)
+    }
+  }
+}
+
+class ScalatraOAuth2Controller[U](createHandler: () => DataHandler[U]) extends OAuthSupport {
+  post("/access_token") {
+    issueAccessToken(createHandler())
+  }
+
+}
