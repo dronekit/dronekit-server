@@ -30,7 +30,7 @@ import org.json4s.JsonDSL._
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class OAuthTests extends ServerDependentSuite {
+class OAuthTests(disabled: Boolean) extends ServerDependentSuite {
 
   // We want cookies for this test
   session {
