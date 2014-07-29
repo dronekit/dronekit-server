@@ -30,7 +30,7 @@ object MapboxClient {
     val lat = fmt.format(latIn)
     val lon = fmt.format(lonIn)
 
-    val mapBoxURL = s"http://api.tiles.mapbox.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
+    val mapBoxURL = s"http://mapbox-02278ec08110.my.apitools.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
 
     mapBoxURL
   }
