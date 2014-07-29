@@ -26,7 +26,10 @@ trait OAuthSupport extends ScalatraServlet with ControllerExtras {
 
   // Convert to the format expected by the the auth lib
   private def requestHeaders = request.headers.map { case (k, v) => k -> Seq(v) }.toMap
-  private def requestParams = request.parameters.map { case (k, v) => k -> Seq(v) }.toMap
+  private def requestParams = {
+    debug("params = " + request.queryString)
+    request.parameters.map { case (k, v) => k -> Seq(v) }.toMap
+  }
 
   def authRequest = AuthorizationRequest(requestHeaders, requestParams)
   def protectedResourceRequest = ProtectedResourceRequest(requestHeaders, requestParams)
@@ -56,7 +59,11 @@ trait OAuthSupport extends ScalatraServlet with ControllerExtras {
    *         Request is failed then return BadRequest or Unauthorized status to client with cause into the JSON.
    */
   def issueAccessToken[A, U](dataHandler: DataHandler[U]): ActionResult = {
-    TokenEndpoint.handleRequest(authRequest, dataHandler) match {
+    val req = authRequest
+    debug(s"issuingAccessToken: req=$req")
+    val r = TokenEndpoint.handleRequest(req, dataHandler)
+    debug(s"issue token result: $r")
+    r match {
       case Left(e) if e.statusCode == 400 => BadRequest(responseOAuthErrorJson(e))
       case Left(e) if e.statusCode == 401 => Unauthorized(responseOAuthErrorJson(e))
       case Right(r) =>

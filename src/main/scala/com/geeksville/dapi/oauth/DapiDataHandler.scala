@@ -24,7 +24,10 @@ class DapiDataHandler extends DataHandler[User] with Logging {
     AuthInfo(t.user, t.clientId, t.scope, redirectUri)
   }
 
-  def validateClient(clientId: String, clientSecret: String, grantType: String): Boolean = ???
+  def validateClient(clientId: String, clientSecret: String, grantType: String): Boolean = {
+    error(s"FIXME: implement validateClient id=$clientId, secret=$clientSecret, grantType=$grantType")
+    true
+  }
 
   def findUser(login: String, password: String): Option[User] = {
     User.findByLoginOrEmail(login).flatMap { user =>
@@ -39,10 +42,14 @@ class DapiDataHandler extends DataHandler[User] with Logging {
   }
 
   def createAccessToken(authInfo: AuthInfo[User]): AccessToken = {
+    warn(s"Creating access token for $authInfo")
     authInfo.user.createToken(authInfo.clientId)
   }
 
-  def getStoredAccessToken(authInfo: AuthInfo[User]): Option[AccessToken] = ???
+  def getStoredAccessToken(authInfo: AuthInfo[User]): Option[AccessToken] = {
+    warn(s"Getting access token for $authInfo")
+    authInfo.user.getToken(authInfo.clientId).map(toAccessToken)
+  }
 
   def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): AccessToken = ???
 

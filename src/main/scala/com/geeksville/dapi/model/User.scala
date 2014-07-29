@@ -208,6 +208,10 @@ case class User(@Required @Unique login: String,
     token
   }
 
+  def getToken(clientId: String) = {
+    tokens.where(_.clientId === clientId).headOption
+  }
+
   override def beforeSave() {
 
     if (password != null) {

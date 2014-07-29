@@ -20,6 +20,7 @@ import com.geeksville.scalatra.ScalatraTools
 import com.github.aselab.activerecord.RecordInvalidException
 import com.geeksville.dapi.Global
 import com.geeksville.dapi.MailTools
+import org.scalatra.Ok
 
 class SessionsController(implicit val swagger: Swagger) extends DroneHubStack with CorsSupport with SwaggerSupport {
 
@@ -183,11 +184,13 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   private def loginAndReturn(r: User) = {
     user = r // Mark the session that this user is logged in
     rememberMe.setCookie(user)
-    Extraction.decompose(r)(userJsonFormat)
+    Ok(Extraction.decompose(r)(userJsonFormat))
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in creating new objects
   post("/create", operation(createOp)) {
+
+    //debug("In auth/create")
 
     // Make sure this app is allowed to create users
     requireServiceAuth("user/create")
@@ -204,6 +207,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     }
 
     val r = createUserAndWelcome(id, u.password.get, u.email, u.fullName)
+    info(s"Created user: $r")
     loginAndReturn(r)
   }
 

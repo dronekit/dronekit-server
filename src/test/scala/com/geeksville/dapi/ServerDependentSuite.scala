@@ -28,6 +28,7 @@ import com.geeksville.util.ThreadTools
 import com.geeksville.util.FileTools
 import java.io.BufferedInputStream
 import java.io.FileInputStream
+import com.geeksville.dapi.oauth.OAuthController
 
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
@@ -74,6 +75,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     addServlet(new VehicleController, "/api/v1/vehicle/*")
     addServlet(new SharedMissionController, "/api/v1/mission/*")
     addServlet(new SessionsController, "/api/v1/auth/*")
+    addServlet(new OAuthController, "/api/v1/oauth/*")
   }
 
   override def afterAll() {
@@ -91,9 +93,26 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     }
   }
 
+  /// Post the req as JSON in the body
+  def jsonPost(uri: String, req: AnyRef) = {
+    post(uri, toJSON(req), headers = jsonHeaders) {
+      checkStatusOk()
+      parse(body)
+    }
+  }
+
+  /// Post the request as form params
+  def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String]) = {
+    post(uri, params, headers) {
+      checkStatusOk()
+      parse(body)
+    }
+  }
+
   def checkStatusOk() {
     if (status != 200) { // If not okay then show the error msg from server
-      error(response.statusLine.message)
+      error("Status not Ok: " + response.statusLine.message)
+      error("Error body: " + response.body)
     }
     status should equal(200)
   }
