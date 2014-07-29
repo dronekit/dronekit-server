@@ -18,15 +18,6 @@ import java.util.UUID
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User, UserJson]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
 
-  /**
-   * Until a compelling use-case can be made we only allow admins to list all users
-   */
-  protected override def requireReadAllAccess() = {
-    requireAdmin()
-
-    super.requireReadAllAccess()
-  }
-
   override protected def requireWriteAccess(o: User) = {
     requireBeOwnerOrAdmin(o.id)
     super.requireWriteAccess(o)
