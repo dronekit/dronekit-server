@@ -315,8 +315,8 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
           ("profileURL" -> u.profileURL) ~
           ("emailVerified" -> u.emailVerified) ~
           ("needNewPassword" -> u.needNewPassword) ~
-          ("defaultViewPrivacy" -> u.defaultViewPrivacy) ~ // FIXME - should instead use AccessCode and just a json object
-          ("defaultControlPrivacy" -> u.defaultControlPrivacy) ~
+          ("defaultViewPrivacy" -> AccessCode.valueOf(u.defaultViewPrivacy).toString) ~
+          ("defaultControlPrivacy" -> AccessCode.valueOf(u.defaultControlPrivacy).toString) ~
           ("vehicles" -> vehicles)
 
         val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
