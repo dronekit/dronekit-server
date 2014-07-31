@@ -48,8 +48,13 @@ class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
     (new File(dir, "LogAnalyzer.py")).toString
   }
 
-  val toolArgs = "-q -s -x - -" // quiet, xml to std out, read from stdin
+  def toolArgs = {
+    val fmt = if (isText) "log" else "bin"
 
+    s"-q -f $fmt -s -x - -" // quiet, xml to std out, read from stdin
+  }
+
+  // No longer used - the tool now understands bin files
   private def binToText() = {
     val reader = new DFReader
     warn(s"Converting .bin to .log")
@@ -72,10 +77,7 @@ class AnalysisFactory(bytes: Array[Byte], val isText: Boolean) extends Logging {
     warn("Running analysis tool")
 
     // If we need to convert from binary, do that in a child thread
-    val stream = if (isText)
-      new ByteArrayInputStream(bytes)
-    else
-      binToText()
+    val stream = new ByteArrayInputStream(bytes)
 
     try {
       using(stream) { instream =>
