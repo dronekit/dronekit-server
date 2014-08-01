@@ -30,7 +30,7 @@ case class VehicleBinding(interface: Int, sysId: Int)
 class MavlinkException(msg: String) extends Exception(msg)
 
 /// Sent to GCSActor when we want to send a message to the vehicle
-case class SendMavlinkToVehicle(msg: MAVLinkMessage)
+case class SendMavlinkToGCS(msg: MAVLinkMessage)
 
 /**
  * Any actor that acts as the sister of a GCS client.  One instance per connected GCS (i.e this actor state includes knowledge of which GCS it is talking to
@@ -69,6 +69,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   private def checkLoggedIn() {
     if (!userOpt.isDefined) {
       log.error("HACK ATTEMPT: client not logged in")
+      context.stop(self) // Stop processing any remaining messages
       throw new Exception("Not logged-in")
     }
   }
@@ -80,7 +81,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   def receive = {
     // It is possible for vehicle actors to tell us they are now talking to a different GCS.  In
     // that case we forget about them
-    case VehicleDisconnected() =>
+    case VehicleDisconnected =>
       log.warning(s"Vehicle $sender has abandoned our GCS")
 
       // Expensive way to find and remove the mapping
@@ -93,8 +94,8 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
           log.error(s"Count not find vehicle $sender in our children")
       }
 
-    case SendMavlinkToVehicle(msg) =>
-      log.debug(s"Sending mavlink to vehicle $msg")
+    case SendMavlinkToGCS(msg) =>
+      log.debug(s"Sending mavlink to gcs $msg")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
     case msg: PingMsg => // We just reply to pings
@@ -108,15 +109,23 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
 
       log.info(s"Binding vehicle $msg")
       //log.info(s"Binding vehicle $msg, user has " + user.vehicles.toList.mkString(","))
-      if (msg.vehicleUUID == "GCS")
+      if (msg.vehicleUUID.startsWith("GCS"))
         log.warning("ignoring GCS ID")
       else {
-        val uuid = UUID.fromString(msg.vehicleUUID)
-        val vehicle = user.getOrCreateVehicle(uuid)
+        val wantsPipe = msg.wantPipe.getOrElse(false)
 
-        val actor = LiveVehicleActor.findOrCreate(vehicle, msg.canAcceptCommands)
+        val uuid = UUID.fromString(msg.vehicleUUID)
+        val vehicle = if (wantsPipe) {
+          user.getVehicle(uuid).getOrElse(throw new Exception(s"Can't find vehicle for $uuid"))
+        } else
+          user.getOrCreateVehicle(uuid)
+
+        val actor = if (wantsPipe)
+          LiveVehicleActor.find(vehicle).getOrElse(throw new Exception(s"$vehicle is not currently connected to server"))
+        else
+          LiveVehicleActor.findOrCreate(vehicle, msg.canAcceptCommands)
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
-        actor ! VehicleConnected()
+        actor ! GCSConnected(wantsPipe)
 
         // The actor might need to immediately start a mission
         currentMission.foreach { actor ! _ }
@@ -242,7 +251,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   // Tell our vehicles we've lost the link
   override def postStop() {
     log.info("Shutting down GCSActor")
-    vehicles.values.foreach(_ ! VehicleDisconnected())
+    vehicles.values.foreach(_ ! GCSDisconnected())
     super.postStop()
   }
 

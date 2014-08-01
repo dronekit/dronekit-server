@@ -30,11 +30,16 @@ import com.github.aselab.activerecord.dsl._
 import com.geeksville.mavlink.FlushNowMessage
 import java.sql.Timestamp
 import com.geeksville.apiproxy.APIConstants
+import scala.collection.mutable.HashSet
 
-/// Sent when a vehicle connects to the server
-case class VehicleConnected()
+/// Sent to the LiveVehicleActor when a GCS connects to the server
+/// @param wantsControl if true this GCS wants to control a vehicle which is already connected to the LiveVehicleActor
+case class GCSConnected(wantsControl: Boolean)
 
-case class VehicleDisconnected()
+case class GCSDisconnected()
+
+/// Send from LiveVehicleActor to GCSActor when we need to tell the GCS to hang up (probably because the vehicle just called in through a different GCS)
+case object VehicleDisconnected
 
 // We would like the live vehicle to reply with an Option[Array[Byte]] of tlog bytes
 case object GetTLogMessage
@@ -45,8 +50,8 @@ case object GetTLogMessage
  *
  * Supported message types:
  * TimestampedMessage - used to add to the running log/new data received from the vehicle
- * VehicleConnected - sent by the GCSActor when the vehicle first connects
- * VehicleDisconnected - sent by the GCSActor when the vehicle disconnects
+ * GCSConnected - sent by the GCSActor when the vehicle first connects
+ * GCSDisconnected - sent by the GCSActor when the vehicle disconnects
  */
 class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   extends VehicleModel(maxUpdatePeriod = 5000) with ActorLogging {
@@ -64,7 +69,11 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   /// The mission we are creating
   private var missionOpt: Option[Mission] = None
 
+  /// This is the GCS providing the connection to our vehicle
   private var gcsActor: Option[ActorRef] = None
+
+  /// This is the set of GCSes that are trying to _control_ our vehicle
+  private val controllingGCSes = HashSet[ActorRef]()
 
   private case object SendUpdateTickMsg
 
@@ -98,30 +107,42 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   override def onReceive = mReceive.orElse(super.onReceive)
 
   private def mReceive: InstrumentedActor.Receiver = {
-    case VehicleConnected() =>
-      log.debug(s"Vehicle connected (GCS=$sender)")
+    case GCSConnected(wantsControl) =>
+      log.debug(s"GCS connected (GCS=$sender) wantsControl=$wantsControl")
 
-      // It is possible for a GCS to drop a connection and then callback into a 'live' 
-      // vehicle instance.  In that case, we just mark that gcs as our new owner
+      if (!wantsControl) {
+        // It is possible for a GCS to drop a connection and then callback into a 'live' 
+        // vehicle instance.  In that case, we just mark that gcs as our new owner
 
-      gcsActor.foreach { old =>
-        log.warning(s"Vehicle reconnection, hanging up on old GCS $old")
-        stopMission()
-        old ! VehicleDisconnected()
+        gcsActor.foreach { old =>
+          log.warning(s"Vehicle reconnection, hanging up on old GCS $old")
+          stopMission()
+          old ! VehicleDisconnected
+        }
+        gcsActor = Some(sender)
       }
-      gcsActor = Some(sender)
 
-    case VehicleDisconnected() =>
-      log.debug("Vehicle disconnected")
+    case GCSDisconnected() =>
 
       // Vehicle should only be connected through one gcs actor at a time
-      assert(sender == gcsActor.get)
-      gcsActor = None
+      if (sender == gcsActor.get) {
+        log.debug("GCS to vehicle disconnected")
+        gcsActor = None
 
-      stopMission() // In case client forgot
-      // FIXME - store tlog to S3
-      // FIXME - should I kill myself? - FIXME - need to use supervisors to do reference counting
-      self ! PoisonPill
+        stopMission() // In case client forgot
+        // FIXME - should I kill myself? - FIXME - need to use supervisors to do reference counting
+
+        // Do this someplace else?
+        controllingGCSes.foreach(_ ! VehicleDisconnected)
+        controllingGCSes.clear()
+
+        self ! PoisonPill
+      } else {
+        log.debug("GCS to controller disconnected")
+
+        // Confirm that the sender really was a controller
+        assert(controllingGCSes.remove(sender))
+      }
 
     case msg: StartMissionMsg =>
       log.debug(s"Handling $msg")
@@ -141,7 +162,20 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     case GetTLogMessage =>
       sender ! getTlogBytes()
 
+    // Handle messages inbound from one of our connected GCSlinks
     case msg: TimestampedMessage =>
+
+      val isFromVehicle = sender == gcsActor.get
+
+      // Forward msgs from vehicle to any GCSes who are trying to control it and vis a versa
+      val forwardTo: Iterable[ActorRef] = if (isFromVehicle)
+        controllingGCSes
+      else
+        gcsActor
+      if (!forwardTo.isEmpty) {
+        log.debug(s"Forwarding ${msg.msg} to $forwardTo")
+        forwardTo.foreach(_ ! SendMavlinkToGCS(msg.msg))
+      }
 
       // Log to the file
       tloggerOpt.foreach { _ ! msg }
@@ -156,10 +190,12 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   }
 
   /**
+   * Called when we want to send messages to the vehicle
+   *
    * m must be a SendYoungest or a MAVLinkMessage
    */
   override protected def handlePacket(m: Any) {
-    //log.debug(s"handlePacket: forwarding $m to $gcsActor")
+    log.debug(s"handlePacket: forwarding $m to vehicle")
 
     val msg = m match {
       case x: MAVLinkMessage => x
@@ -179,7 +215,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       if (listenOnly)
         throw new Exception(s"$vehicle can not accept $msg")
       else
-        gcsActor.foreach(_ ! SendMavlinkToVehicle(msg))
+        gcsActor.foreach(_ ! SendMavlinkToGCS(msg))
     }
   }
 
