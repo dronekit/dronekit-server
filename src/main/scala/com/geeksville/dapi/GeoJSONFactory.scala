@@ -9,7 +9,8 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
   import model._
   import GeoJSON._
 
-  val wptColor = Some("#000099")
+  // For wpt colors we bop through four different hues - one for each group of ten - blue, then purpleish, then redish, the brownish
+  val wptColor = Seq("#000099", "#9900ff", "#990033", "#cc3300")
   val wptDisabledColor = Some("#9999D6") // Used when we suspect the wpts were too far from the current mission
   val tracklogShadow = lineStyles(color = Some("#444444"), width = Some(4))
   val wptLineStyle = lineStyles(color = Some("#0000FF"), opacity = Some(0.5))
@@ -91,9 +92,11 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
         //val symbol = if (wp.seq < 10) wp.seq.toString else "embassy"
         ("Waypoint #" + wp.seq, (wp.seq % 10).toString)
 
-      val wcolor = if (isHome || !disablingWaypoints)
-        wptColor
-      else
+      val wcolor = if (isHome || !disablingWaypoints) {
+        // Pick colors in groups of ten
+        val colorBlock = (wp.seq / 10) % wptColor.size
+        Some(wptColor(colorBlock))
+      } else
         wptDisabledColor
       makeMarker(wp.location, name, color = wcolor, description = desc, symbol = Some(symbol))
     }
