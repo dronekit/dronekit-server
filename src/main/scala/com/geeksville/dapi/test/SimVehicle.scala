@@ -39,45 +39,18 @@ import com.geeksville.flight.SendMessage
 import com.geeksville.akka.AkkaTools
 import scala.util.Success
 import scala.util.Failure
+import com.geeksville.mavlink.MavlinkUtils
 
-private class SimVehicle(systemId: Int, numSeconds: Int, val numPoints: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) {
+/// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
+private class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) {
   import SimClient._
   import context._
 
   val generation = SimGCSClient.nextGeneration
 
-  // Center our vehicles around various world points
-  val centerLocations = Seq((21.2966980, -157.8480360), // HI
-    // (37.517, -122.29), // SF Bay area
-    (51.500, -0.1262), // London
-    (35.68, 139.69) // Tokyo
-    )
-  val center = centerLocations(random.nextInt(centerLocations.size))
-
-  val lineAngle = generation * random.nextDouble % (math.Pi * 2)
-  val maxLen = 0.5 // in degrees
-  val maxAlt = 100
-
-  val ovalWidth = maxLen * random.nextDouble
-  val ovalHeight = maxLen * random.nextDouble
-
-  // 20-40sec per each path down the line
-  val secondsPerLoop = 20.0 + random.nextDouble * 20
-  val numLoops = numSeconds / secondsPerLoop
-
-  var numRemaining = numPoints
-
-  var heading = random.nextInt(360)
-
   val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
 
-  val interval = numSeconds.toDouble / numPoints
-  private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
-
   sendMavlink(makeStatusText("Starting sim vehicle"))
-
-  // Start our sim
-  scheduleNext()
 
   override def postStop() {
     webapi.stopMission(keep)
@@ -94,66 +67,10 @@ private class SimVehicle(systemId: Int, numSeconds: Int, val numPoints: Int, hos
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
   }
 
-  /// A fake current position
-  def curLoc = {
-    // How far are we through our sim time 0 means all the time is left, 1 means done
-    val pos = (numPoints.toDouble - numRemaining.toDouble) / numPoints
-
-    val curLoopNum = numLoops * pos
-
-    // Position on current loop (0 to 1)
-    var len = curLoopNum - math.floor(curLoopNum)
-
-    val alt = Some(maxAlt * math.sin(len))
-
-    val onLine = false // We either do ovals or lines
-    if (onLine) {
-      // How far are we on our current loop (if on odd loops fly backwards in the other direction)
-      val isOdd = (curLoopNum.toInt % 2) == 1
-
-      if (isOdd)
-        len = 1 - len
-
-      Location(center._1 + len * math.cos(lineAngle),
-        center._2 + len * math.sin(lineAngle),
-        alt)
-    } else {
-      Location(center._1 + ovalWidth * math.cos(len * math.Pi * 2),
-        center._2 + ovalHeight * math.sin(len * math.Pi * 2),
-        alt)
-    }
-  }
-
-  override def receive = ({
-    case SimNext =>
-      if (numRemaining == 0)
-        self ! PoisonPill
-      else {
-        import com.geeksville.util.MathTools._
-
-        sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100), heading))
-        sendMavlink(makeAttitude(toRad(heading).toFloat, toRad(heading).toFloat, toRad(heading).toFloat))
-        sendMavlink(makePosition(curLoc))
-        sendMavlink(makeGPSRaw(curLoc))
-        if (random.nextInt(100) < 2)
-          sendMavlink(makeStatusText("Random status text msg!"))
-
-        // Fake up some mode changes
-        if (random.nextInt(100) < 5) {
-          //log.debug("Faking a mode change")
-          heading = random.nextInt(360)
-          gcsCustomMode = random.nextInt(5) + 1
-          gcsBaseMode = (if (random.nextBoolean()) MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED else 0) | MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED
-        }
-
-        numRemaining -= 1
-        scheduleNext()
-      }
-  }: PartialFunction[Any, Unit]).orElse(super.receive)
-
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
-    log.warning(s"Server wants us to send $b, but we are ignoring!")
+    val msg = MavlinkUtils.bytesToPacket(b)
+    log.warning(s"Server wants us to send $msg, but we are ignoring!")
   }
 
 }

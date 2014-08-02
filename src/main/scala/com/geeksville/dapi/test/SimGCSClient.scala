@@ -75,7 +75,7 @@ class SimGCSClient(host: String, keep: Boolean) extends DebuggableActor with Act
     val numPoints = numSeconds * 2
 
     (0 until numVehicles).foreach { i =>
-      watch(context.actorOf(Props(new SimVehicle(SimGCSClient.nextGeneration(), numSeconds, numPoints, host, keep))))
+      watch(context.actorOf(Props(new SimFlyingVehicle(SimGCSClient.nextGeneration(), numSeconds, numPoints, host, keep))))
     }
 
     // Handle the no vehicle case
