@@ -41,21 +41,25 @@ import scala.util.Success
 import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 
-/// This vehicle just sits quietly (just sending heartbeats) and listens for commands from the web
-private class SimSimpleVehicle(systemId: Int, val numPoints: Int, host: String, keep: Boolean) extends SimVehicle(systemId, host, keep) {
+/// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
+abstract class SimWebController(systemId: Int, host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID) extends SimClient(systemId, host) {
   import SimClient._
 
-  val interval = 1.0
-
-  /// For now just use a well known ID
-  override def uuid = SimSimpleVehicle.singletonUUID
-
-  override def doNextStep() {
-    log.debug("I'm a simple vehicle, just sitting here listening for commands...")
+  override def postStop() {
+    super.postStop()
   }
-}
 
-object SimSimpleVehicle {
-  val singletonUUID = UUID.fromString("1dd33cc0-1a7b-11e4-8c21-0800200c9a66")
-}
+  override def startConnection() {
+    super.startConnection()
 
+    // log.info(s"Created sim vehicle $systemId: $uuid")
+    // webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
+  }
+
+  /// Dear GCS, please send this packet
+  override def sendMavlink(b: Array[Byte]) {
+    val msg = MavlinkUtils.bytesToPacket(b)
+    log.warning(s"Server us msg from vehicle $msg, but we are ignoring!")
+  }
+
+}

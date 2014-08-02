@@ -48,7 +48,8 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
 
   val generation = SimGCSClient.nextGeneration
 
-  val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
+  /// Subclasses can override, but by default we use a random UUID
+  def uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
 
   sendMavlink(makeStatusText("Starting sim vehicle"))
 
