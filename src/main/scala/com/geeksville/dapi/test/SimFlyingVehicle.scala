@@ -44,7 +44,6 @@ import com.geeksville.mavlink.MavlinkUtils
 /// A vehicle that flies in circles sending real looking flight data
 private class SimFlyingVehicle(systemId: Int, numSeconds: Int, val numPoints: Int, host: String, keep: Boolean) extends SimVehicle(systemId, host, keep) {
   import SimClient._
-  import context._
 
   // Center our vehicles around various world points
   val centerLocations = Seq((21.2966980, -157.8480360), // HI
