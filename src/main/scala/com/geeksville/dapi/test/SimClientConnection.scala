@@ -58,7 +58,7 @@ object SimClient extends Logging {
 
 case object SimNext
 
-private abstract class SimClient(val systemId: Int, host: String) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender with GCSCallback {
+abstract class SimClient(val systemId: Int, host: String) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender with GCSCallback {
   import SimClient._
 
   private var seqNum = 0

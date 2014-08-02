@@ -65,15 +65,9 @@ private class SimFlyingVehicle(systemId: Int, numSeconds: Int, val numPoints: In
   val secondsPerLoop = 20.0 + random.nextDouble * 20
   val numLoops = numSeconds / secondsPerLoop
 
-  var numRemaining = numPoints
-
   var heading = random.nextInt(360)
 
   val interval = numSeconds.toDouble / numPoints
-  private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
-
-  // Start our sim
-  scheduleNext()
 
   /// A fake current position
   def curLoc = {
@@ -105,31 +99,23 @@ private class SimFlyingVehicle(systemId: Int, numSeconds: Int, val numPoints: In
     }
   }
 
-  override def receive = ({
-    case SimNext =>
-      if (numRemaining == 0)
-        self ! PoisonPill
-      else {
-        import com.geeksville.util.MathTools._
+  override def doNextStep() {
+    import com.geeksville.util.MathTools._
 
-        sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100), heading))
-        sendMavlink(makeAttitude(toRad(heading).toFloat, toRad(heading).toFloat, toRad(heading).toFloat))
-        sendMavlink(makePosition(curLoc))
-        sendMavlink(makeGPSRaw(curLoc))
-        if (random.nextInt(100) < 2)
-          sendMavlink(makeStatusText("Random status text msg!"))
+    sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100), heading))
+    sendMavlink(makeAttitude(toRad(heading).toFloat, toRad(heading).toFloat, toRad(heading).toFloat))
+    sendMavlink(makePosition(curLoc))
+    sendMavlink(makeGPSRaw(curLoc))
+    if (random.nextInt(100) < 2)
+      sendMavlink(makeStatusText("Random status text msg!"))
 
-        // Fake up some mode changes
-        if (random.nextInt(100) < 5) {
-          //log.debug("Faking a mode change")
-          heading = random.nextInt(360)
-          gcsCustomMode = random.nextInt(5) + 1
-          gcsBaseMode = (if (random.nextBoolean()) MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED else 0) | MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED
-        }
-
-        numRemaining -= 1
-        scheduleNext()
-      }
-  }: PartialFunction[Any, Unit]).orElse(super.receive)
+    // Fake up some mode changes
+    if (random.nextInt(100) < 5) {
+      //log.debug("Faking a mode change")
+      heading = random.nextInt(360)
+      gcsCustomMode = random.nextInt(5) + 1
+      gcsBaseMode = (if (random.nextBoolean()) MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED else 0) | MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED
+    }
+  }
 }
 

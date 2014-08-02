@@ -42,7 +42,7 @@ import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
-private class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) {
+abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) {
   import SimClient._
   import context._
 
@@ -51,6 +51,16 @@ private class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends
   val uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
 
   sendMavlink(makeStatusText("Starting sim vehicle"))
+
+  def numPoints: Int
+  def interval: Double
+
+  protected var numRemaining = numPoints
+
+  private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
+
+  // Start our sim
+  scheduleNext()
 
   override def postStop() {
     webapi.stopMission(keep)
@@ -73,6 +83,19 @@ private class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends
     log.warning(s"Server wants us to send $msg, but we are ignoring!")
   }
 
+  protected def doNextStep(): Unit
+
+  override def receive = ({
+    case SimNext =>
+      if (numRemaining == 0)
+        self ! PoisonPill
+      else {
+        doNextStep()
+
+        numRemaining -= 1
+        scheduleNext()
+      }
+  }: PartialFunction[Any, Unit]).orElse(super.receive)
 }
 
 object SimVehicle extends Logging {
