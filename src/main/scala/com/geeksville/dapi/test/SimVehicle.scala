@@ -49,12 +49,13 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
   import SimClient._
   import context._
 
-  var curMode = -1L
-
   val generation = SimGCSClient.nextGeneration
 
   /// Subclasses can override, but by default we use a random UUID
   def uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
+
+  // We are pretending to be a vehicle
+  vehicleTypeCode = MAV_TYPE.MAV_TYPE_FLAPPING_WING
 
   sendMavlink(makeStatusText("Starting sim vehicle"))
 
@@ -81,8 +82,8 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
     val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
     msg match {
       case m: msg_set_mode =>
-        curMode = m.custom_mode
-        log.info(s"Changing sim vehicle mode -> $curMode")
+        gcsCustomMode = m.custom_mode.toInt
+        log.info(s"Changing sim vehicle mode -> $gcsCustomMode")
       case m: msg_heartbeat =>
         // Ignore heartbeats for now
         log.info("Ignoring heartbeat from server")
