@@ -31,6 +31,7 @@ import org.json4s.Extraction
 import com.geeksville.json.GeeksvilleFormats
 import _root_.akka.pattern.ask
 import com.geeksville.json.EnumSerializer
+import scala.concurrent.Future
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -371,7 +372,15 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   get("/staticMap", operation(staticMap)) {
     val space = SpaceSupervisor.find() // FIXME - eventually find the supervisor that makes sense for the current
 
-    new AsyncResult { val is = space ? SpaceSupervisor.GetInitialJSON(tryLogin()) }
+    applyNoCache(response) // Tell client to never cache this (it will change)
+    new AsyncResult {
+
+      val is = {
+        val f = space ? SpaceSupervisor.GetInitialJSON(tryLogin())
+        // f.map(jresult => Ok(jresult))
+        f
+      }
+    }
   }
 
   private val addMissionInfo =

@@ -80,7 +80,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
   /// We keep the last N messages from each vehicle (for reply to new clients)
   /// 20 is too many - it swamps slow web app startup - perhaps we can revisit once FE has been optimized
-  val maxRecordsPerVehicle = 5
+  val maxRecordsPerVehicle = 20
 
   private case class AtmosphereUpdate(typ: String, payload: JValue)
 
