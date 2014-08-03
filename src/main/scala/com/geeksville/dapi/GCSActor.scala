@@ -22,6 +22,7 @@ import scala.collection.mutable.Queue
 import java.io.DataInputStream
 import com.geeksville.util.QueueInputStream
 import scala.collection.JavaConverters._
+import com.geeksville.mavlink.MavlinkUtils
 
 /// All messages after connection are identified by this tuple
 case class VehicleBinding(interface: Int, sysId: Int)
@@ -95,7 +96,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       }
 
     case SendMavlinkToGCS(msg) =>
-      log.debug(s"Sending mavlink to gcs $msg")
+      //log.debug(s"Sending mavlink to gcs ${MavlinkUtils.toString(msg)}")
       sendToVehicle(Envelope(mavlink = Some(MavlinkMsg(1, List(ByteString.copyFrom(msg.encode))))))
 
     case msg: PingMsg => // We just reply to pings
@@ -115,15 +116,19 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
         val wantsPipe = msg.wantPipe.getOrElse(false)
 
         val uuid = UUID.fromString(msg.vehicleUUID)
+        //log.debug(s"Looking for $uuid")
         val vehicle = if (wantsPipe) {
           user.getVehicle(uuid).getOrElse(throw new Exception(s"Can't find vehicle for $uuid"))
         } else
           user.getOrCreateVehicle(uuid)
 
+        //log.debug(s"Looking for live actor wantsPipe=$wantsPipe")
         val actor = if (wantsPipe)
           LiveVehicleActor.find(vehicle).getOrElse(throw new Exception(s"$vehicle is not currently connected to server"))
         else
           LiveVehicleActor.findOrCreate(vehicle, msg.canAcceptCommands)
+
+        //log.debug("Telling LiveActor we have a new GCSConnected")
         vehicles += VehicleBinding(msg.gcsInterface, msg.sysId) -> actor
         actor ! GCSConnected(wantsPipe)
 
@@ -154,7 +159,7 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
       do {
         p = reader.getNextMessageWithoutBlocking()
         if (p != null) {
-          //log.debug(s"Processing $p")
+          log.debug(s"Incoming from GCS ${MavlinkUtils.toString(p)}")
 
           // Have our vehicle handle the message
           val timestamped = TimestampedMessage(timestamp, p)

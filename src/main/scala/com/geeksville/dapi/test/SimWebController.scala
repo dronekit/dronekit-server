@@ -52,14 +52,18 @@ class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.sing
   override def startConnection() {
     super.startConnection()
 
-    // log.info(s"Created sim vehicle $systemId: $uuid")
-    // webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
+    val controlledId = 1 // The aliased sysId we'd like to use to refer to the vehicle we are controlling
+    // FIXME - we don't yet support the proper remapping of sysIds in the server
+
+    log.info(s"Attempting to control $toControl as sysid=$controlledId")
+    webapi.setVehicleId(toControl.toString, interfaceNum, controlledId, isControllable, wantPipe = Some(true))
+    webapi.flush()
   }
 
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
-    val msg = MavlinkUtils.bytesToPacket(b)
-    log.warning(s"Server us msg from vehicle $msg, but we are ignoring!")
+    val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
+    log.warning(s"Server sent us msg from vehicle ${MavlinkUtils.toString(msg)}, but we are ignoring!")
   }
 
 }

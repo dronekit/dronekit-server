@@ -121,6 +121,9 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
           old ! VehicleDisconnected
         }
         gcsActor = Some(sender)
+      } else {
+        log.debug(s"WebController $sender connected")
+        controllingGCSes.add(sender)
       }
 
     case GCSDisconnected() =>
@@ -139,7 +142,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
         self ! PoisonPill
       } else {
-        log.debug("GCS to controller disconnected")
+        log.debug("WebController disconnected")
 
         // Confirm that the sender really was a controller
         assert(controllingGCSes.remove(sender))
@@ -175,7 +178,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       else
         gcsActor
       if (!forwardTo.isEmpty) {
-        log.debug(s"Forwarding ${msg.msg} to $forwardTo")
+        log.debug(s"Forwarding ${MavlinkUtils.toString(msg.msg)} to $forwardTo")
         forwardTo.foreach(_ ! SendMavlinkToGCS(msg.msg))
       }
 
