@@ -45,6 +45,7 @@ import com.github.aselab.activerecord.RecordNotFoundException
 import com.geeksville.doarama.DoaramaClient
 import java.io.ByteArrayOutputStream
 import com.geeksville.util.ThreadTools
+import org.squeryl.SquerylSQLException
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -310,7 +311,12 @@ case class Mission(
 
       s.mission := this
       summary := s
-      save
+      try {
+        save
+      } catch {
+        case ex: SquerylSQLException =>
+          warn("Ignoring save error for $this - it has probably been deleted")
+      }
 
       warn(s"Summary regened: $this")
     }
