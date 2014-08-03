@@ -42,7 +42,7 @@ import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 
 /// This vehicle just sits quietly (just sending heartbeats) and listens for commands from the web
-private class SimSimpleVehicle(systemId: Int, val numPoints: Int, host: String, keep: Boolean) extends SimVehicle(systemId, host, keep) {
+class SimSimpleVehicle(val numPoints: Int, host: String, systemId: Int = 1, keep: Boolean = false) extends SimVehicle(systemId, host, keep) {
   import SimClient._
 
   val interval = 1.0
@@ -51,7 +51,7 @@ private class SimSimpleVehicle(systemId: Int, val numPoints: Int, host: String, 
   override def uuid = SimSimpleVehicle.singletonUUID
 
   override def doNextStep() {
-    log.debug("I'm a simple vehicle, just sitting here listening for commands...")
+    // log.debug("I'm a simple vehicle, just sitting here listening for commands...")
   }
 }
 

@@ -9,6 +9,8 @@ import com.geeksville.akka.TCPListenerActor
 import java.io.File
 import com.geeksville.akka.MockAkka
 import com.geeksville.dapi.test.SimGCSClient
+import com.geeksville.dapi.test.SimWebController
+import com.geeksville.dapi.test.SimSimpleVehicle
 
 object Global {
   def system = MockAkka.system
@@ -19,7 +21,11 @@ object Global {
   val senderEmail = "support@droneshare.com"
   val appName = "Droneshare"
 
-  lazy val simGCSClient = system.actorOf(Props(new SimGCSClient("localhost", false)))
+  val simServerHostname = "localhost"
+
+  lazy val simGCSClient = system.actorOf(Props(new SimGCSClient(simServerHostname, false)))
+  lazy val simWebController = system.actorOf(Props(new SimWebController(simServerHostname)))
+  lazy val simSimpleVehicle = system.actorOf(Props(new SimSimpleVehicle(60, simServerHostname)))
 
   def setConfig() {
     val configOverride = new File(System.getProperty("user.home") + "/nestor.conf")

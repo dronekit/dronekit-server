@@ -31,6 +31,7 @@ import com.geeksville.mavlink.FlushNowMessage
 import java.sql.Timestamp
 import com.geeksville.apiproxy.APIConstants
 import scala.collection.mutable.HashSet
+import com.geeksville.mavlink.MavlinkUtils
 
 /// Sent to the LiveVehicleActor when a GCS connects to the server
 /// @param wantsControl if true this GCS wants to control a vehicle which is already connected to the LiveVehicleActor
@@ -166,6 +167,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     case msg: TimestampedMessage =>
 
       val isFromVehicle = sender == gcsActor.get
+      log.debug(s"Received ${MavlinkUtils.toString(msg.msg)} fromVehicle=$isFromVehicle")
 
       // Forward msgs from vehicle to any GCSes who are trying to control it and vis a versa
       val forwardTo: Iterable[ActorRef] = if (isFromVehicle)
@@ -195,8 +197,6 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
    * m must be a SendYoungest or a MAVLinkMessage
    */
   override protected def handlePacket(m: Any) {
-    log.debug(s"handlePacket: forwarding $m to vehicle")
-
     val msg = m match {
       case x: MAVLinkMessage => x
       case SendYoungest(x) => x
@@ -206,12 +206,14 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
     // Some messages we never want to send to the client
     val isBlacklist = msg match {
-      case x: msg_heartbeat => // We assume the local GCS is sending this - no need to waste bandwidth
+      case x: msg_heartbeat if x.sysId == systemId => // Our embedded model is sending this - no need to waste bandwidth
         true
       case _ =>
         false
     }
     if (!isBlacklist) {
+      log.debug(s"handlePacket: forwarding ${MavlinkUtils.toString(msg)} to vehicle")
+
       if (listenOnly)
         throw new Exception(s"$vehicle can not accept $msg")
       else

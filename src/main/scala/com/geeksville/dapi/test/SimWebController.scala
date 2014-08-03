@@ -42,7 +42,7 @@ import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
-abstract class SimWebController(systemId: Int, host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID) extends SimClient(systemId, host) {
+class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID) extends SimClient(SimWebController.controllerSysId, host) {
   import SimClient._
 
   override def postStop() {
@@ -62,4 +62,8 @@ abstract class SimWebController(systemId: Int, host: String, val toControl: UUID
     log.warning(s"Server us msg from vehicle $msg, but we are ignoring!")
   }
 
+}
+
+object SimWebController {
+  val controllerSysId = 249 // FIXME - can be anything, but this makes for easier log reading
 }
