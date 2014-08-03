@@ -51,6 +51,9 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   private var myVehicle: Option[ActorRef] = None
   private val vehicles = HashMap[VehicleBinding, ActorRef]()
 
+  /// Is this GCS connection trying to control remote vehicles?
+  private var isWebController = false
+
   private var startTime: Option[Long] = None
 
   private var userOpt: Option[User] = None
@@ -78,6 +81,10 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
   /// Helper function for making user visible messages
   private def createMessage(s: String) =
     Some(ShowMsg(text = Some(s), priority = ShowMsg.Priority.MEDIUM))
+
+  private def sendToAll(timestamped: TimestampedMessage) {
+    vehicles.values.foreach { _ ! timestamped }
+  }
 
   def receive = {
     // It is possible for vehicle actors to tell us they are now talking to a different GCS.  In
@@ -114,6 +121,9 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
         log.warning("ignoring GCS ID")
       else {
         val wantsPipe = msg.wantPipe.getOrElse(false)
+
+        if (wantsPipe)
+          isWebController = true
 
         val uuid = UUID.fromString(msg.vehicleUUID)
         //log.debug(s"Looking for $uuid")
@@ -165,12 +175,15 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
           val timestamped = TimestampedMessage(timestamp, p)
           val vehicle = vehicles.get(VehicleBinding(msg.srcInterface, p.sysId))
           val probablyGCS = p.sysId > 200 // Don't spam the log about GCS msgs - just send them to every vehicle
-          if (!vehicle.isDefined && !probablyGCS) {
+
+          if (isWebController)
+            sendToAll(timestamped)
+          else if (!vehicle.isDefined && !probablyGCS) {
             msgLogThrottle.withIgnoreCount { numIgnored: Int =>
               log.warning(s"Unknown sysId=${p.sysId} send to all: $p (and $numIgnored others)")
             }
 
-            vehicles.values.foreach { _ ! timestamped }
+            sendToAll(timestamped)
           } else
             vehicle.foreach { _ ! timestamped }
         }

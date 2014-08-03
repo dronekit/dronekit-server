@@ -56,8 +56,6 @@ object SimClient extends Logging {
   }
 }
 
-case object SimNext
-
 abstract class SimClient(val systemId: Int, host: String) extends DebuggableActor with ActorLogging with VehicleSimulator with HeartbeatSender with GCSCallback {
   import SimClient._
 

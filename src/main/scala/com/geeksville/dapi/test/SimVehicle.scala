@@ -40,9 +40,10 @@ import com.geeksville.akka.AkkaTools
 import scala.util.Success
 import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
+import com.geeksville.akka.TimesteppedActor
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
-abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) {
+abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) with TimesteppedActor {
   import SimClient._
   import context._
 
@@ -55,13 +56,6 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
 
   def numPoints: Int
   def interval: Double
-
-  protected var numRemaining = numPoints
-
-  private def scheduleNext() = context.system.scheduler.scheduleOnce(interval seconds, self, SimNext)
-
-  // Start our sim
-  scheduleNext()
 
   override def postStop() {
     webapi.stopMission(keep)
@@ -85,18 +79,6 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
   }
 
   protected def doNextStep(): Unit
-
-  override def receive = ({
-    case SimNext =>
-      if (numRemaining == 0)
-        self ! PoisonPill
-      else {
-        doNextStep()
-
-        numRemaining -= 1
-        scheduleNext()
-      }
-  }: PartialFunction[Any, Unit]).orElse(super.receive)
 }
 
 object SimVehicle extends Logging {
