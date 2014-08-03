@@ -25,7 +25,7 @@ object Global {
 
   lazy val simGCSClient = system.actorOf(Props(new SimGCSClient(simServerHostname, false)))
   lazy val simWebController = system.actorOf(Props(new SimWebController(simServerHostname)))
-  lazy val simSimpleVehicle = system.actorOf(Props(new SimSimpleVehicle(60, simServerHostname)))
+  lazy val simSimpleVehicle = system.actorOf(Props(new SimSimpleVehicle(30, simServerHostname)))
 
   def setConfig() {
     val configOverride = new File(System.getProperty("user.home") + "/nestor.conf")

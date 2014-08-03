@@ -41,11 +41,15 @@ import scala.util.Success
 import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 import com.geeksville.akka.TimesteppedActor
+import org.mavlink.messages.ardupilotmega.msg_set_mode
+import org.mavlink.messages.ardupilotmega.msg_heartbeat
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
 abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) with TimesteppedActor {
   import SimClient._
   import context._
+
+  var curMode = -1L
 
   val generation = SimGCSClient.nextGeneration
 
@@ -74,8 +78,17 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
 
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
-    val msg = MavlinkUtils.bytesToPacket(b)
-    log.warning(s"Server wants us to send $msg, but we are ignoring!")
+    val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
+    msg match {
+      case m: msg_set_mode =>
+        curMode = m.custom_mode
+        log.info(s"Changing sim vehicle mode -> $curMode")
+      case m: msg_heartbeat =>
+        // Ignore heartbeats for now
+        log.info("Ignoring heartbeat from server")
+      case _ =>
+        log.warning(s"Server wants us to handle $msg, but we are ignoring!")
+    }
   }
 
   protected def doNextStep(): Unit

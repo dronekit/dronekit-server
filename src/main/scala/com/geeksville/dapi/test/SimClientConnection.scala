@@ -112,6 +112,7 @@ abstract class SimClient(val systemId: Int, host: String) extends DebuggableActo
         seqNum += 1
         m.sequence = (seqNum & 0xff)
         webapi.filterMavlink(interfaceNum, m.encode)
+        webapi.flush()
     }
   }
 }

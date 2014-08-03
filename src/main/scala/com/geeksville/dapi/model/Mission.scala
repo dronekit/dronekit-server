@@ -315,7 +315,7 @@ case class Mission(
         save
       } catch {
         case ex: SquerylSQLException =>
-          warn("Ignoring save error for $this - it has probably been deleted")
+          warn(s"Ignoring save error for $this - it has probably been deleted")
       }
 
       warn(s"Summary regened: $this")

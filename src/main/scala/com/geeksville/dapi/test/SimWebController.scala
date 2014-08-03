@@ -40,25 +40,18 @@ import com.geeksville.akka.AkkaTools
 import scala.util.Success
 import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
+import com.geeksville.akka.TimesteppedActor
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
-class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID) extends SimClient(SimWebController.controllerSysId, host) {
-  import SimClient._
+class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID)
+  extends SimClient(SimWebController.controllerSysId, host)
+  with VehicleSimulator with TimesteppedActor {
 
-  override def postStop() {
-    super.postStop()
-  }
+  // val targetSystem = 1 // The aliased sysId we'd like to use to refer to the vehicle we are controlling
+  // FIXME - we don't yet support the proper remapping of sysIds in the server
 
-  override def startConnection() {
-    super.startConnection()
-
-    val controlledId = 1 // The aliased sysId we'd like to use to refer to the vehicle we are controlling
-    // FIXME - we don't yet support the proper remapping of sysIds in the server
-
-    log.info(s"Attempting to control $toControl as sysid=$controlledId")
-    webapi.setVehicleId(toControl.toString, interfaceNum, controlledId, isControllable, wantPipe = Some(true))
-    webapi.flush()
-  }
+  def numPoints = 4
+  def interval = 5.0
 
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
@@ -66,6 +59,20 @@ class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.sing
     log.warning(s"Server sent us msg from vehicle ${MavlinkUtils.toString(msg)}, but we are ignoring!")
   }
 
+  protected def doNextStep() {
+    currentStep match {
+      case 0 =>
+      case 1 =>
+        log.info(s"Attempting to control $toControl as sysid=$targetSystem")
+        webapi.setVehicleId(toControl.toString, interfaceNum, targetSystem, isControllable, wantPipe = Some(true))
+        webapi.flush()
+      case 2 =>
+        sendMavlink(setMode(3))
+      case 3 =>
+        sendMavlink(setMode(4))
+      case _ =>
+    }
+  }
 }
 
 object SimWebController {
