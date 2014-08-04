@@ -98,7 +98,7 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     system.actorOf(Props(new EventStreamDebugger), "eventDebug")
 
-    // startSimVehicles(tcpGCSActor)
+    //startSimVehicles(tcpGCSActor)
   }
 
   private def startSimVehicles(tcpGCSActor: ActorRef) {
@@ -109,7 +109,9 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
         throw t
 
       case Success(_) =>
-        Global.simGCSClient ! SimGCSClient.RunTest(1, 24 * 60 * 60 * 30)
+        // Global.simGCSClient ! SimGCSClient.RunTest(1, 24 * 60 * 60 * 30)
+        println("Started: " + Global.simSimpleVehicle)
+        println("Started: " + Global.simWebController)
     }
   }
 

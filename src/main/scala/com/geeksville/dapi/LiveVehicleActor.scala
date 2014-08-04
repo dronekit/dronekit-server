@@ -90,6 +90,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
   this.listenOnly = !canAcceptCommands
   autoWaypointDownload = false
   autoParameterDownload = false
+  maxStreamRate = Some(1) // Tell vehicle to stream at 1Hz
 
   override def toString = s"LiveVehicle: $vehicle"
 
@@ -129,7 +130,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     case GCSDisconnected() =>
 
       // Vehicle should only be connected through one gcs actor at a time
-      if (sender == gcsActor.get) {
+      if (Some(sender) == gcsActor) {
         log.debug("GCS to vehicle disconnected")
         gcsActor = None
 
@@ -170,7 +171,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
     case msg: TimestampedMessage =>
 
       val isFromVehicle = sender == gcsActor.get
-      log.debug(s"Received ${MavlinkUtils.toString(msg.msg)} fromVehicle=$isFromVehicle")
+      //log.debug(s"Received ${MavlinkUtils.toString(msg.msg)} fromVehicle=$isFromVehicle")
 
       // Forward msgs from vehicle to any GCSes who are trying to control it and vis a versa
       val forwardTo: Iterable[ActorRef] = if (isFromVehicle)
@@ -178,7 +179,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       else
         gcsActor
       if (!forwardTo.isEmpty) {
-        log.debug(s"Forwarding ${MavlinkUtils.toString(msg.msg)} to $forwardTo")
+        // log.debug(s"Forwarding ${MavlinkUtils.toString(msg.msg)} to $forwardTo")
         forwardTo.foreach(_ ! SendMavlinkToGCS(msg.msg))
       }
 

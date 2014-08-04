@@ -155,21 +155,30 @@ abstract class GCSActor extends DebuggableActor with ActorLogging {
 
       // Put all payload into our input stream
       msg.packet.foreach { pRaw =>
+        val bytes = pRaw.asScala.toSeq
+
+        //log.debug("Rcv: " + bytes.map { b => "%02x".format(b.toInt & 0xff) }.mkString(","))
+
         // Prevent client trying to crash the server by uploading an endless stream of non mavlink
-        if (mavlinkQueue.size > 512) {
+        if (mavlinkQueue.size > 4096) {
           log.error("Client sending too much crap - discarding")
           mavlinkQueue.clear()
         }
 
         //log.debug(s"Enuqueuing ${pRaw.size} bytes")
-        mavlinkQueue.enqueue(pRaw.asScala.toSeq: _*)
+        mavlinkQueue.enqueue(bytes: _*)
       }
 
       var p: MAVLinkMessage = null
       do {
         p = reader.getNextMessageWithoutBlocking()
         if (p != null) {
-          log.debug(s"Incoming from GCS ${MavlinkUtils.toString(p)}")
+          msgLogThrottle.withIgnoreCount { numIgnored: Int =>
+            if (isWebController)
+              log.debug(s"Incoming from controller ${MavlinkUtils.toString(p)} (and $numIgnored others)")
+            else
+              log.debug(s"Incoming from vehicle ${MavlinkUtils.toString(p)} (and $numIgnored others)")
+          }
 
           // Have our vehicle handle the message
           val timestamped = TimestampedMessage(timestamp, p)
