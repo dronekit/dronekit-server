@@ -170,7 +170,13 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
     }
   }
 
-  put("/") {
+  private lazy val createDynamicallyOp =
+    (apiOperation[String]("createDynamically")
+      summary "Create a new object with a dynamically constructed ID"
+      parameters (
+        bodyParam[JsonT]))
+
+  put("/", operation(createDynamicallyOp)) {
     requireCreateAccess()
 
     createDynamically(bodyAsJSON)
