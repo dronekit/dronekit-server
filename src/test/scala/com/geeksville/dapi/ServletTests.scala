@@ -60,9 +60,7 @@ class ServletTests extends ServerDependentSuite {
 
     /* We now allow anyone to read the user list */
     test("User read users list") {
-      get(s"/api/v1/user", headers = jsonHeaders) {
-        status should equal(200)
-      }
+      jsonGet(s"/api/v1/user")
     }
   }
 
