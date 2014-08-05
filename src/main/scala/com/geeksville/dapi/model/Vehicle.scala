@@ -121,7 +121,7 @@ case class Vehicle(
 
 case class VehicleJson(
   uuid: Option[UUID],
-  name: String,
+  name: Option[String] = None,
   id: Option[Long] = None,
   userId: Option[Long] = None,
   manufacturer: Option[String] = None,
@@ -152,7 +152,7 @@ class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle]
           ("id" -> v.id): JObject
       }.toSeq
 
-      val m = VehicleJson(Some(u.uuid), u.name, Some(u.id), u.userId,
+      val m = VehicleJson(Some(u.uuid), Some(u.name), Some(u.id), u.userId,
         u.manufacturer,
         u.vehicleType,
         u.autopilotType,

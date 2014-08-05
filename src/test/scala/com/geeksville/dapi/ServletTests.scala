@@ -28,7 +28,7 @@ import com.geeksville.apiproxy.APIConstants
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class ServletTests(disabled: Boolean) extends ServerDependentSuite {
+class ServletTests extends ServerDependentSuite {
 
   // We want cookies for this test
   session {
@@ -58,16 +58,17 @@ class ServletTests(disabled: Boolean) extends ServerDependentSuite {
       jsonGet(s"/api/v1/user/root")
     }
 
-    test("User !read user list") {
+    /* We now allow anyone to read the user list
+     test("User !read user list") {
       get(s"/api/v1/user", headers = jsonHeaders) {
         status should equal(401)
       }
-    }
+    } */
   }
 
   //userSession {
   ignore("Vehicle create") {
-    val v = VehicleJson(Some(UUID.randomUUID), "unit-test vehicle")
+    val v = VehicleJson(Some(UUID.randomUUID), Some("unit-test vehicle"))
     put("/api/v1/vehicle", toJSON(v), headers = jsonHeaders) {
       checkStatusOk()
     }

@@ -179,11 +179,14 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   put("/", operation(createDynamicallyOp)) {
     requireCreateAccess()
 
-    createDynamically(bodyAsJSON)
+    val json = bodyAsJSON
+    val o = createDynamically(json)
+    // Update the created object based on any payload that was provided
+    updateObject(o, json)
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to / to result in creating new objects.  implementations should return the new ID
-  protected def createDynamically(payload: JObject): Any = {
+  protected def createDynamically(payload: JObject): T = {
     haltMethodNotAllowed("creation without IDs not allowed")
   }
 

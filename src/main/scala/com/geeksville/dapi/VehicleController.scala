@@ -70,7 +70,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
   // FIXME - need to use correct domain objects (Waypoints)
   //rwField[List[Location]]("waypoints", null, { (v) => })
 
-  override protected def createDynamically(payload: JObject): Any = {
+  override protected def createDynamically(payload: JObject): Vehicle = {
     val json = payload.extract[VehicleJson]
     user.getOrCreateVehicle(json.uuid.getOrElse(UUID.randomUUID))
   }
@@ -95,7 +95,7 @@ class VehicleController(implicit swagger: Swagger) extends ActiveRecordControlle
     val r = payload.extract[VehicleJson]
 
     debug(s"Setting vehicle from web client, payload=$r")
-    o.name = r.name
+    r.name.foreach { o.name = _ }
     r.viewPrivacy.foreach { v => o.viewPrivacy = v.id }
     r.controlPrivacy.foreach { v => o.controlPrivacy = v.id }
     o.save
