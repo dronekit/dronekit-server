@@ -58,12 +58,12 @@ class ServletTests extends ServerDependentSuite {
       jsonGet(s"/api/v1/user/root")
     }
 
-    /* We now allow anyone to read the user list
-     test("User !read user list") {
+    /* We now allow anyone to read the user list */
+    test("User read users list") {
       get(s"/api/v1/user", headers = jsonHeaders) {
-        status should equal(401)
+        status should equal(200)
       }
-    } */
+    }
   }
 
   //userSession {
@@ -75,6 +75,10 @@ class ServletTests extends ServerDependentSuite {
   }
   ignore("Vehicle read") {
     jsonGet("/api/v1/vehicle/1") // .extract[Vehicle]
+  }
+
+  ignore("Vehicle read all") {
+    jsonGet("/api/v1/vehicle") // .extract[Vehicle]
   }
   //}
 
