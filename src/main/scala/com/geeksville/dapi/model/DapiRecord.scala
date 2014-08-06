@@ -24,6 +24,9 @@ trait CRUDOperations[T] {
 }
 
 trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] with CRUDOperations[T] with Logging {
+
+  type Relation = ActiveRecord.Relation1[T, T]
+
   /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
   def find(id: String): Option[T] = try {
     collection.where(_.id === id.toLong).headOption
@@ -36,5 +39,6 @@ trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] wi
   /**
    * Return a top level view of this collection (subclasses might change this method to make it prefetch associated tables (see Mission)
    */
-  def collection: ActiveRecord.Relation1[T, T] = this.companionToRelation(this)
+  def collection: Relation = this.companionToRelation(this)
+
 }

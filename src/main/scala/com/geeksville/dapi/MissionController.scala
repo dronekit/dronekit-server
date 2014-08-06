@@ -32,6 +32,7 @@ import com.geeksville.json.GeeksvilleFormats
 import _root_.akka.pattern.ask
 import com.geeksville.json.EnumSerializer
 import scala.concurrent.Future
+import com.github.aselab.activerecord.ActiveRecordException
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -112,6 +113,37 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
    */
   override protected def toSingletonJSON(o: Mission): JValue = {
     Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new MissionSerializer(true))
+  }
+
+  /// Subclasses can override if they want to make finding fields smarter
+  override protected def applyFilterExpressions(rIn: myCompanion.Relation, whereExp: Seq[LogicalBoolean]) = {
+    var r = rIn
+
+    // Find which clauses we can handle as special cases and handle them, for the others let the superclass handle it
+    val forSuper = whereExp.filter { w =>
+      val handled = w.colName match {
+        case "userName" =>
+          // Ugh - bug in activerecords two levels deep - https://github.com/aselab/scala-activerecord/issues/48
+          // r = r.where(_.vehicle.user.login === w.cmpValue)
+          val u = User.find(w.cmpValue).getOrElse(throw new ActiveRecordException("Can't find user"))
+          val vehicleIds = u.vehicles.map(_.id)
+          r = r.where(_.vehicleId in vehicleIds)
+          true
+
+        case "maxAlt" =>
+          // FIXME - doesn't work yet
+          val v = w.cmpValue.toDouble
+          r = r.where { o =>
+            o.summary.maxAlt.~ > v
+          }
+          true
+        case _ =>
+          false
+      }
+      !handled
+    }
+
+    super.applyFilterExpressions(r, forSuper)
   }
 
   override protected def getOp = (super.getOp

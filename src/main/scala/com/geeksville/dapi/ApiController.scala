@@ -284,6 +284,9 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
     toJSON(results)
   }
 
+  /// A regex that matches fieldname[NE] or fieldname[EQ] etc...
+  val OpRegex = """(\S+)\[(\w+)\]""".r
+
   /**
    * Using the current query parameters, return all matching records (paging and ordering is supported as well.
    *
@@ -296,7 +299,17 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
     val fieldPrefix = "field_"
     val filters = params.filterKeys(_.startsWith(fieldPrefix)).map {
       case (k, v) =>
-        LogicalBoolean(k.substring(fieldPrefix.length), "EQ", v)
+        var fieldName = k.substring(fieldPrefix.length)
+        var opcode = "EQ"
+
+        fieldName match {
+          case OpRegex(name, op) =>
+            fieldName = name
+            opcode = op
+          case _ =>
+          // assume that everything was in the fieldname
+        }
+        LogicalBoolean(fieldName, opcode, v)
     }
     getWithQuery(offset, pagesize, params.get("order_by"), params.get("order_dir"), filters)
   }

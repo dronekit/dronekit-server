@@ -37,6 +37,15 @@ class ActiveRecordController[T <: ActiveRecord: Manifest, JsonT <: Product: Mani
     }).getOrElse(haltNotFound("object or parameter not found"))
   }
 
+  /// Subclasses can override if they want to make finding fields smarter
+  protected def applyFilterExpressions(r: myCompanion.Relation, whereExp: Seq[LogicalBoolean]) = {
+    val eqFilters = whereExp.map { l => (l.colName, l.cmpValue) }
+    if (!eqFilters.isEmpty)
+      r.findAllBy(eqFilters.head, eqFilters.tail: _*)
+    else
+      r
+  }
+
   /**
    * Use activerecord methods to find our records
    *
@@ -53,8 +62,7 @@ class ActiveRecordController[T <: ActiveRecord: Manifest, JsonT <: Product: Mani
       // FIXME - use the where expression more correctly
       if (!whereExp.isEmpty) {
         debug("Applying filter expressions: " + whereExp.mkString(", "))
-        val eqFilters = whereExp.map { l => (l.colName, l.cmpValue) }.toSeq
-        r = r.findAllBy(eqFilters.head, eqFilters.tail: _*)
+        r = applyFilterExpressions(r, whereExp.toSeq)
       }
 
       // Apply ordering
