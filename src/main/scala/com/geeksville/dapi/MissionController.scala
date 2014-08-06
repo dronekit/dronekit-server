@@ -33,6 +33,8 @@ import _root_.akka.pattern.ask
 import com.geeksville.json.EnumSerializer
 import scala.concurrent.Future
 import com.github.aselab.activerecord.ActiveRecordException
+import org.squeryl.dsl.TDouble
+import org.squeryl.dsl.TString
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -115,13 +117,103 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new MissionSerializer(true))
   }
 
+  // FIXME - experimenting with reflection
+  import scala.reflect.runtime.{ universe => ru }
+  val m = ru.runtimeMirror(classOf[MissionSummary].getClassLoader)
+  val summaryType = ru.typeOf[MissionSummary]
+  summaryType.members.foreach { m =>
+    println(s"Member: $m, ${m.typeSignature}")
+  }
+
+  private val doubleFields = Set("maxAlt", "maxGroundspeed", "maxAirspeed", "latitude", "longitude", "flightDuration")
+  private val stringFields = Set("summaryText", "softwareVersion", "softwareGit")
+
+  private def makeDoubleOp(field: TypedExpression[Double, TDouble], opcode: String) = {
+    type CmpType = Double
+
+    opcode match {
+      case "GT" => field.>(_: CmpType)
+      case "GE" => field.>=(_: CmpType)
+      case "EQ" => field.===(_: CmpType)
+      case "NE" => field.<>(_: CmpType)
+      case "LT" => field.<(_: CmpType)
+      case "LE" => field.<=(_: CmpType)
+      //case "LIKE" => field.like(_: String)
+
+      case _ => throw new ActiveRecordException("Bad opcode: " + opcode)
+    }
+  }
+
+  private def makeStringOp(field: TypedExpression[String, TString], opcode: String) = {
+    type CmpType = String
+
+    opcode match {
+      case "GT" => field.>(_: CmpType)
+      case "GE" => field.>=(_: CmpType)
+      case "EQ" => field.===(_: CmpType)
+      case "NE" => field.<>(_: CmpType)
+      case "LT" => field.<(_: CmpType)
+      case "LE" => field.<=(_: CmpType)
+      case "LIKE" => field.like(_: String)
+
+      case _ => throw new ActiveRecordException("Bad opcode: " + opcode)
+    }
+  }
+
   /// Subclasses can override if they want to make finding fields smarter
   override protected def applyFilterExpressions(rIn: myCompanion.Relation, whereExp: Seq[LogicalBoolean]) = {
     var r = rIn
 
+    var forSuper = whereExp
+
+    // We have to do this scan FIRST because the join rule isn't smart enough to keep previous results 
+    // FIXME - the loop over whereExp should be done _inside_ the join.where
+    forSuper = whereExp.filter { w =>
+      if (doubleFields.contains(w.colName) || stringFields.contains(w.colName)) {
+        // FIXME - this is all pretty nasty
+
+        // val fieldTerm = ru.typeOf[MissionSummary].declaration(ru.newTermName(w.colName)).asTerm
+
+        debug(s"Handling special col: $w")
+        r = Mission.joins[MissionSummary]((mission, summary) => summary.missionId === mission.id).where { (mission, summary) =>
+
+          // FIXME - figure out how to do this nasty thing with reflection
+          //val im = m.reflect(summary)
+          //val fieldTerm = summaryType.declaration(ru.newTermName(w.colName)).asTerm
+          //val reflectedField = summaryType.
+
+          if (doubleFields.contains(w.colName)) {
+            val field = w.colName match {
+              case "maxAlt" => summary.maxAlt
+              case "maxGroundspeed" => summary.maxGroundSpeed
+              case "maxAirspeed" => summary.maxAirSpeed
+              case "latitude" => summary.latitude.get
+              case "longitude" => summary.longitude.get
+              case "flightDuration" => summary.flightDuration.get
+            }
+
+            val op = makeDoubleOp(field, w.opcode)
+            op(w.cmpValue.toDouble)
+          } else {
+            val field = w.colName match {
+              case "summaryText" => summary.text.getOrElse("")
+              case "softwareVersion" => summary.softwareVersion.getOrElse("")
+              case "softwareGit" => summary.softwareGit.getOrElse("")
+            }
+
+            val op = makeStringOp(field, w.opcode)
+            op(w.cmpValue)
+          }
+        }.select((mission, summary) => mission)
+
+        false
+      } else
+        true
+    }
+
     // Find which clauses we can handle as special cases and handle them, for the others let the superclass handle it
-    val forSuper = whereExp.filter { w =>
-      val handled = w.colName match {
+    forSuper = forSuper.filter { w =>
+      var handled = w.colName match {
         case "userName" =>
           // Ugh - bug in activerecords two levels deep - https://github.com/aselab/scala-activerecord/issues/48
           // r = r.where(_.vehicle.user.login === w.cmpValue)
@@ -130,16 +222,10 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
           r = r.where(_.vehicleId in vehicleIds)
           true
 
-        case "maxAlt" =>
-          // FIXME - doesn't work yet
-          val v = w.cmpValue.toDouble
-          r = r.where { o =>
-            o.summary.maxAlt.~ > v
-          }
-          true
         case _ =>
           false
       }
+
       !handled
     }
 

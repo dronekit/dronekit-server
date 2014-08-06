@@ -309,7 +309,7 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
           case _ =>
           // assume that everything was in the fieldname
         }
-        LogicalBoolean(fieldName, opcode, v)
+        LogicalBoolean(fieldName, opcode.toUpperCase, v)
     }
     getWithQuery(offset, pagesize, params.get("order_by"), params.get("order_dir"), filters)
   }

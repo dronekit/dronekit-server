@@ -25,7 +25,7 @@ trait CRUDOperations[T] {
 
 trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] with CRUDOperations[T] with Logging {
 
-  type Relation = ActiveRecord.Relation1[T, T]
+  type Relation = ActiveRecord.Relation[T, T]
 
   /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
   def find(id: String): Option[T] = try {
