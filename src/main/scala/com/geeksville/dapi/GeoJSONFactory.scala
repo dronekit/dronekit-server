@@ -4,6 +4,7 @@ import com.geeksville.json.GeoJSON
 import org.json4s.JsonAST.JObject
 import com.geeksville.flight.LiveOrPlaybackModel
 import grizzled.slf4j.Logging
+import com.geeksville.flight.Location
 
 class GeoJSONFactory(model: PlaybackModel) extends Logging {
   import model._
@@ -24,7 +25,9 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     // State for advancing modes
     val modeIterator = modeChanges.iterator
     var nextMode: Option[(Long, String)] = None
+    var curMode: Option[(Long, String)] = None
     def advanceMode() {
+      curMode = nextMode
       nextMode = if (modeIterator.hasNext)
         Some(modeIterator.next)
       else
@@ -35,32 +38,47 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     // Process the tracklog
     // As we iterate through the locations, look to see if we've crossed a mode change timestamp and emit a proper marker
     var modeMarkers: List[JObject] = Nil
+    var tracklogs: List[JObject] = Nil
+    var curTracklog: List[Location] = Nil
     val tracklogBbox = new BoundingBox
     debug(s"Generating GeoJSON for ${positions.size} points")
-    val locations = positions.map { p =>
+    positions.foreach { p =>
+
       val crossedModeChange = nextMode.map {
         case (t, m) =>
           t < p.time
       }.getOrElse(false)
 
+      // We just finished a tracklog for the previous mode - terminate it
       if (crossedModeChange) {
-        val newModeName = nextMode.get._2
 
+        // Generate the mode marker
+        val newModeName = nextMode.get._2
         val color = LiveOrPlaybackModel.htmlColorName(newModeName)
         modeMarkers = makeMarker(p.loc, "Mode change", description = Some(newModeName), size = "small", color = color, symbol = Some("triangle-stroked")) :: modeMarkers
+
+        // Generate the correctly colored tracklog
+        val tracklog = {
+          // The lines along the tracklog
+          val tracklogLineString = makeLineString(curTracklog)
+
+          val curColor = curMode.flatMap { m => LiveOrPlaybackModel.htmlColorName(m._2) }.getOrElse("#00FF00")
+
+          // Ugh - we want to draw a shadow on our tracklog - so we need to send the whole list of points _twice_
+          val tracklogStyle = lineStyles(color = Some(curColor), width = Some(2))
+
+          makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
+        }
+        tracklogs = tracklog :: tracklogs
+
         advanceMode()
       }
 
+      // Add to our current work in progress tracklog
+      curTracklog = p.loc :: curTracklog
+
       tracklogBbox.addPoint(p.loc)
-      p.loc
     }
-
-    // The lines along the tracklog
-    val tracklogLineString = makeLineString(locations)
-
-    // Ugh - we want to draw a shadow on our tracklog - so we need to send the whole list of points _twice_
-    val tracklogStyle = lineStyles(color = Some("#00FF00"), width = Some(2))
-    val tracklog = makeFeatureCollection(makeFeature(tracklogLineString, tracklogShadow), makeFeature(tracklogLineString, tracklogStyle))
 
     val wptBbox = new BoundingBox(0.005)
 
@@ -116,7 +134,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
     else
       wptLineStyle
     val wptLayer = makeFeatureCollection(wptMarkers :+ makeFeature(makeLineString(wptLines), wlineStyle): _*)
-    val topLevel = makeFeatureCollection(modeLayer, wptLayer, tracklog)
+    val topLevel = makeFeatureCollection(modeLayer :: wptLayer :: tracklogs: _*)
 
     val bbox = new BoundingBox(0.005)
     bbox.union(tracklogBbox)
