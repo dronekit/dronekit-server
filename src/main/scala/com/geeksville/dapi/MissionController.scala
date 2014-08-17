@@ -83,6 +83,9 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
       // Use the privacy setting from the vehicle if the mission specifies default sharing
       var vehiclePrivacy = o.vehicle.viewPrivacy
+
+      debug(s"access check for $o, userId=$userId, privCode=${o.viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
+
       if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
         vehiclePrivacy = ApiController.defaultVehicleViewAccess
 
@@ -92,7 +95,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         None
     }
 
-    //debug(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
+    if (!r.isDefined) warn(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
     r
   }
 
@@ -114,7 +117,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
    * We provide extra data in this case: the (expensive to generate) doarama URL
    */
   override protected def toSingletonJSON(o: Mission): JValue = {
-    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new MissionSerializer(true))
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + EnumSerializer.create(AccessCode) + new MissionSerializer(true))
   }
 
   // FIXME - experimenting with reflection
@@ -187,9 +190,9 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
               case "maxAlt" => summary.maxAlt
               case "maxGroundspeed" => summary.maxGroundSpeed
               case "maxAirspeed" => summary.maxAirSpeed
-              case "latitude" => summary.latitude.get
-              case "longitude" => summary.longitude.get
-              case "flightDuration" => summary.flightDuration.get
+              case "latitude" => summary.latitude.getOrElse(0.0)
+              case "longitude" => summary.longitude.getOrElse(0.0)
+              case "flightDuration" => summary.flightDuration.getOrElse(0.0)
             }
 
             val op = makeDoubleOp(field, w.opcode)
@@ -218,11 +221,14 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
           // Ugh - bug in activerecords two levels deep - https://github.com/aselab/scala-activerecord/issues/48
           // r = r.where(_.vehicle.user.login === w.cmpValue)
           val u = User.find(w.cmpValue).getOrElse(throw new ActiveRecordException("Can't find user"))
-          val vehicleIds = u.vehicles.map(_.id)
+          val vehicleIds = u.vehicles.map { v => v.id } // .toList
+          debug(s"Looking for missions by $u, in vehicleIds: " + vehicleIds.mkString(","))
           r = r.where(_.vehicleId in vehicleIds)
+          //debug(s"FIXME - num matching missions: " + r.size)
           true
 
-        case _ =>
+        case x @ _ =>
+          debug(s"Letting superclass handle $x")
           false
       }
 
