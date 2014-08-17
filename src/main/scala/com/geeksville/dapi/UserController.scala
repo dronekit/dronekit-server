@@ -14,6 +14,7 @@ import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.Vehicle
 import com.geeksville.dapi.model.VehicleSerializer
 import java.util.UUID
+import com.geeksville.json.EnumSerializer
 
 class UserController(implicit swagger: Swagger) extends ActiveRecordController[User, UserJson]("user", swagger, User) {
   override val blacklist = Set("hashedPassword", "password", "groupId")
@@ -24,7 +25,7 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
   }
 
   override protected def toJSON(o: Any): JValue = {
-    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + new UserSerializer(Option(user), true))
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + EnumSerializer.create(AccessCode) + new UserSerializer(Option(user), true))
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in updating objects.
