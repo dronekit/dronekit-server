@@ -426,7 +426,7 @@ object ApiController extends Logging {
       case AccessCode.PUBLIC_VALUE =>
         true
       case AccessCode.SHARED_VALUE =>
-        isSharedLink
+        isSharedLink || isOwner
       case AccessCode.RESEARCHER_VALUE =>
         isOwner || isResearcher
     }
