@@ -4,8 +4,8 @@ echo "Prebuilding various dependencies needed for dronehub"
 # set -e
 git submodule update --recursive --init
 
-echo "Installing LogAnalyzer dependencies"
-pip install numpy
+# echo "Installing LogAnalyzer dependencies"
+# pip install numpy
 
 cp nestor.conf.template ~/nestor.conf
 
