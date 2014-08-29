@@ -39,6 +39,11 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     Migrator(13,
       "ALTER TABLE missions ADD doarama_id INTEGER"))
 
+  val initialSetup = Seq(
+    // FIXME - for some reason scala activerecord doesn't create an index on mission_id - which we need for fast joins later - so we add it by hand
+    Migrator(1,
+      "create index mission_id_index on mission_summaries (mission_id)"))
+
   case class Migrator(newVerNum: Int, sql: String*) {
     def run() {
       inTransaction {
@@ -96,6 +101,10 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
       } else {
         error("WIPING TABLES DUE TO MIGRATION!")
         Tables.reset
+
+        // Run our manual init step
+        warn("Tables now created - performing custom DB init")
+        initialSetup.foreach(_.run())
 
         // A wipe implies no need to run migrations
         setVersion(math.max(dbWipeVersion, requiredVersion))
