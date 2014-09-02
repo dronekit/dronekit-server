@@ -108,7 +108,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
    */
 
   post("/pwreset/:login") {
-    val u = User.find(params("login")).getOrElse(haltNotFound("login not found"))
+    val u = User.findByLoginOrEmail(params("login")).getOrElse(haltNotFound("login not found"))
     if (!u.email.isDefined)
       haltBadRequest("No email address known for this account, sorry.")
     else {
