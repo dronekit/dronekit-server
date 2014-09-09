@@ -183,6 +183,7 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
           val name = m.name
           msg.setParam_id(name)
           msg.param_value = m.value.toFloat
+          msg.param_type = MAVLINK_TYPE_FLOAT // Dataflash logs always store params as floats
           params(name) = new ROParamValue(msg)
 
         case _ =>
