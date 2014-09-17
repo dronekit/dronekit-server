@@ -275,7 +275,8 @@ case class Mission(
   }
 
   /// The user of this mission
-  private lazy val userId = for {
+  @Transient
+  lazy val userId = for {
     v <- vehicle
     uid <- v.userId
   } yield {
@@ -292,7 +293,7 @@ case class Mission(
     // Use the privacy setting from the vehicle if the mission specifies default sharing
     var vehiclePrivacy = vehicle.viewPrivacy
 
-    debug(s"access check for $this, userId=$userId, privCode=${viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
+    val debugmsg = s"access check for $this, userId=$userId, privCode=${viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink"
 
     if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
       vehiclePrivacy = ApiController.defaultVehicleViewAccess
@@ -301,7 +302,9 @@ case class Mission(
     val isResearcher = u.map(_.isResearcher).getOrElse(false)
     val isAdmin = u.map(_.isAdmin).getOrElse(false)
 
-    ApiController.isAccessAllowed(viewPrivacy, isOwner || isAdmin, isResearcher, vehiclePrivacy, isSharedLink)
+    val ok = ApiController.isAccessAllowed(viewPrivacy, isOwner || isAdmin, isResearcher, vehiclePrivacy, isSharedLink)
+    debug(debugmsg + ": ok=" + ok)
+    ok
   }
 
   /**
