@@ -75,7 +75,10 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
   /**
-   * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
+   * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions.
+   *
+   * @param isSharedLink if true we are resolving a _specific_ URL which was passed between users (so not something like a google
+   * search or top level map view)
    */
   override protected def filterForReadAccess(oin: Mission, isSharedLink: Boolean = false) = {
     val r = super.filterForReadAccess(oin).flatMap { o =>

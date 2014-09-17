@@ -408,6 +408,8 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
 object ApiController extends Logging {
   /**
    * Does the user have appropriate access to see the specified AccessCode?
+   * @param isSharedLink if true we are resolving a _specific_ URL which was passed between users (so not something like a google
+   * search or top level map view)
    */
   def isAccessAllowed(requiredIn: Int, isOwner: Boolean, isResearcher: Boolean, default: Int, isSharedLink: Boolean) = {
     val required = if (requiredIn == AccessCode.DEFAULT_VALUE) {
