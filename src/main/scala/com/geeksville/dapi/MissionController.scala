@@ -507,6 +507,40 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     }
   }
 
+  private val newEndpointDocs = """
+    Note: I'm temporarily placing these docs here for review - to make it easy to just move text around when I create the real code
+    and the swagger webdocs.  Please add comments via github.
+    
+    So Arthur, Ramon and I have been discussing how to support extra flight metadata in the web GUI and in our various GCS apps.  
+    This proposal is for the creation of a 'heirachical folder of datafiles or URLs which can be accessed from clients using standard
+    REST conventions.
+    
+    Note: This documentation is currently placed under the mission node, but when implemented it will actually be available under mission,
+    user and vehicle.  So clients will have the option of attaching extra data under any of those nodes.
+    
+    Use cases:
+    * Allow GCS and web UI to share a richer notion of wpts/flight-plans than supported by the vehicle code(i.e. some sort of JSON flt plan Arthur
+    and I have been discussing).  These flt plans could be stored under mission, vehicle or user (TBD based on GCS needs)
+    * Allow youtube, sketchfab or other oembed based URLs to be assocated with missions - this would allow the web UI to check for these
+    optional blobs and if present show a richer UI using this new data
+    * Missions could include both TLOGS and dataflash logs - currently we assume only one or the other.
+    * Apps could use this store for their own private application state (stored under user or vehicle).  i.e. droidplanner settings etc... 
+    magically found by your 3dr ID
+    * Someday when we can squirt up images for stitching, this directory tree might be a good home for such raw images before stitching
+    
+    Proposed API (details to be added based on feedback/proof of concept implementation):
+    * Placed under the parent node (i.e. /api/v1/mission/4443d-3042/data or /api/v1/user/kevinh/data
+    * Doing a GET of DATA includes the full list of child files as some sort of JSON structure).  Something like:
+  { { "path": "droidplanner/extrafile", "appcreator": "<appkey>", "appshare": "public|private", "mime": "<mimetype>" } }
+    * Doing a GET of .../data/mydroidplannerblob returns the contents of that blob
+    * Doing a PUT of .../data/mydroidplannerblob creates or updates some blob
+    * DELETE has the expected behavior (non public data can only be deleted by the app that created it)
+    * PUT supports an optional appshare query param, if set it will control access for apps that are different than the creator.  If private
+    (the default) only the app that created this node will see it, if public any app can see this node.  (All API operations already have
+    the appkey provided by the client)
+    * PUT supports a required query param of MIME.  This param must be set to indicate the mimetype of the associated datafile or URL.
+    """
+
   private val addMissionInfo =
     (apiOperation[List[MissionJson]]("uploadForVehicle")
       summary s"Add a new mission (as a tlog, bog or log)"
