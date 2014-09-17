@@ -27,12 +27,9 @@ trait DapiRecordCompanion[T <: ActiveRecord] extends ActiveRecordCompanion[T] wi
 
   type Relation = ActiveRecord.Relation[T, T]
 
-  /// Find a long primary key
-  final def findByLongId(id: Long): Option[T] = collection.where(_.id === id).headOption
-
   /// Assume that the key is a long SQL primary id, subclasses can override if they want different behavior
   def find(id: String): Option[T] = try {
-    findByLongId(id.toLong)
+    collection.where(_.id === id.toLong).headOption
   } catch {
     case ex: NumberFormatException =>
       warn(s"Can't convert $id to an integer id")
