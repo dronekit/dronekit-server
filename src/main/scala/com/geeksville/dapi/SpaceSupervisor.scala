@@ -112,13 +112,18 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
     }
 
     /// Get a suitable set of update messages which are suitable to send to a client
-    def updates = {
-      // Always include a start msg if we can
-      val summary = mission.map { m =>
-        AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(m))))
-      }
+    def updates(u: Option[User]): Iterable[AtmosphereUpdate] = {
+      // If we don't have a start - don't send anything
+      mission.map { m =>
+        val start = Seq(AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(m)))))
 
-      summary ++ history
+        // If user doesn't have read access to this mission hide it from what we provide to the client
+        if (m.isReadAccessAllowed(u, false))
+          (start ++ history)
+        else
+          Iterable.empty
+
+      }.getOrElse(Iterable.empty)
     }
   }
 
@@ -130,7 +135,7 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
    */
   private val actorToMission = HashMap[ActorRef, MissionHistory]()
 
-  // Send live and then ended flights
+  // Send live and then ended flights 
   private def allMissions = actorToMission.values ++ recentMissions
 
   protected def publishEvent(a: Any) { eventStream.publish(a) }
@@ -247,11 +252,12 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
       AtmosphereTools.sendTo(dest, "user", Extraction.decompose(o))
     }
 
-    log.debug(s"Sending ${allMissions.size} old missions to atmosphere client")
-    allMissions.foreach { info =>
+    val missions = allMissions
+    log.debug(s"Sending ${missions.size} old missions to atmosphere client")
+    missions.foreach { info =>
       //log.debug(s"Resending from $info")
       catchIgnore {
-        info.updates.foreach { u =>
+        info.updates(user).foreach { u =>
           //log.debug(s"Resending $u")
           AtmosphereTools.sendTo(dest, u.typ, u.payload)
         }
@@ -274,13 +280,14 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
         Extraction.decompose(o)
       }
 
-      log.debug(s"Getting ${allMissions.size} old missions in initial JSON")
-      val othersJson = allMissions.flatMap { info =>
+      val missions = allMissions
+      log.debug(s"Getting ${missions.size} old missions in initial JSON")
+      val othersJson = missions.flatMap { info =>
         //log.debug(s"Resending from $info")
 
         // We might throw while parsing these - return what we can
         catchOrElse(Iterable.empty: Iterable[JValue]) {
-          info.updates.map { u =>
+          info.updates(user).map { u =>
             //log.debug(s"Resending $u")
             u.payload
           }

@@ -46,6 +46,7 @@ import com.geeksville.doarama.DoaramaClient
 import java.io.ByteArrayOutputStream
 import com.geeksville.util.ThreadTools
 import org.squeryl.SquerylSQLException
+import com.geeksville.dapi.ApiController
 
 /**
  * Stats which cover an entire flight (may span multiple tlog chunks)
@@ -271,6 +272,36 @@ case class Mission(
   def numParameters = {
     regenSummary()
     summary.numParameters
+  }
+
+  /// The user of this mission
+  private lazy val userId = for {
+    v <- vehicle
+    uid <- v.userId
+  } yield {
+    uid
+  }
+
+  /**
+   * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
+   *
+   * This method should eventually replace MissonController.isAccessAllowed
+   */
+  def isReadAccessAllowed(u: Option[User], isSharedLink: Boolean = false) = {
+
+    // Use the privacy setting from the vehicle if the mission specifies default sharing
+    var vehiclePrivacy = vehicle.viewPrivacy
+
+    debug(s"access check for $this, userId=$userId, privCode=${viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
+
+    if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
+      vehiclePrivacy = ApiController.defaultVehicleViewAccess
+
+    val isOwner = u.map(_.id == userId.getOrElse(-1L)).getOrElse(false)
+    val isResearcher = u.map(_.isResearcher).getOrElse(false)
+    val isAdmin = u.map(_.isAdmin).getOrElse(false)
+
+    ApiController.isAccessAllowed(viewPrivacy, isOwner || isAdmin, isResearcher, vehiclePrivacy, isSharedLink)
   }
 
   /**
