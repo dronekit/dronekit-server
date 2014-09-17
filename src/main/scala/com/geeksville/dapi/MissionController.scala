@@ -67,13 +67,6 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
 
 class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordController[Mission, MissionJson]("mission", swagger, Mission) with MissionUploadSupport {
 
-  private def missionUserId(o: Mission) = for {
-    v <- o.vehicle
-    uid <- v.userId
-  } yield {
-    uid
-  }
-
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions.
    *
@@ -82,12 +75,12 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
    */
   override protected def filterForReadAccess(oin: Mission, isSharedLink: Boolean = false) = {
     val r = super.filterForReadAccess(oin).flatMap { o =>
-      val userId = missionUserId(o)
+      val userId = o.userId
 
       // Use the privacy setting from the vehicle if the mission specifies default sharing
       var vehiclePrivacy = o.vehicle.viewPrivacy
 
-      debug(s"access check for $o, userId=$userId, privCode=${o.viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
+      debug(s"filter check for $o, userId=$userId, privCode=${o.viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
 
       if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
         vehiclePrivacy = ApiController.defaultVehicleViewAccess
@@ -98,7 +91,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         None
     }
 
-    if (!r.isDefined) warn(s"access allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
+    if (!r.isDefined) warn(s"filter allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
     r
   }
 
@@ -107,7 +100,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
    * If not allowed, override should call haltUnauthorized()
    */
   override protected def requireWriteAccess(o: Mission) = {
-    val userId = missionUserId(o)
+    val userId = o.userId
 
     // Be even more strict than this - only let them change the mission object if the owner (for now)
     // requireAccessCode(userId.getOrElse(-1L), o.controlPrivacy, ApiController.defaultVehicleControlAccess)
