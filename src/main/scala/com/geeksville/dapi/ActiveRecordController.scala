@@ -9,11 +9,12 @@ import com.github.aselab.activerecord.dsl._
 import com.geeksville.dapi.model.DapiRecordCompanion
 import com.github.aselab.activerecord.ActiveRecordException
 import org.json4s.JsonAST.JValue
+import com.geeksville.dapi.model.DapiRecord
 
 /**
  * A controller that assumes the backing object comes from ActiveRecord (allows easy field finding)
  */
-class ActiveRecordController[T <: ActiveRecord: Manifest, JsonT <: Product: Manifest](aName: String, swagger: Swagger, protected val myCompanion: DapiRecordCompanion[T])
+class ActiveRecordController[T <: DapiRecord: Manifest, JsonT <: Product: Manifest](aName: String, swagger: Swagger, protected val myCompanion: DapiRecordCompanion[T])
   extends ApiController[T, JsonT](aName, swagger, myCompanion) {
 
   /// Fields we never want to share with clients

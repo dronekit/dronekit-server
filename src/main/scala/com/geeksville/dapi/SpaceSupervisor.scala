@@ -113,17 +113,17 @@ class SpaceSupervisor extends DebuggableActor with ActorLogging {
 
     /// Get a suitable set of update messages which are suitable to send to a client
     def updates(u: Option[User]): Iterable[AtmosphereUpdate] = {
-      // refresh from the master DB copy (FIXME - it would be better to invent a general concept of a cached DB record which can 
-      // be used 'live' in the ORM until it is too old (5 mins?) and has to be reread)
-      // Rereading missions every time is too slow
-      // mission.foreach { m => mission = Mission.find(m.id) }
+      // refresh from the master DB copy 
+      mission = Mission.perhapsReread(mission)
 
       // If we don't have a start - don't send anything
       mission.map { m =>
         val start = Seq(AtmosphereUpdate("start", Extraction.decompose(SpaceEnvelope(m.id, Option(m)))))
 
         // If user doesn't have read access to this mission hide it from what we provide to the client
-        if (m.isReadAccessAllowed(u, false))
+        val canRead = m.isReadAccessAllowed(u, false)
+        //log.debug(s"canread on $m is $canRead")
+        if (canRead)
           (start ++ history)
         else
           Iterable.empty
