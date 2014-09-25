@@ -17,6 +17,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
 import org.apache.http.client.methods.HttpRequestBase
 import scala.xml._
+import org.apache.http.client.utils.URLEncodedUtils
 
 /**
  * Standard client side glue for talking to HTTP services
@@ -46,6 +47,17 @@ class HttpClient(val httpHost: HttpHost) {
     } finally {
       transaction.releaseConnection()
     }
+  }
+
+  /// Add a query string to an URL
+  protected def addQueryString(url: String, params: (String, String)*) = {
+    val nvps = params.map {
+      case (key, v) =>
+        new BasicNameValuePair(key, v)
+    }.toList.asJava
+
+    val encoded = URLEncodedUtils.format(nvps, "utf-8");
+    url + "?" + encoded
   }
 
   /// Call something with a JSON response
