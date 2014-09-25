@@ -16,6 +16,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
 import org.apache.http.client.methods.HttpRequestBase
+import scala.xml._
 
 /**
  * Standard client side glue for talking to HTTP services
@@ -47,8 +48,15 @@ class HttpClient(val httpHost: HttpHost) {
     }
   }
 
+  /// Call something with a JSON response
   def callJson(transaction: HttpRequestBase) = {
     val msg = call(transaction)
     parse(msg).asInstanceOf[JObject]
+  }
+
+  /// Call something with XML response
+  def callXml(transaction: HttpRequestBase) = {
+    val msg = call(transaction)
+    XML.loadString(msg)
   }
 }
