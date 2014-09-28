@@ -35,6 +35,8 @@ import scala.concurrent.Future
 import com.github.aselab.activerecord.ActiveRecordException
 import org.squeryl.dsl.TDouble
 import org.squeryl.dsl.TString
+import com.geeksville.nasa.NASAClient
+import java.util.Date
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
@@ -421,6 +423,33 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         // JObject("label" -> JString(s._1), "data" -> jarray, "color" -> JInt(i))
         ("label" -> s._1) ~ ("data" -> array) ~ ("color" -> i)
     }
+    r
+  }
+
+  val client = new NASAClient()
+
+  get("/:id/submitNASA") {
+    if (!user.isAdmin)
+      haltUnauthorized("Private API testing only")
+
+    val mission = findById
+
+    val primaryContact = mission.vehicle.user.login + "@droneshare"
+    val aircraftType = mission.vehicle.vehicleType.getOrElse(haltNotFound("Invalid vehicle type"))
+    val flightNotes = mission.summary.text.getOrElse(haltNotFound("Invalid summary text"))
+    val primaryPhone = None
+    val flightStartTime = mission.summary.startTime.getOrElse(haltNotFound("Invalid flight start"))
+    val flightEndTime = mission.summary.endTime.getOrElse(haltNotFound("Invalid flight end"))
+    val minAltitude = 0L // FIXME - how is this encoded?
+    val maxAltitude = mission.summary.maxAlt.toLong
+
+    // FIXME - for now we just use the waypoints - is there a better way to specify the amount of airspace we want
+    val model = mission.model.getOrElse(haltNotFound("Can't generate model"))
+    val locs = model.waypoints.map(_.location)
+
+    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs)
+
+    println("NASA says: " + r)
     r
   }
 
