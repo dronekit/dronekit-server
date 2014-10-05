@@ -37,7 +37,9 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     Migrator(12,
       "ALTER TABLE mission_summaries ADD summary_version INTEGER NOT NULL DEFAULT 0"),
     Migrator(13,
-      "ALTER TABLE missions ADD doarama_id INTEGER"))
+      "ALTER TABLE missions ADD doarama_id INTEGER"),
+    Migrator(14,
+      "ALTER TABLE missions ADD approval VARCHAR(80)"))
 
   val initialSetup = Seq(
     // FIXME - for some reason scala activerecord doesn't create an index on mission_id - which we need for fast joins later - so we add it by hand
