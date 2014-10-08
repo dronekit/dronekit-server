@@ -447,7 +447,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val model = mission.model.getOrElse(haltNotFound("Can't generate model"))
     val locs = model.waypoints.map(_.location)
 
-    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs)
+    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs, mission.id)
 
     println("NASA says: " + r)
 
