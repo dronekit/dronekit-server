@@ -36,5 +36,5 @@ class EnvelopeFactory(private val magic: String) {
   def encode(message: String) = MD5Tools.toBase64(magic + message)
 
   // Was the hashed value correct for the specified expected message
-  def isValid(expectedMessage: String, receivedMessage: String) = MD5Tools.checkBase64(receivedMessage, magic + expectedMessage)
+  def isValid(expectedMessage: String, receivedMessage: String) = MD5Tools.checkBase64(receivedMessage, encode(expectedMessage))
 }
