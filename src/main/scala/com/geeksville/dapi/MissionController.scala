@@ -428,7 +428,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   val client = new NASAClient()
 
-  get("/:id/submitNASA") {
+  private def doApprove() = {
     if (!user.isAdmin)
       haltUnauthorized("Private API testing only")
 
@@ -445,12 +445,26 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
     // FIXME - for now we just use the waypoints - is there a better way to specify the amount of airspace we want
     val model = mission.model.getOrElse(haltNotFound("Can't generate model"))
-    val locs = model.waypoints.map(_.location)
+    val locs = model.waypoints.filter { wpt => wpt.isValidLatLng && wpt.isCommandValid }.map(_.location)
 
-    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs)
+    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs, mission.id)
 
     println("NASA says: " + r)
-    r
+
+    mission.approval = Some("SUBMITTED")
+    mission.save
+
+    mission
+  }
+
+  // FIXME - temp hack for testing in browser, remove me
+  get("/:id/submitApproval") {
+    doApprove()
+  }
+
+  // Testing NASA flight submission
+  post("/:id/submitApproval") {
+    doApprove()
   }
 
   roField("parameters.json") { (o) =>

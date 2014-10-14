@@ -178,6 +178,11 @@ case class Mission(
   var keep: Boolean = true
 
   /**
+   * For testing airspace approval ideas
+   */
+  var approval: Option[String] = None
+
+  /**
    * Note: this is no longer just for tlogs.  The rules are as follows:
    *
    * If the string ends with a suffix (.log or .bog) then they are data flash (or some other data file format).  If
@@ -559,7 +564,7 @@ class MissionSerializer(useDoarama: Boolean) extends CustomSerializer[Mission](i
       if (useDoarama)
         r = r ~ ("doaramaURL" -> u.doaramaURL)
 
-      r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType)
+      r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType) ~ ("approval" -> u.approval)
   }))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {

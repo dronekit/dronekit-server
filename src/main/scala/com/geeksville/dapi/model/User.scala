@@ -19,6 +19,7 @@ import com.geeksville.akka.MockAkka
 import com.geeksville.util.MD5Tools
 import com.geeksville.scalatra.WebException
 import java.sql.Timestamp
+import com.geeksville.util.EnvelopeFactory
 
 /**
  * Owned by a user - currently active access tokens
@@ -145,21 +146,18 @@ case class User(@Required @Unique login: String,
     }
   }
 
-  private def verificationMagic = "ab641x"
-
   /**
    * Return a MD5 string which can be used to verify that the user owns this email address
    */
-  def verificationCode =
-    MD5Tools.toBase64(verificationMagic + email.getOrElse(throw new Exception("Can't verify without email")))
+  def verificationCode = User.verificationFactory.encode(email.getOrElse(throw new Exception("Can't verify without email")))
 
   /// Check if the specified code proves the USER's email is good
   def confirmVerificationCode(code: String) {
-    if (MD5Tools.checkBase64(code, verificationCode)) {
+    if (User.verificationFactory.isValid(email.getOrElse(throw new Exception("Can't verify without email")), code)) {
       emailVerified = true
       save
     } else {
-      error(s"Invalid verification code $verificationCode, wanted $code")
+      error(s"Invalid verification code $code, wanted $email")
       throw WebException(400, s"Invalid verification code")
     }
   }
@@ -372,5 +370,9 @@ object User extends DapiRecordCompanion[User] with Logging {
     u
   }
 
+  /**
+   * Return a MD5 string which can be used to verify that the user owns this email address
+   */
+  private val verificationFactory = new EnvelopeFactory("ab641x")
 }
 
