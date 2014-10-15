@@ -429,6 +429,9 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   val client = new NASAClient()
 
   private def doApprove() = {
+    if (user == null)
+      haltUnauthorized("Not logged in")
+
     if (!user.isAdmin)
       haltUnauthorized("Private API testing only")
 
@@ -454,7 +457,11 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     mission.approval = Some("SUBMITTED")
     mission.save
 
-    mission
+    // Super skanky - FIXME - we assume that NASA would have responded within 5 secs - this allows the frontend to not have to poll
+    // for changes to the mission
+    // mission
+    Thread.sleep(3000)
+    findById // Return the updated mission object (hopefully NASA has responded by now)s
   }
 
   // FIXME - temp hack for testing in browser, remove me
