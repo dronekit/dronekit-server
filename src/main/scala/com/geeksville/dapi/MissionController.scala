@@ -428,6 +428,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
   val client = new NASAClient()
 
+  private def meterToFeet(m: Double) = m * 3.28084
+
   private def doApprove() = {
     if (user == null)
       haltUnauthorized("Not logged in")
@@ -443,12 +445,16 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val primaryPhone = None
     val flightStartTime = mission.summary.startTime.getOrElse(haltNotFound("Invalid flight start"))
     val flightEndTime = mission.summary.endTime.getOrElse(haltNotFound("Invalid flight end"))
-    val minAltitude = 0L // FIXME - how is this encoded?
-    val maxAltitude = mission.summary.maxAlt.toLong
+    //val minAltitude = 0L // FIXME - how is this encoded?
+    //val maxAltitude = mission.summary.maxAlt.toLong
 
     // FIXME - for now we just use the waypoints - is there a better way to specify the amount of airspace we want
     val model = mission.model.getOrElse(haltNotFound("Can't generate model"))
-    val locs = model.waypoints.filter { wpt => wpt.isValidLatLng && wpt.isCommandValid }.map(_.location)
+    val wpts = model.waypoints.filter { wpt => wpt.isValidLatLng && wpt.isCommandValid }
+    val locs = wpts.map(_.location)
+    val alts = wpts.map(_.altitude.toDouble)
+    val minAltitude = meterToFeet(alts.reduceOption(math.min(_, _)).getOrElse(0.0)).toLong
+    val maxAltitude = meterToFeet(alts.reduceOption(math.max(_, _)).getOrElse(0.0)).toLong
 
     val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs, mission.id)
 
