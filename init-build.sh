@@ -9,6 +9,8 @@ git submodule update --recursive --init
 
 cp nestor.conf.template ~/nestor.conf
 
+echo rebuilding dependencies
+rm -rf dependencies
 mkdir dependencies
 cd dependencies
 
@@ -19,12 +21,12 @@ cd dependencies
 #ln -s ../dependencies/$SCALA/bin/* .
 #popd
 
-git clone git@github.com:geeksville/sbt-scalabuff.git
+git clone https://github.com/geeksville/sbt-scalabuff.git
 cd sbt-scalabuff/
 sbt publishLocal
 cd ..
 
-git clone -b fixes_for_dronehub git@github.com:geeksville/json4s.git
+git clone -b fixes_for_dronehub https://github.com/geeksville/json4s.git
 cd json4s
 sbt publishLocal
 cd ..
@@ -36,12 +38,12 @@ cd akka
 sbt -Dakka.scaladoc.diagrams=false publishLocal
 cd ..
 
-git clone -b 2.3.x_2.10 git@github.com:geeksville/scalatra.git
+git clone -b 2.3.x_2.10 https://github.com/geeksville/scalatra.git
 cd scalatra
 sbt publishLocal
 cd ..
 
-git clone git@github.com:geeksville/scala-activerecord.git
+git clone https://github.com/geeksville/scala-activerecord.git
 cd scala-activerecord
 sbt "project core" publishLocal "project generator" publishLocal "project scalatra" publishLocal "project scalatraSbt" publishLocal
 cd ..
