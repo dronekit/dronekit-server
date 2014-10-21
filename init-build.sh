@@ -9,10 +9,11 @@ git submodule update --recursive --init
 
 cp nestor.conf.template ~/nestor.conf
 
+# We build in /tmp because it might be a ramfs and much faster
 echo rebuilding dependencies
-rm -rf dependencies
-mkdir dependencies
-cd dependencies
+rm -rf /tmp/dependencies
+mkdir /tmp/dependencies
+cd /tmp/dependencies
 
 #SCALA=scala-2.10.4
 #wget http://www.scala-lang.org/files/archive/$SCALA.tgz
@@ -32,7 +33,7 @@ sbt publishLocal
 cd ..
 
 # akka needs sphinx to make docs
-pip install sphinx
+sudo pip install sphinx
 git clone https://github.com/geeksville/akka.git
 cd akka
 sbt -Dakka.scaladoc.diagrams=false publishLocal
