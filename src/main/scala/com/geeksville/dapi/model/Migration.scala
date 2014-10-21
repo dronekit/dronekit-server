@@ -85,7 +85,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     dbVer.save
   }
 
-  def allowAutoWipe = false
+  def allowAutoWipe = System.getProperty("dapi.autowipe", "false").toBoolean
 
   def update() {
     val curver = try {
@@ -98,7 +98,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
     if (curver < dbWipeVersion) {
       if (!allowAutoWipe) {
-        error(s"DB schema ver($curver) < wipever($dbWipeVersion), but autowipe is false - please fix DB")
+        error(s"DB schema ver($curver) < wipever($dbWipeVersion), but autowipe is false - please fix DB or say -Ddapi.autowipe=true")
         throw new Exception("DB invalid")
       } else {
         error("WIPING TABLES DUE TO MIGRATION!")
