@@ -354,9 +354,9 @@ object User extends DapiRecordCompanion[User] with Logging {
   }
 
   def findByLoginOrEmail(login: String) =
-    User.find(login).orElse {
+    find(login).orElse {
       logger.warn(s"Username $login not found, now searching for email $login")
-      User.findByEmail(login)
+      findByEmail(login)
     }
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
