@@ -27,7 +27,7 @@ object MailTools extends Logging {
 
           <a href={ confirmDest }>{ confirmDest }</a><p/>
 
-          Feedback on this beta-test is appreciated.  Please email <a href={ "mailto:" + senderEmail }>{ senderEmail }</a>
+          Feedback on this community supported application is appreciated.  Please email <a href={ "mailto:" + senderEmail }>{ senderEmail }</a>
           with questions or comments. Droneshare is 
           <a href="https://github.com/diydrones/droneshare/blob/master/WELCOME.md">open-source</a>, 
           please contribute code or fork it into something new.<p/>
