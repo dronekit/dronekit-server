@@ -308,7 +308,7 @@ case class Mission(
     val isAdmin = u.map(_.isAdmin).getOrElse(false)
 
     val ok = ApiController.isAccessAllowed(viewPrivacy, isOwner || isAdmin, isResearcher, vehiclePrivacy, isSharedLink)
-    debug(debugmsg + ": ok=" + ok)
+    // debug(debugmsg + ": ok=" + ok)
     ok
   }
 
