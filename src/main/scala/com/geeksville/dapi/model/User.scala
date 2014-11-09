@@ -279,6 +279,7 @@ case class User(@Required @Unique login: String,
 case class UserJson(login: String,
   password: Option[String] = None, email: Option[String] = None,
   fullName: Option[String] = None, wantEmails: Option[String] = None,
+  groups: Option[String] = None,
 
   // If a client is changing password they must also include this field (or be an admin)
   oldPassword: Option[String] = None,
@@ -296,6 +297,7 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
       val r = x.extract[UserJson]
       val u = User(r.login, r.email, r.fullName)
       r.password.foreach(u.password = _)
+      r.groups.foreach(u.groupId = _)
       u
   },
   {
@@ -323,9 +325,9 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
           ("defaultControlPrivacy" -> AccessCode.valueOf(u.defaultControlPrivacy).toString) ~
           ("vehicles" -> vehicles)
 
-        val showEmail = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
-        if (showEmail) {
-          r = r ~ ("email" -> u.email) ~ ("wantEmails" -> u.wantEmails)
+        val showSecrets = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
+        if (showSecrets) {
+          r = r ~ ("email" -> u.email) ~ ("wantEmails" -> u.wantEmails) ~ ("groups" -> u.groupId)
         }
         r
     }

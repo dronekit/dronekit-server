@@ -43,6 +43,15 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
       o.save
     }
 
+    // If the logged in user is an admin let them change groups
+    r.groups.foreach { newGroup =>
+      if (!user.isAdmin)
+        haltUnauthorized("Invalid access")
+
+      o.groupId = newGroup
+      o.save
+    }
+
     r.defaultViewPrivacy.foreach { o.defaultViewPrivacy = _ }
 
     o
