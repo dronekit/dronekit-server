@@ -434,7 +434,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     if (user == null)
       haltUnauthorized("Not logged in")
 
-    if (!user.isAdmin)
+    if (!user.isPreauth && !user.isAdmin)
       haltUnauthorized("Private API testing only")
 
     val mission = findById
