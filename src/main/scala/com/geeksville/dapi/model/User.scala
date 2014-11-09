@@ -76,7 +76,7 @@ case class User(@Required @Unique login: String,
   var hashedPassword: String = _
 
   /**
-   * The group Id for htis user (eventually we will support group tables, for now the only options are null, admin.
+   * The group Ids for this user (this is a set of strings separated by comma. Can contain empty, "admin", or "preauth")
    */
   @Length(max = 40)
   var groupId: String = ""
@@ -123,11 +123,17 @@ case class User(@Required @Unique login: String,
    */
   lazy val vehicles = hasMany[Vehicle]
 
-  def isAdmin = groupId == "admin"
+  /// Is the user in the specified group name (FIXME, currently just a crude string search)
+  def inGroup(groupName: String) = {
+    val r = groupId.contains(groupName)
+    //logger.debug(s"inGroup check for $groupName in $groupId result is $r")
+    r
+  }
 
-  def isDeveloper = groupId == "develop"
-
-  def isResearcher = groupId == "research"
+  def isAdmin = inGroup("admin")
+  def isDeveloper = inGroup("develop")
+  def isResearcher = inGroup("research")
+  def isPreauth = inGroup("preauth")
 
   /**
    * Some accounts were migrated from the old droneshare, which didn't have the concept of passwords.
