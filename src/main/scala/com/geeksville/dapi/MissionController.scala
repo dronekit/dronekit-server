@@ -82,7 +82,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       // Use the privacy setting from the vehicle if the mission specifies default sharing
       var vehiclePrivacy = o.vehicle.viewPrivacy
 
-      debug(s"filter check for $o, userId=$userId, privCode=${o.viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
+      //debug(s"filter check for $o, userId=$userId, privCode=${o.viewPrivacy}, vehiclePriv=$vehiclePrivacy, isShared=$isSharedLink")
 
       if (vehiclePrivacy == AccessCode.DEFAULT_VALUE)
         vehiclePrivacy = ApiController.defaultVehicleViewAccess
