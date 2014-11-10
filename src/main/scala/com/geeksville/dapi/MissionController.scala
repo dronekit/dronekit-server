@@ -93,7 +93,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         None
     }
 
-    if (!r.isDefined) warn(s"filter allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
+    // if (!r.isDefined) warn(s"filter allowed=${r.isDefined} to $oin, isShared=$isSharedLink")
     r
   }
 
