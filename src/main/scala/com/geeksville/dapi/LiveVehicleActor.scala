@@ -88,7 +88,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
 
   // Since we are on a server, we don't want to inadvertently spam the vehicle
   this.listenOnly = !canAcceptCommands
-  autoWaypointDownload = false
+  // autoWaypointDownload = false
   autoParameterDownload = false
   maxStreamRate = Some(1) // Tell vehicle to stream at 1Hz
 
