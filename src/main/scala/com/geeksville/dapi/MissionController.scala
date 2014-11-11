@@ -456,12 +456,12 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val minAltitude = meterToFeet(alts.reduceOption(math.min(_, _)).getOrElse(0.0)).toLong
     val maxAltitude = meterToFeet(alts.reduceOption(math.max(_, _)).getOrElse(0.0)).toLong
 
+    mission.approval = Some("SUBMITTED")
+    mission.save
+
     val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs, mission.id)
 
     println("NASA says: " + r)
-
-    mission.approval = Some("SUBMITTED")
-    mission.save
 
     // Super skanky - FIXME - we assume that NASA would have responded within 5 secs - this allows the frontend to not have to poll
     // for changes to the mission
