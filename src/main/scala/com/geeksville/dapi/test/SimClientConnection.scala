@@ -40,6 +40,7 @@ import com.geeksville.akka.AkkaTools
 import scala.util.Success
 import scala.util.Failure
 import com.geeksville.apiproxy.GCSCallback
+import com.geeksville.mavlink.LogBinaryMavlink
 
 object SimClient extends Logging {
   val random = new Random(System.currentTimeMillis)
@@ -63,8 +64,16 @@ abstract class SimClient(val systemId: Int, host: String) extends DebuggableActo
 
   protected val webapi = new GCSHooksImpl(host)
 
+  // Keep a tlog file on disk for debugging purposes
+  private val tlogSnapshot = context.actorOf(Props(LogBinaryMavlink.create(false)), "simTlog")
+
   val interfaceNum = 0
   val isControllable = true
+
+  // We learn the target system on the other side of the link for responding to key msgs
+  protected var otherSystemId = 1
+
+  override final protected def targetSystem = otherSystemId
 
   // We are not a GCS - pretend to be a quad
   vehicleTypeCode = MAV_TYPE.MAV_TYPE_QUADROTOR
@@ -72,10 +81,11 @@ abstract class SimClient(val systemId: Int, host: String) extends DebuggableActo
 
   startConnection()
 
-  sendMavlink(makeStatusText("Starting sim client"))
+  sendMavlink(makeStatusText(s"Starting $this"))
 
   override def postStop() {
     webapi.close()
+    tlogSnapshot ! PoisonPill
     super.postStop()
   }
 
@@ -103,6 +113,8 @@ abstract class SimClient(val systemId: Int, host: String) extends DebuggableActo
   }
 
   /**
+   * Send any locally generated messages to the server.
+   *
    * m must be a SendYoungest or a MAVLinkMessage
    */
   override protected def handlePacket(m: Any) {
@@ -111,6 +123,7 @@ abstract class SimClient(val systemId: Int, host: String) extends DebuggableActo
       case m: MAVLinkMessage =>
         seqNum += 1
         m.sequence = (seqNum & 0xff)
+        tlogSnapshot ! m
         webapi.filterMavlink(interfaceNum, m.encode)
         webapi.flush()
     }

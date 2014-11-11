@@ -41,8 +41,9 @@ import scala.util.Success
 import scala.util.Failure
 import com.geeksville.mavlink.MavlinkUtils
 import com.geeksville.akka.TimesteppedActor
+import org.mavlink.messages.ardupilotmega.msg_heartbeat
 
-/// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
+/// A base class for simulated web gcs clients - it just tries to change vehicle mode
 class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.singletonUUID)
   extends SimClient(SimWebController.controllerSysId, host)
   with VehicleSimulator with TimesteppedActor {
@@ -56,7 +57,14 @@ class SimWebController(host: String, val toControl: UUID = SimSimpleVehicle.sing
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
     val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
-    log.warning(s"Server sent us msg from vehicle ${MavlinkUtils.toString(msg)}, but we are ignoring!")
+    msg match {
+      case m: msg_heartbeat =>
+        // Ignore heartbeats for now
+        //log.info("SimWebGCS is ignoring heartbeat from vehicle")
+        ;
+      case _ =>
+        log.warning(s"Server sent us msg from vehicle ${MavlinkUtils.toString(msg)}, but we are ignoring!")
+    }
   }
 
   protected def doNextStep() {

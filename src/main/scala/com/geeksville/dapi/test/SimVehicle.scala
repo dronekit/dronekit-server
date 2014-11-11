@@ -54,13 +54,22 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
 
   val generation = SimGCSClient.nextGeneration
 
+  val waypoints = Seq[Location](
+    // Four pts in Yosemite - as a test of a no fly area
+    Location(37.865685, -119.539616, Some(10.0)),
+    Location(37.866084, -119.536355, Some(10.0)),
+    Location(37.863915, -119.536398, Some(10.0)),
+    Location(37.864373, -119.540325, Some(10.0)))
+
   /// Subclasses can override, but by default we use a random UUID
   def uuid = UUID.nameUUIDFromBytes(Array(systemId.toByte, generation.toByte) ++ getMachineId)
 
   // We are pretending to be a vehicle
   vehicleTypeCode = MAV_TYPE.MAV_TYPE_FLAPPING_WING
 
-  sendMavlink(makeStatusText("Starting sim vehicle"))
+  // If we have any waypoints at all claim to the GCS we are at wpt 0 currently
+  if (!waypoints.isEmpty)
+    sendMavlink(missionCurrent(0))
 
   def numPoints: Int
   def interval: Double
@@ -80,8 +89,6 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
   }
 
-  var waypoints = Seq[Location]()
-
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
     val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
@@ -92,6 +99,7 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
         // Reply with a msg_count
         val len = waypoints.length
         log.info(s"Sim vehicle claiming to have $len waypoints")
+        otherSystemId = msg.sysId
         sendMavlink(missionCount(len, targetComponent = msg.componentId))
 
       // Messages for pretending to contain wpts - respond to GCS attempted fetch
