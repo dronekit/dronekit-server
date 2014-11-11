@@ -47,11 +47,20 @@ class SimSimpleVehicle(val numPoints: Int, host: String, systemId: Int = 1, keep
 
   val interval = 1.0
 
+  // Always send enough movement so that any captured TLOG is considered long enough to be 'not boring'
+  sendFakeMovement()
+
   /// For now just use a well known ID
   override def uuid = SimSimpleVehicle.singletonUUID
 
   override def doNextStep() {
     // log.debug("I'm a simple vehicle, just sitting here listening for commands...")
+  }
+
+  private def sendFakeMovement() {
+    log.info("Sending some fake movement...")
+    val numPoints = 50
+    (0 until (numPoints / waypoints.length)).foreach { i => waypoints.foreach(sendPosition) }
   }
 }
 

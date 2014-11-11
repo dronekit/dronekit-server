@@ -103,8 +103,7 @@ private class SimFlyingVehicle(systemId: Int, numSeconds: Int, val numPoints: In
 
     sendMavlink(makeVFRHud(random.nextFloat % 10, random.nextFloat % 10, random.nextInt(100), heading))
     sendMavlink(makeAttitude(toRad(heading).toFloat, toRad(heading).toFloat, toRad(heading).toFloat))
-    sendMavlink(makePosition(curLoc))
-    sendMavlink(makeGPSRaw(curLoc))
+    sendPosition(curLoc)
     if (random.nextInt(100) < 2)
       sendMavlink(makeStatusText("Random status text msg!"))
 

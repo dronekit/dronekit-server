@@ -121,6 +121,12 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
     }
   }
 
+  // Send the msgs needed to look like a position update
+  protected def sendPosition(curLoc: Location) {
+    sendMavlink(makePosition(curLoc))
+    sendMavlink(makeGPSRaw(curLoc))
+  }
+
   protected def doNextStep(): Unit
 }
 
