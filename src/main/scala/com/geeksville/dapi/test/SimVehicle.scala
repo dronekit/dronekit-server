@@ -43,6 +43,9 @@ import com.geeksville.mavlink.MavlinkUtils
 import com.geeksville.akka.TimesteppedActor
 import org.mavlink.messages.ardupilotmega.msg_set_mode
 import org.mavlink.messages.ardupilotmega.msg_heartbeat
+import org.mavlink.messages.ardupilotmega.msg_mission_count
+import org.mavlink.messages.ardupilotmega.msg_mission_request_list
+import org.mavlink.messages.ardupilotmega.msg_mission_request
 
 /// A base class for simulated vehicles - it just starts a mission, subclass needs to provide more interesting behavior
 abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extends SimClient(systemId, host) with TimesteppedActor {
@@ -77,10 +80,28 @@ abstract class SimVehicle(systemId: Int, host: String, val keep: Boolean) extend
     webapi.setVehicleId(uuid.toString, interfaceNum, systemId, isControllable)
   }
 
+  var waypoints = Seq[Location]()
+
   /// Dear GCS, please send this packet
   override def sendMavlink(b: Array[Byte]) {
     val msg = MavlinkUtils.bytesToPacket(b).getOrElse(throw new Exception("Server sent us invalid mavlink"))
     msg match {
+
+      // Messages for pretending to contain wpts - respond to GCS attempted fetch (FIXME, no support for acks etc...)
+      case msg: msg_mission_request_list =>
+        // Reply with a msg_count
+        val len = waypoints.length
+        log.info(s"Sim vehicle claiming to have $len waypoints")
+        sendMavlink(missionCount(len, targetComponent = msg.componentId))
+
+      // Messages for pretending to contain wpts - respond to GCS attempted fetch
+      case msg: msg_mission_request =>
+        // Reply with the mission item
+        val seq = msg.seq
+        val wpt = waypoints(seq)
+        log.info(s"Sim vehicle returning wpt #$seq as $wpt")
+        sendMavlink(missionItem(seq, wpt, targetComponent = msg.componentId))
+
       case m: msg_set_mode =>
         gcsCustomMode = m.custom_mode.toInt
         log.info(s"Changing sim vehicle mode -> $gcsCustomMode")
