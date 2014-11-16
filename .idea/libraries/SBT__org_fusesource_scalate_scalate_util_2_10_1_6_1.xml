@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="SBT: org.fusesource.scalate:scalate-util_2.10:1.6.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.scalate/scalate-util_2.10/jars/scalate-util_2.10-1.6.1.jar!/" />
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.scalate/scalate-util_2.10/bundles/scalate-util_2.10-1.6.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.scalate/scalate-util_2.10/docs/scalate-util_2.10-1.6.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.scalate/scalate-util_2.10/srcs/scalate-util_2.10-1.6.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

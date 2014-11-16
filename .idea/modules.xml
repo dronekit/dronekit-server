@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/apihub.iml" filepath="$PROJECT_DIR$/.idea/modules/apihub.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/apihub-build.iml" filepath="$PROJECT_DIR$/.idea/modules/apihub-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gcommon.iml" filepath="$PROJECT_DIR$/.idea/modules/gcommon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gcommon-build.iml" filepath="$PROJECT_DIR$/.idea/modules/gcommon-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/three-akka.iml" filepath="$PROJECT_DIR$/.idea/modules/three-akka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/three-akka-build.iml" filepath="$PROJECT_DIR$/.idea/modules/three-akka-build.iml" />
+    </modules>
+  </component>
+</project>

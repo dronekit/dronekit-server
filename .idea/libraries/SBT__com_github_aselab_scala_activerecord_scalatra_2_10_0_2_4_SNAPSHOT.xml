@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: com.github.aselab:scala-activerecord-scalatra_2.10:0.2.4-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/local/com.github.aselab/scala-activerecord-scalatra_2.10/0.2.4-SNAPSHOT/jars/scala-activerecord-scalatra_2.10.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/local/com.github.aselab/scala-activerecord-scalatra_2.10/0.2.4-SNAPSHOT/docs/scala-activerecord-scalatra_2.10-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/local/com.github.aselab/scala-activerecord-scalatra_2.10/0.2.4-SNAPSHOT/srcs/scala-activerecord-scalatra_2.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

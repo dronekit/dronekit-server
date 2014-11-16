@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="" />
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/3scale-akka" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/arduleader" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/arduleader/droneapi-protobuf" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/arduleader/scandroid" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ardupilot" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/dependencies/akka" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/dependencies/json4s" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/dependencies/sbt-scalabuff" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/dependencies/scala-activerecord" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/dependencies/scalatra" vcs="Git" />
+  </component>
+</project>
