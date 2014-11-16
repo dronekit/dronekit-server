@@ -7,11 +7,7 @@
       <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
     </inspection_tool>
     <inspection_tool class="SpellCheckingInspection" enabled="true" level="TYPO" enabled_by_default="true">
-<<<<<<< HEAD
       <option name="processCode" value="false" />
-=======
-      <option name="processCode" value="true" />
->>>>>>> 615fc07... add hull.io java lib
       <option name="processLiterals" value="false" />
       <option name="processComments" value="true" />
     </inspection_tool>
