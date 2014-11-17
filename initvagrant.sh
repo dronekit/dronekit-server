@@ -1,6 +1,6 @@
 echo "PROVISIONING DroneAPI-Private vagrant instance."
 sudo apt-get -y update
-sudo apt-get -y install git python-pip openjdk-6-jre-headless openjdk-7-jdk python-dev build-essential python-numpy
+sudo apt-get -y install git python-pip openjdk-6-jre-headless openjdk-7-jdk python-dev build-essential python-numpy maven2
 pushd /tmp
 wget http://dl.bintray.com/sbt/debian/sbt-0.13.5.deb
 sudo dpkg -i sbt-0.13.5.deb

@@ -5,6 +5,16 @@
       <SbtProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="jdk" value="1.7" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/3scale-akka" />
+            <option value="$PROJECT_DIR$/3scale-akka/project" />
+            <option value="$PROJECT_DIR$/arduleader/common" />
+            <option value="$PROJECT_DIR$/arduleader/common/project" />
+            <option value="$PROJECT_DIR$/project" />
+          </set>
+        </option>
         <option name="resolveClassifiers" value="true" />
         <option name="resolveSbtClassifiers" value="true" />
         <option name="useAutoImport" value="true" />

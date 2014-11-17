@@ -68,6 +68,7 @@ object NestorBuild extends Build {
       assemblyCustomize,
       resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
+        resolvers += Resolver.mavenLocal,
 
       // To include source for Takipi
       unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
@@ -115,6 +116,8 @@ object NestorBuild extends Build {
         "org.json4s" %% "json4s-jackson" % "3.2.9-SNAPSHOT", // NEEDED FOR Atmosphere
         // We want the version from logback
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
+
+        "io.hull" % "hull-client" % "0.1",
 
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
