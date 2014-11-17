@@ -1,5 +1,6 @@
 package com.geeksville.dapi.model
 
+import com.geeksville.hull.Hull
 import com.github.aselab.activerecord.Datestamps
 import com.github.aselab.activerecord.annotations._
 import org.squeryl.annotations.Transient
@@ -117,6 +118,17 @@ case class User(@Required @Unique login: String,
    * Currently goes to gravatar.  Once we have a user profile URL in MDS we can return that instead.
    */
   def profileURL = email.map(Gravatar.profileUrl)
+
+  /**
+   * Get an ID string usable by hull.io
+   *
+   * For accounts that started with hull we prefix the ID with #h:, for other accounts we just use the whole string
+   */
+  def hullId =
+    if(login.startsWith("#h:"))
+        login.substring(3)
+    else
+        login
 
   /**
    * All the vehicles this user owns
@@ -323,7 +335,7 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
           ("needNewPassword" -> u.needNewPassword) ~
           ("defaultViewPrivacy" -> AccessCode.valueOf(u.defaultViewPrivacy).toString) ~
           ("defaultControlPrivacy" -> AccessCode.valueOf(u.defaultControlPrivacy).toString) ~
-          ("vehicles" -> vehicles)
+          ("vehicles" -> vehicles) ~ ("hullId" -> Hull.generateUserHash(u.hullId, u.email.getOrElse("")))
 
         val showSecrets = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
         if (showSecrets) {
