@@ -99,7 +99,9 @@ object NestorBuild extends Build {
 
         "mysql" % "mysql-connector-java" % "5.1.22",
 
-        // Turn off h2 for now
+        "com.cloudbees.thirdparty" % "zendesk-java-client" % "0.2.0",
+
+  // Turn off h2 for now
         // "com.h2database" % "h2" % "1.3.170",  // See Supported databases
 
         "org.mindrot" % "jbcrypt" % "0.3m", // For password encryption

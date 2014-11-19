@@ -145,5 +145,9 @@
     <orderEntry type="library" name="SBT: xerces:xercesImpl:2.8.0" level="project" />
     <orderEntry type="library" name="SBT: xmlunit:xmlunit:1.2" level="project" />
     <orderEntry type="library" name="SBT: xom:xom:1.2.5" level="project" />
+    <orderEntry type="library" name="SBT: com.cloudbees.thirdparty:zendesk-java-client:0.2.0" level="project" />
+    <orderEntry type="library" name="SBT: com.damnhandy:handy-uri-templates:1.1.7" level="project" />
+    <orderEntry type="library" name="SBT: com.ning:async-http-client:1.7.12" level="project" />
+    <orderEntry type="library" name="SBT: io.netty:netty:3.6.3.Final" level="project" />
   </component>
 </module>

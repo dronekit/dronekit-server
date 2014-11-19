@@ -9,6 +9,9 @@ import com.geeksville.dapi.model._
 import java.net.URL
 import com.geeksville.mavlink.DataReducer
 import com.geeksville.nestor.ParamVal
+import org.zendesk.client.v2.Zendesk
+import org.zendesk.client.v2.model.Ticket
+import org.zendesk.client.v2.model.Comment
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import org.json4s.JsonAST.JArray
@@ -44,6 +47,13 @@ case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolea
 case class MessageJson(t: Long, typ: String, fld: List[(String, Any)])
 case class MessageHeader(modelType: String, messages: Seq[MessageJson])
 
+/**
+ * extraInfo - text added by the user
+contactEmail - if specified will override the default which will come from the user record
+priority - TBD once we play with the zendesk UI and see what the choices are
+ */
+case class OpenTicketJSON(extraInfo: String, contactEmail: Option[String], priority: String)
+
 /// Atmosphere doesn't work in the test framework so we split it out
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
   private lazy val liveOp = apiOperation[AtmosphereClient]("live") summary "An atmosphere endpoint containing an endless stream of mission update messages"
@@ -58,7 +68,7 @@ class MissionController(implicit swagger: Swagger) extends SharedMissionControll
       }
     }
 
-    // We support customizing the feed for a particular user (note - this customization doesn't guarantee the user is really logged in or 
+    // We support customizing the feed for a particular user (note - this customization doesn't guarantee the user is really logged in or
     // their password is valid.  (FIXME - atmo headers need to include valid cookies etc...)
     // val login = tryLogin()
     val login = params.get("login").flatMap(User.find)
@@ -167,7 +177,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
 
     var forSuper = whereExp
 
-    // We have to do this scan FIRST because the join rule isn't smart enough to keep previous results 
+    // We have to do this scan FIRST because the join rule isn't smart enough to keep previous results
     // FIXME - the loop over whereExp should be done _inside_ the join.where
     forSuper = whereExp.filter { w =>
       if (doubleFields.contains(w.colName) || stringFields.contains(w.colName)) {
@@ -470,15 +480,28 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     findById // Return the updated mission object (hopefully NASA has responded by now)s
   }
 
-  // FIXME - temp hack for testing in browser, remove me
-  get("/:id/submitApproval") {
-    doApprove()
-  }
-
   // Testing NASA flight submission
   post("/:id/submitApproval") {
     doApprove()
   }
+
+
+  woField[OpenTicketJSON]("/:id/openTicket", { (m, ticket) =>
+    // For now just return - we currently ignore the payload
+    warn(s"Received cust service ticket for $m, contents: $ticket")
+
+    val zd = new Zendesk.Builder("https://{{your domain}}.zendesk.com")
+      .setUsername("...")
+      .setToken("...") // or .setPassword("...")
+      .build()
+
+    val email = ticket.contactEmail.getOrElse(user.email)
+    val comment = new Comment(ticket.extraInfo)
+    val t= new Ticket(zd.getCurrentUser.getId, "User report via Droneshare", comment)
+
+    zd.createTicket(t)
+    "Ticket created"
+  })
 
   roField("parameters.json") { (o) =>
     applyMissionCache()
@@ -562,24 +585,24 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   private val newEndpointDocs = """
     Note: I'm temporarily placing these docs here for review - to make it easy to just move text around when I create the real code
     and the swagger webdocs.  Please add comments via github.
-    
-    So Arthur, Ramon and I have been discussing how to support extra flight metadata in the web GUI and in our various GCS apps.  
+
+    So Arthur, Ramon and I have been discussing how to support extra flight metadata in the web GUI and in our various GCS apps.
     This proposal is for the creation of a 'heirachical folder of datafiles or URLs which can be accessed from clients using standard
     REST conventions.
-    
+
     Note: This documentation is currently placed under the mission node, but when implemented it will actually be available under mission,
     user and vehicle.  So clients will have the option of attaching extra data under any of those nodes.
-    
+
     Use cases:
     * Allow GCS and web UI to share a richer notion of wpts/flight-plans than supported by the vehicle code(i.e. some sort of JSON flt plan Arthur
     and I have been discussing).  These flt plans could be stored under mission, vehicle or user (TBD based on GCS needs)
     * Allow youtube, sketchfab or other oembed based URLs to be assocated with missions - this would allow the web UI to check for these
     optional blobs and if present show a richer UI using this new data
     * Missions could include both TLOGS and dataflash logs - currently we assume only one or the other.
-    * Apps could use this store for their own private application state (stored under user or vehicle).  i.e. droidplanner settings etc... 
+    * Apps could use this store for their own private application state (stored under user or vehicle).  i.e. droidplanner settings etc...
     magically found by your 3dr ID
     * Someday when we can squirt up images for stitching, this directory tree might be a good home for such raw images before stitching
-    
+
     Proposed API (details to be added based on feedback/proof of concept implementation):
     * Placed under the parent node (i.e. /api/v1/mission/4443d-3042/data or /api/v1/user/kevinh/data
     * Doing a GET of DATA includes the full list of child files as some sort of JSON structure).  Something like:
@@ -599,14 +622,14 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       notes """This endpoint is designed to facilitate easy log file uploading from GCS applications.  It requires no oauth or
       other authentication (but you will need to use your application's api_key).  You should pass in the user's login and password
       as query parameters.<p>
-      
+
       You'll also need to pick a UUID to represent the vehicle (if your user interface allows the user to specify
       particular models you should associate the UUID with the model - alternatively you can open a WebView and use droneshare to let the
       user pick a model).  If the vehicle has not previously been seen it will be created.<p>
-      
+
       If you are taking advantage of the autoCreate feature, you should specify a user email address and name (so we can send them
       password reset emails if they forget their password).<p>
-      
+
       Both multi-part file POSTs and simple posts of log files as the entire request body are supported.  In the latter case the content
       type must be set appropriately.<p>
       """
@@ -619,7 +642,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
         queryParam[String]("fullName").description(s"User full name (optional, used if user creation is required)").optional,
         queryParam[Boolean]("autoCreate").description(s"If true a new user account will be created if required"),
         queryParam[String]("privacy").description(s"The privacy setting for this flight (DEFAULT, PRIVATE, PUBLIC, SHARED, RESEARCHER)").optional)
-        responseMessage (StringResponseMessage(200, """Success.  Payload will be a JSON array of mission objects.  
+        responseMessage (StringResponseMessage(200, """Success.  Payload will be a JSON array of mission objects.
         		You probably want to show the user the viewURL for each file, but the other mission fields might also be interesting.""")))
 
   // Allow adding missions in the easiest possible way for web clients
@@ -691,11 +714,11 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     User.find("test-bob").foreach { u =>
       r = r.not(_.vehicle.userId === u.id)
     }
-    // 
+    //
 
     r
   }
-  * 
+  *
   */
 }
 
