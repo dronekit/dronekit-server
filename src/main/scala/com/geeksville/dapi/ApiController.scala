@@ -146,7 +146,7 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   /// Generate a wo attribute on this rest endpoint of the form /:id/name.
   /// call getter and setter as needed
   /// FIXME - move this great utility somewhere else
-  def woField[R: Manifest](name: String, setter: (T, R) => Unit) {
+  def woField[R: Manifest](name: String, setter: (T, R) => Any) {
     val putInfo =
       (apiOperation[String]("set" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
