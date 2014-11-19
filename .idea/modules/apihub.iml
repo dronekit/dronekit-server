@@ -148,5 +148,6 @@
     <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpcore:4.2.4" level="project" />
     <orderEntry type="library" name="SBT: org.codehaus.jackson:jackson-core-asl:1.9.12" level="project" />
     <orderEntry type="library" name="SBT: org.codehaus.jackson:jackson-mapper-asl:1.9.12" level="project" />
+    <orderEntry type="library" name="SBT: com.auth0:java-jwt:1.0.0" level="project" />
   </component>
 </module>

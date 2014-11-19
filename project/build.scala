@@ -86,6 +86,8 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
 
+        "com.auth0" % "java-jwt" % "1.0.0",
+
         // Needed for our google datasource publishing
         "com.google.visualization" % "visualization-datasource" % "1.1.1" withSources (),
         "com.ibm.icu" % "icu4j" % "4.0.1",

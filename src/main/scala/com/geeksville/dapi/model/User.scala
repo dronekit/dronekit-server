@@ -335,7 +335,7 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
           ("needNewPassword" -> u.needNewPassword) ~
           ("defaultViewPrivacy" -> AccessCode.valueOf(u.defaultViewPrivacy).toString) ~
           ("defaultControlPrivacy" -> AccessCode.valueOf(u.defaultControlPrivacy).toString) ~
-          ("vehicles" -> vehicles) ~ ("hullId" -> Hull.generateUserHash(u.hullId, u.email.getOrElse("")))
+          ("vehicles" -> vehicles) ~ ("hullId" -> Hull.generateAccessToken(u.hullId))
 
         val showSecrets = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
         if (showSecrets) {
