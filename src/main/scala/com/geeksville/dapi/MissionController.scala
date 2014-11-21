@@ -1,5 +1,6 @@
 package com.geeksville.dapi
 
+import com.geeksville.zendesk.ZendeskClient
 import org.scalatra._
 import org.scalatra.swagger.SwaggerSupport
 import org.json4s.{ DefaultFormats, Formats }
@@ -9,9 +10,7 @@ import com.geeksville.dapi.model._
 import java.net.URL
 import com.geeksville.mavlink.DataReducer
 import com.geeksville.nestor.ParamVal
-import org.zendesk.client.v2.Zendesk
-import org.zendesk.client.v2.model.Ticket
-import org.zendesk.client.v2.model.Comment
+import org.zendesk.client.v2.model.Type
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import org.json4s.JsonAST.JArray
@@ -52,7 +51,7 @@ case class MessageHeader(modelType: String, messages: Seq[MessageJson])
 contactEmail - if specified will override the default which will come from the user record
 priority - TBD once we play with the zendesk UI and see what the choices are
  */
-case class OpenTicketJSON(extraInfo: String, contactEmail: Option[String], priority: String)
+case class OpenTicketJSON(extraInfo: String, priority: String)
 
 /// Atmosphere doesn't work in the test framework so we split it out
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
@@ -490,17 +489,21 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     // For now just return - we currently ignore the payload
     warn(s"Received cust service ticket for $m, contents: $ticket")
 
-    val zd = new Zendesk.Builder("https://{{your domain}}.zendesk.com")
-      .setUsername("...")
-      .setToken("...") // or .setPassword("...")
-      .build()
+    val email = user.email.getOrElse(haltNotFound("You must attach an email address to your account before you can use support"))
+    val fullname = user.fullName.getOrElse(user.login)
 
-    val email = ticket.contactEmail.getOrElse(user.email)
-    val comment = new Comment(ticket.extraInfo)
-    val t= new Ticket(zd.getCurrentUser.getId, "User report via Droneshare", comment)
+    val comment =
+      s"""
+        |This is a semi-automated ticket opened by "$fullname" a [user](http://www.droneshare.com/user/${user.login}) of Droneshare.
+        |
+        |They described their issue as "${ticket.extraInfo}" while running this [mission](http://www.droneshare.com/mission/${m.id}).
+        |
+        |The email address from this requester is based on their droneshare account and that user has received an automated Zendesk email telling them that 3DR support will be responding.
+      """.stripMargin
 
-    zd.createTicket(t)
-    "Ticket created"
+    val t = ZendeskClient.createTicket(fullname, email,  "User ticket created via Droneshare", comment)
+
+    s"Ticket ${t.getId} created"
   })
 
   roField("parameters.json") { (o) =>
