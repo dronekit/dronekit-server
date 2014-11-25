@@ -48,7 +48,6 @@ case class MessageHeader(modelType: String, messages: Seq[MessageJson])
 
 /**
  * extraInfo - text added by the user
-contactEmail - if specified will override the default which will come from the user record
 priority - TBD once we play with the zendesk UI and see what the choices are
  */
 case class OpenTicketJSON(extraInfo: String, priority: String)
@@ -485,7 +484,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   }
 
 
-  woField[OpenTicketJSON]("/:id/openTicket", { (m, ticket) =>
+  aoField[OpenTicketJSON]("openTicket", { (m, ticket) =>
     // For now just return - we currently ignore the payload
     warn(s"Received cust service ticket for $m, contents: $ticket")
 
