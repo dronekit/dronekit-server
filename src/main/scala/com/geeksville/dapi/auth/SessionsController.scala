@@ -45,7 +45,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
 
   /*
     WE don't talk html
-    
+
     get("/new") {
     if (isAuthenticated) redirect("/")
     contentType = "text/html"
@@ -75,7 +75,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
         haltForbidden("Invalid login")
       /*
     If we were using HTML this is what we would give
-    
+
     if (isAuthenticated) {
       redirect("/")
     } else {
@@ -195,7 +195,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
     // Make sure this app is allowed to create users
     requireServiceAuth("user/create")
 
-    val u = parsedBody.extract[UserJson]
+    val u = parsedBodyAs[UserJson]
 
     val id = u.login
 
