@@ -50,7 +50,7 @@ case class MessageHeader(modelType: String, messages: Seq[MessageJson])
  * extraInfo - text added by the user
 priority - TBD once we play with the zendesk UI and see what the choices are
  */
-case class OpenTicketJSON(extraInfo: String, priority: String)
+case class OpenTicketJSON(extraInfo: String, priority: Option[String])
 
 /// Atmosphere doesn't work in the test framework so we split it out
 class MissionController(implicit swagger: Swagger) extends SharedMissionController with AtmosphereSupport {
