@@ -104,11 +104,14 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
 
   /// A one line log msg
   def dumpRequestSummary() {
-    val url = request.getRequestURL.toString
-    if(url.endsWith("/api/v1/mission") || url.endsWith(".tlog"))
-      info(s"MSN: $clientIP ${request.getMethod} ${request.getRequestURL} " + request.headers.mkString(","))
-    else
-      debug(s"REQ: $clientIP ${request.getMethod} ${request.getRequestURL} ")
+    val shouldIgnore = request.headers.getOrElse("Newrelic-Ignore", "false") == "true"
+    if(!shouldIgnore) {
+      val url = request.getRequestURL.toString
+      if(url.endsWith("/api/v1/mission") || url.endsWith(".tlog"))
+        info(s"MSN: $clientIP ${request.getMethod} ${request.getRequestURL} " + request.headers.mkString(","))
+      else
+        debug(s"REQ: $clientIP ${request.getMethod} ${request.getRequestURL} ")
+    }
   }
 
   /// Return the client's IP address (being careful to work if we are behind a load balancer)
