@@ -104,7 +104,7 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
 
   /// A one line log msg
   def dumpRequestSummary() {
-    val shouldIgnore = request.headers.getOrElse("Newrelic-Ignore", "false") == "true"
+    val shouldIgnore = request.headers.getOrElse("X-Newrelic-Ignore", "false").toString == "true"
     if(!shouldIgnore) {
       val url = request.getRequestURL.toString
       if(url.endsWith("/api/v1/mission") || url.endsWith(".tlog"))
