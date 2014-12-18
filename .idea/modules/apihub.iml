@@ -1,5 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id="apihub" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/../../dependencies/scalatra/example/src/main/webapp/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/../../dependencies/scalatra/example/src/main/webapp" relative="/" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/../../src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/scala" />
+          <root url="file://$MODULE_DIR$/../../target/scala-2.10/src_managed/main" />
+          <root url="file://$MODULE_DIR$/../../src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/resources" />
+          <root url="file://$MODULE_DIR$/../../src/main/scala" />
+          <root url="file://$MODULE_DIR$/../../target/scala-2.10/resource_managed/main" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+    <facet type="web" name="Web2">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/../../src/main/webapp/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/../../src/main/webapp" relative="/" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/../../src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/scala" />
+          <root url="file://$MODULE_DIR$/../../target/scala-2.10/src_managed/main" />
+          <root url="file://$MODULE_DIR$/../../src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/resources" />
+          <root url="file://$MODULE_DIR$/../../src/main/scala" />
+          <root url="file://$MODULE_DIR$/../../target/scala-2.10/resource_managed/main" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/../../target/scala-2.10/classes" />
     <output-test url="file://$MODULE_DIR$/../../target/scala-2.10/test-classes" />
@@ -149,5 +189,130 @@
     <orderEntry type="library" name="SBT: com.damnhandy:handy-uri-templates:1.1.7" level="project" />
     <orderEntry type="library" name="SBT: com.ning:async-http-client:1.7.12" level="project" />
     <orderEntry type="library" name="SBT: io.netty:netty:3.6.3.Final" level="project" />
+    <orderEntry type="library" name="SBT: cglib:cglib-nodep:2.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: ch.qos.logback:logback-classic:1.0.9:jar" level="project" />
+    <orderEntry type="library" name="SBT: ch.qos.logback:logback-core:1.0.9:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.amazonaws:aws-java-sdk:1.7.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.cloudbees.thirdparty:zendesk-java-client:0.2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.damnhandy:handy-uri-templates:1.1.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.fasterxml.jackson.core:jackson-annotations:2.3.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.fasterxml.jackson.core:jackson-core:2.3.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.fasterxml.jackson.core:jackson-databind:2.3.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.aselab:scala-activerecord-scalatra_2.10:0.2.4-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.aselab:scala-activerecord_2.10:0.2.4-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.aselab:squeryl_2.10:0.9.6-M2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.nscala-time:nscala-time_2.10:0.6.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.google.code.findbugs:jsr305:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.google.guava:guava:15.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.google.protobuf:protobuf-java:2.5.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.google.visualization:visualization-datasource:1.1.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.googlecode.juniversalchardet:juniversalchardet:1.0.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.h2database:h2:1.3.170:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.ibm.icu:icu4j:4.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.jolbox:bonecp:0.8.0.RELEASE:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.ning:async-http-client:1.7.12:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.novus:salat-core_2.10:1.9.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.novus:salat-util_2.10:1.9.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.nulab-inc:scala-oauth2-core_2.10:0.7.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.sun.xml.bind:jaxb-impl:2.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.sun.xml.bind:jaxb-xjc:2.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.thoughtworks.paranamer:paranamer:2.6:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe:config:1.2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-actor_2.10:2.4-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-slf4j_2.10:2.4-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-zeromq_2.10:2.4-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-beanutils:commons-beanutils:1.8.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-codec:commons-codec:1.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-digester:commons-digester:1.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-lang:commons-lang:2.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-logging:commons-logging:1.1.1:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: commons-logging:commons-logging:1.1.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-pool:commons-pool:1.5.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-validator:commons-validator:1.4.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: de.micromata.jak:JavaAPIforKml:2.2.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: eu.medsea.mimeutil:mime-util:2.1.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: io.backchat.inflector:scala-inflector_2.10:1.3.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: io.netty:netty:3.6.3.Final:jar" level="project" />
+    <orderEntry type="library" name="SBT: javax.activation:activation:1.1:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: javax.servlet:javax.servlet-api:3.1.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: javax.xml.bind:jaxb-api:2.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: javax.xml.stream:stax-api:1.0-2:jar" level="project" />
+    <orderEntry type="library" name="SBT: joda-time:joda-time:2.6:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: junit:junit:4.11:jar" level="project" />
+    <orderEntry type="library" name="SBT: mysql:mysql-connector-java:5.1.22:jar" level="project" />
+    <orderEntry type="library" name="SBT: net.iharder:base64:2.3.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: net.sandrogrzicic:scalabuff-runtime_2.10:1.3.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: net.sf.opencsv:opencsv:1.8:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.apache.commons:commons-lang3:3.2.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpclient:4.2:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.apache.httpcomponents:httpclient:4.3.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpcore:4.2:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.apache.httpcomponents:httpcore:4.3.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpmime:4.2:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.apache.httpcomponents:httpmime:4.3.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.atmosphere:atmosphere-compat-jbossweb:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.atmosphere:atmosphere-compat-tomcat:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.atmosphere:atmosphere-compat-tomcat7:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.atmosphere:atmosphere-redis:2.1.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.atmosphere:atmosphere-runtime:2.1.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.clapper:grizzled-slf4j_2.10:1.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-continuation:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-http:8.1.10.v20130312:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-http:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-io:8.1.10.v20130312:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-io:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-security:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-security:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-server:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-server:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-servlet:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-servlet:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-util:8.1.10.v20130312:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-util:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-webapp:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-webapp:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-websocket:8.1.10.v20130312:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty:jetty-xml:8.1.8.v20121106:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.eclipse.jetty:jetty-xml:9.1.2.v20140210:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016:orbit" level="project" />
+    <orderEntry type="library" name="SBT: org.fusesource.scalate:scalate-core_2.10:1.6.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.fusesource.scalate:scalate-util_2.10:1.6.1:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.joda:joda-convert:1.6:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.json4s:json4s-ast_2.10:3.2.9-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.json4s:json4s-core_2.10:3.2.9-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.json4s:json4s-ext_2.10:3.2.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.json4s:json4s-jackson_2.10:3.2.9-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.json4s:json4s-native_2.10:3.2.9-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.mindrot:jbcrypt:0.3m:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.mockito:mockito-all:1.9.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.mongodb:casbah-commons_2.10:2.6.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.mongodb:casbah-core_2.10:2.6.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.mongodb:casbah-query_2.10:2.6.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.mongodb:mongo-java-driver:2.11.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-compiler:2.10.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.10.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-reflect:2.10.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scalap:2.10.3:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.10:2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-atmosphere_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-auth_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-common_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-json_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-scalate_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.scalatra:scalatra-scalatest_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra-swagger_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.scalatra:scalatra-test_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra:scalatra_2.10:2.3.0-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalatra.rl:rl_2.10:0.4.9:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.simplex3d:simplex3d-math-core_2.10:2.4.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.simplex3d:simplex3d-math-double_2.10:2.4.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.slf4j:slf4j-api:1.7.6:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.zeromq:jeromq:0.3.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: redis.clients:jedis:2.0.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: xalan:xalan:2.7.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: xerces:xercesImpl:2.8.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: xmlunit:xmlunit:1.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: xom:xom:1.2.5:jar" level="project" />
   </component>
 </module>
