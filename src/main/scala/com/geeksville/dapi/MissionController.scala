@@ -8,7 +8,7 @@ import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.model._
 import java.net.URL
-import com.geeksville.mavlink.DataReducer
+import com.geeksville.mavlink.{TimestampedAbstractMessage, DataReducer}
 import com.geeksville.nestor.ParamVal
 import org.zendesk.client.v2.model.Type
 import scala.collection.mutable.HashMap
@@ -283,6 +283,28 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val m = getModel(o)
     var msgs = m.abstractMessages
 
+    // Allow caller to request msgs at a max of 1Hz, 10Hz, etc...
+    // we scan through the sequence only dumping on msg per bucket
+    params.get("max_freq").foreach { maxfreq =>
+      val bucketSize = 1 / maxfreq.toDouble
+
+      msgs = msgs.scanLeft(None: Option[TimestampedAbstractMessage]) { case (prev, cur) =>
+        val prevBucket = prev match {
+          case Some(p) =>
+            (p.timeSeconds / bucketSize).toInt
+          case None =>
+            -1
+        }
+
+        val curBucket = (cur.timeSeconds / bucketSize).toInt
+
+        if(curBucket != prevBucket)
+          Some(cur)
+        else
+          None
+      }.flatten
+    }
+
     params.get("page_offset").foreach { numrecs =>
       msgs = msgs.drop(numrecs.toInt)
     }
@@ -291,8 +313,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
       msgs = msgs.take(numrecs.toInt)
     }
 
-    // FIXME - instead of passing msg content as string, it should be a json object
-    val json = msgs.map { a => MessageJson(a.time, a.msg.messageType, a.msg.fields.toList) }
+    // FIXME - don't use a seq here - so we can read lazily?
+    val json = msgs.toSeq.map { a => MessageJson(a.time, a.msg.messageType, a.msg.fields.toList) }
     MessageHeader(m.modelType, json)
   }
 
@@ -356,7 +378,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     }
   }
 
-  /// This is a temporary endpoint to support the old droneshare API - it will be getting refactored substantially
+  /// Return plot data in the crude format used by the current plot tool
   roField("dseries") { (o) =>
     applyMissionCache()
 

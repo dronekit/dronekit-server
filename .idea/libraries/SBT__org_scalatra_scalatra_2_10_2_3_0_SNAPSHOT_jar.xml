@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: org.scalatra:scalatra_2.10:2.3.0-SNAPSHOT:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/local/org.scalatra/scalatra_2.10/2.3.0-SNAPSHOT/jars/scalatra_2.10.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/local/org.scalatra/scalatra_2.10/2.3.0-SNAPSHOT/docs/scalatra_2.10-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/local/org.scalatra/scalatra_2.10/2.3.0-SNAPSHOT/srcs/scalatra_2.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,19 +1,17 @@
 package com.geeksville.dapi
 
-import com.geeksville.mavlink.TimestampedMessage
+import com.geeksville.mavlink._
 import org.mavlink.messages.ardupilotmega.msg_global_position_int
 import scala.collection.mutable.ArrayBuffer
 import java.io.File
 import com.geeksville.flight.VehicleSimulator
 import java.io.ByteArrayOutputStream
-import com.geeksville.mavlink.BinaryMavlinkReader
 import java.io.ByteArrayInputStream
 import com.geeksville.flight.Location
 import org.mavlink.messages.ardupilotmega.msg_gps_raw_int
 import java.util.zip.ZipOutputStream
 import java.util.zip.ZipEntry
 import java.net.URLEncoder
-import com.geeksville.mavlink.DataReducer
 import org.mavlink.messages.ardupilotmega.msg_mission_item
 import com.geeksville.flight.Waypoint
 import com.geeksville.flight.WaypointsForMap
@@ -68,6 +66,8 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   def waypoints = waypointOpt.flatten.toSeq
 
   val parameters = ArrayBuffer[ROParamValue]()
+
+  override def abstractMessages = messages.flatMap { m => MavlinkBasedMessage.tryCreate(m.msg).map(TimestampedAbstractMessage(m.time, _)) }
 
   override def autopilotType = hardwareToAutopilotType.orElse(heartbeatAutopilotType)
 

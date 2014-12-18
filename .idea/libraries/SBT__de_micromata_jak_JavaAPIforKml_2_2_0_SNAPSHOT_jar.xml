@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: de.micromata.jak:JavaAPIforKml:2.2.0-SNAPSHOT:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/de.micromata.jak/JavaAPIforKml/jars/JavaAPIforKml-2.2.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/de.micromata.jak/JavaAPIforKml/srcs/JavaAPIforKml-2.2.0-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

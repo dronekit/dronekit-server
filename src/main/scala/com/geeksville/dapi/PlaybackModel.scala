@@ -21,8 +21,7 @@ import com.geeksville.mavlink.AbstractMessage
  */
 trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryStats with ParametersReadOnlyModel with Logging {
 
-  // FIXME -unify with tlog messages
-  def abstractMessages: Seq[TimestampedAbstractMessage] = Seq.empty
+  def abstractMessages: Iterable[TimestampedAbstractMessage]
 
   /// A JSON readable string showing model type: TLOG, Dataflash
   def modelType: String

@@ -44,7 +44,7 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   override def autopilotType = hardwareToAutopilotType
 
   /// The messages array can be _very_ large and is rarely used, so we reload it as needed by calling loadMessages
-  override def abstractMessages: Seq[TimestampedAbstractMessage] = loadMessages(dfMessages).toSeq
+  override def abstractMessages = loadMessages(dfMessages)
 
   // FIXME - these should be hidden inside the loadMessages closure
   private var baseUsec = defaultTime * 1000L
