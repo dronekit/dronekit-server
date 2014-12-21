@@ -156,7 +156,7 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 12
+  val currentVersion = 13
 }
 
 /**
