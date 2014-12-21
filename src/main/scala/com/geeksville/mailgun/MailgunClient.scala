@@ -20,7 +20,7 @@ import com.geeksville.http.HttpClient
 import scala.xml.Node
 
 object MailgunClient {
-  val monitor = true
+  val monitor = false
 }
 
 class MailgunClient(myDomain: String = "droneshare.com")
@@ -83,6 +83,6 @@ public static ClientResponse SendSimpleMessage() {
        return webResource.type(MediaType.APPLICATION_FORM_URLENCODED).
                post(ClientResponse.class, formData);
 }
-* 
+*
 */
 }

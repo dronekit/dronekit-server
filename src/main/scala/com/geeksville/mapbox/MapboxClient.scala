@@ -21,7 +21,7 @@ import grizzled.slf4j.Logging
 import java.text.DecimalFormat
 
 object MapboxClient {
-  val monitor = true
+  val monitor = false
 
   /// Generate an URL for a static map png
   def staticMapURL(latIn: Double, lonIn: Double, zoom: Integer, width: Integer, height: Integer, icon: String) = {

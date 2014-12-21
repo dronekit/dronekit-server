@@ -35,7 +35,7 @@ import org.apache.http.entity.mime.content.AbstractContentBody
 import org.apache.http.entity.mime.content.ByteArrayBody
 
 object DoaramaClient {
-  val monitor = true
+  val monitor = false
 }
 
 class DoaramaClient(val userId: String)
