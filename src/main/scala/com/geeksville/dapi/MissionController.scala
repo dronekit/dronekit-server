@@ -284,7 +284,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     var msgs = m.abstractMessages
 
     // Allow caller to request msgs at a max of 1Hz, 10Hz, etc...
-    // we scan through the sequence only dumping on msg per bucket
+    // we scan through the sequence only dumping one msg per bucket
     params.get("max_freq").foreach { maxfreq =>
       val bucketSize = 1 / maxfreq.toDouble
 
