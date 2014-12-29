@@ -67,6 +67,8 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
 
   val parameters = ArrayBuffer[ROParamValue]()
 
+  override val errors: ArrayBuffer[(Long, ErrorCode)] = ArrayBuffer.empty
+
   override def abstractMessages = messages.flatMap { m => MavlinkBasedMessage.tryCreate(m.msg).map(TimestampedAbstractMessage(m.time, _)) }
 
   override def autopilotType = hardwareToAutopilotType.orElse(heartbeatAutopilotType)
