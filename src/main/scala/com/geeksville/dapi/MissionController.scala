@@ -43,7 +43,7 @@ import java.util.Date
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
 
 // Helper class for generating json
-case class MessageJson(t: Long, typ: String, fld: List[(String, Any)])
+case class MessageJson(t: Long, typ: String, fld: Map[String, Any])
 case class MessageHeader(modelType: String, messages: Seq[MessageJson])
 
 /**
@@ -314,7 +314,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     }
 
     // FIXME - don't use a seq here - so we can read lazily?
-    val json = msgs.toSeq.map { a => MessageJson(a.time, a.msg.messageType, a.msg.fields.toList) }
+    val json = msgs.toSeq.map { a => MessageJson(a.time, a.msg.messageType, a.msg.fields) }
     MessageHeader(m.modelType, json)
   }
 
