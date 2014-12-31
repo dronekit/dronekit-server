@@ -26,13 +26,21 @@ import com.geeksville.util.EnvelopeFactory
  *
  * @param clientId the appid for the requesting app
  */
-case class DBToken(@Required @Unique accessToken: UUID, @Unique refreshToken: Option[UUID],
+case class DBToken(@Required @Unique var accessToken: UUID, @Unique refreshToken: Option[UUID],
   clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord {
   /**
    * What vehicle made me?
    */
   lazy val user = belongsTo[User]
   val userId: Option[Long] = None
+
+  /**
+   * The user has a valid refresh token and wants to update the access token
+   */
+  def refreshAccessToken(): Unit = {
+    accessToken = UUID.randomUUID()
+    save
+  }
 }
 
 object DBToken extends DapiRecordCompanion[DBToken] {
@@ -53,6 +61,17 @@ object DBToken extends DapiRecordCompanion[DBToken] {
     } catch {
       case ex: IllegalArgumentException =>
         error(s"Malformed access token UUID: $token")
+        None
+    }
+  }
+
+  def findByRefreshToken(token: String) = {
+    try {
+      val t = UUID.fromString(token)
+      DBToken.where(_.refreshToken === t).headOption
+    } catch {
+      case ex: IllegalArgumentException =>
+        error(s"Malformed refresh token UUID: $token")
         None
     }
   }
@@ -212,7 +231,7 @@ case class User(@Required @Unique login: String,
     token
   }
 
-  def getToken(clientId: String) = {
+  def getTokenByClientId(clientId: String) = {
     tokens.where(_.clientId === clientId).headOption
   }
 

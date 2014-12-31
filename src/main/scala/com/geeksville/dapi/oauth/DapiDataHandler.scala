@@ -1,9 +1,8 @@
 package com.geeksville.dapi.oauth
 
 import com.geeksville.dapi.model.User
-import scalaoauth2.provider.DataHandler
-import scalaoauth2.provider.AccessToken
-import scalaoauth2.provider.AuthInfo
+import scala.collection.mutable
+import scalaoauth2.provider._
 import grizzled.slf4j.Logging
 import java.sql.Timestamp
 import com.geeksville.dapi.model.DBToken
@@ -48,14 +47,27 @@ class DapiDataHandler extends DataHandler[User] with Logging {
 
   def getStoredAccessToken(authInfo: AuthInfo[User]): Option[AccessToken] = {
     warn(s"Getting access token for $authInfo")
-    authInfo.user.getToken(authInfo.clientId).map(toAccessToken)
+    authInfo.user.getTokenByClientId(authInfo.clientId).map(toAccessToken)
   }
 
-  def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): AccessToken = ???
+  def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): AccessToken = {
+    val dbToken = DBToken.findByRefreshToken(refreshToken).getOrElse(throw new InvalidToken("refreshToken not found"))
+    if(authInfo.clientId != dbToken.clientId)
+      throw new InvalidClient("Token not for your client")
 
-  def findAuthInfoByCode(code: String): Option[AuthInfo[User]] = ???
+    dbToken.refreshAccessToken()
+    dbToken
+  }
 
-  def findAuthInfoByRefreshToken(refreshToken: String): Option[AuthInfo[User]] = ???
+  /**
+   * Look at the live list of short lived authorization codes - to find the AuthInfo that corresponds to that code
+   * @param code
+   * @return
+   */
+  def findAuthInfoByCode(code: String): Option[AuthInfo[User]] = DapiDataHandler.authorizationCodes.get(code)
+
+  def findAuthInfoByRefreshToken(refreshToken: String): Option[AuthInfo[User]] =
+    DBToken.findByRefreshToken(refreshToken).map(toAuthInfo)
 
   def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Option[User] = ???
 
@@ -69,3 +81,10 @@ class DapiDataHandler extends DataHandler[User] with Logging {
 
 }
 
+object DapiDataHandler {
+  /** A short lived map for users who have completed the first screen of granting permission for API access
+    *
+    * FIXME - make these expire after a little while
+    */
+  val authorizationCodes = mutable.HashMap[String, AuthInfo[User]]()
+}
