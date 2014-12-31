@@ -47,7 +47,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
   val email = s"kevin+$login@3drobotics.com"
   val fullName = "TestUser LongName"
 
-  val apiKey = "a8948c11.9e44351f6c0aa7e3e2ff6d00b14a71c5" // Ramone's key
+  val apiKey = "eb34bd67.megadroneshare"
 
   // Send this in all cases
   val commonHeaders = Map(
