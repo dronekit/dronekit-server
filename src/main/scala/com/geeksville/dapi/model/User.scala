@@ -25,8 +25,9 @@ import com.geeksville.util.EnvelopeFactory
  * Owned by a user - currently active access tokens
  *
  * @param clientId the appid for the requesting app
+ *
  */
-case class DBToken(@Required @Unique var accessToken: UUID, @Unique refreshToken: Option[UUID],
+case class DBToken(@Required @Unique var accessToken: String, @Unique refreshToken: Option[String],
   clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord {
   /**
    * What vehicle made me?
@@ -38,7 +39,7 @@ case class DBToken(@Required @Unique var accessToken: UUID, @Unique refreshToken
    * The user has a valid refresh token and wants to update the access token
    */
   def refreshAccessToken(): Unit = {
-    accessToken = UUID.randomUUID()
+    accessToken = DBToken.createRandomCode()
     save
   }
 }
@@ -49,32 +50,35 @@ object DBToken extends DapiRecordCompanion[DBToken] {
 
   def create(clientId: String) = {
     val expire = new Timestamp(System.currentTimeMillis + leaseTime)
-    val token = DBToken(UUID.randomUUID(), Some(UUID.randomUUID()), clientId, None, Some(expire))
+    val token = DBToken(DBToken.createRandomCode(), Some(DBToken.createRandomCode()), clientId, None, Some(expire))
     token.create
     token
   }
 
-  def findByAccessToken(token: String) = {
+  def findByAccessToken(t: String) = {
     try {
-      val t = UUID.fromString(token)
       DBToken.where(_.accessToken === t).headOption
     } catch {
       case ex: IllegalArgumentException =>
-        error(s"Malformed access token UUID: $token")
+        error(s"Malformed access token UUID: $t")
         None
     }
   }
 
-  def findByRefreshToken(token: String) = {
+  def findByRefreshToken(t: String) = {
     try {
-      val t = UUID.fromString(token)
       DBToken.where(_.refreshToken === t).headOption
     } catch {
       case ex: IllegalArgumentException =>
-        error(s"Malformed refresh token UUID: $token")
+        error(s"Malformed refresh token UUID: $t")
         None
     }
   }
+
+  /**
+   * Generate a short alphanumeric random code
+   */
+  def createRandomCode() = Random.alphanumeric.take(30).mkString
 }
 
 case class User(@Required @Unique login: String,

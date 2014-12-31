@@ -32,31 +32,46 @@ import org.json4s.JsonDSL._
  */
 class OAuthTests extends ServerDependentSuite {
 
-  // We want cookies for this test
-  session {
-    val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
+  val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
-    // Create a user we can use to test oauth with
-    test("User create") {
-      info(s"Attempting create of $u")
-      post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
-        checkStatusOk()
-        response.headers.foreach {
-          case (k, v) =>
-            println(s"Create response: $k => ${v.mkString(",")}")
-        }
+  // Create a user we can use to test oauth with
+  test("User create") {
+    info(s"Attempting create of $u")
+    post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
+      checkStatusOk()
+      response.headers.foreach {
+        case (k, v) =>
+          println(s"Create response: $k => ${v.mkString(",")}")
       }
     }
-
-    test("Oauth create token") {
-      println("creating oauth token")
-      val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
-      val req = Seq(("grant_type" -> "password"), ("username" -> u.login), ("password" -> u.password.get), ("scope" -> "all"))
-
-      val result = paramPost(s"/api/v1/oauth/access_token", req, headers)
-      println(s"OAuth token creation result: $result")
-    }
-
   }
 
+  ignore("Oauth create token: password auth") {
+    println("creating oauth token")
+    val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
+    val req = Seq(("grant_type" -> "password"), ("username" -> u.login), ("password" -> u.password.get), ("scope" -> "all"))
+
+    val result = paramPost(s"/api/v1/oauth/access_token", req, headers)
+    println(s"OAuth token creation result: $result")
+  }
+
+  ignore("Oauth create token: access token auth") {
+    userSession {
+      Then("request auth code")
+      val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
+
+      // Step 1: FIXME - send request token, to receive auth code
+      val req1 = Seq("redirect_uri" -> "FIXME2", "client_id" -> "FIXME3", "response_type" -> "code", "scope" -> "fish cat dog",
+        "state" -> "I like monkies")
+      get("/api/v1/oauth/auth", req1) {
+        println(s"Server response: $body")
+      }
+
+      Then("exchange code for token")
+      // Step 2: exchange auth code returned from server for an access token
+      val req2 = Seq("grant_type" -> "authorization_code", "code" -> "FIXME", "redirect_uri" -> "FIXME")
+      val result = paramPost(s"/api/v1/oauth/access_token", req2, headers)
+      println(s"OAuth token creation result: $result")
+    }
+  }
 }

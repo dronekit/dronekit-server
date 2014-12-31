@@ -2,6 +2,7 @@ package com.geeksville.dapi.oauth
 
 import com.geeksville.dapi.model.User
 import scala.collection.mutable
+import scala.util.Random
 import scalaoauth2.provider._
 import grizzled.slf4j.Logging
 import java.sql.Timestamp
@@ -69,7 +70,8 @@ class DapiDataHandler extends DataHandler[User] with Logging {
   def findAuthInfoByRefreshToken(refreshToken: String): Option[AuthInfo[User]] =
     DBToken.findByRefreshToken(refreshToken).map(toAuthInfo)
 
-  def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Option[User] = ???
+  def findClientUser(clientId: String, clientSecret: String, scope: Option[String]): Option[User] =
+    throw new Exception("We don't plan to support Client credentials")
 
   def findAccessToken(token: String): Option[AccessToken] = {
     DBToken.findByAccessToken(token).map(toAccessToken)
@@ -82,9 +84,12 @@ class DapiDataHandler extends DataHandler[User] with Logging {
 }
 
 object DapiDataHandler {
+
   /** A short lived map for users who have completed the first screen of granting permission for API access
     *
     * FIXME - make these expire after a little while
     */
   val authorizationCodes = mutable.HashMap[String, AuthInfo[User]]()
+
+
 }

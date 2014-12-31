@@ -175,5 +175,15 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
   def haltBadRequest(reason: String) = verboseHalt(400, reason = reason)
   def haltNotImplemented(reason: String) = verboseHalt(501, reason = reason)
   def haltInternalServerError(reason: String) = verboseHalt(500, reason = reason)
+
+  /**
+   * Retrieve a server tracked session object with the given key
+   * @param key
+   * @return
+   */
+  def getSession[T](key: String) = Option(servletContext.getAttribute(keyPrefix + key).asInstanceOf[T])
+  def setSession(key: String, v: AnyRef) { servletContext.setAttribute(keyPrefix + key, v) }
+
+  private val keyPrefix = "ctrlExtra_"
 }
 
