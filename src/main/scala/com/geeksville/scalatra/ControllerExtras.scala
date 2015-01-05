@@ -139,7 +139,7 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
       InternalServerError(<html>
                             <body>
                               <p>
-                                Oh my - you've found a problem with this beta-test.  Our geeks have been alerted and will work on a fix shortly...  Thank you for your help.
+                                Oh my - we've broken something.  Our geeks have been alerted and will work on a fix shortly...
                               </p>
                               <p>
                                 { e }
