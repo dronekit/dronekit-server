@@ -1,6 +1,7 @@
 package com.geeksville.dapi.oauth
 
 import com.geeksville.dapi.model.{DBToken, User}
+import com.geeksville.http.HttpClient
 import com.geeksville.oauth.OAuthSupport
 import com.geeksville.dapi.DroneHubStack
 import scala.xml._
@@ -39,14 +40,13 @@ class OAuthController extends DroneHubStack with OAuthSupport {
    */
   get("/auth") {
 
-    val redirect = params("redirect_uri")
-    val clientId = params("client_id")
-    val responseType = params("response_type")
-    val scope = params("scope")
+    val redirect = params.get("redirect_uri").getOrElse(haltBadRequest("needs redirect_uri"))
+    val clientId = params.get("client_id").getOrElse(haltBadRequest("needs client_id"))
+    val responseType = params.get("response_type").getOrElse(haltBadRequest("needs response_type"))
+    val scope = params.get("scope").getOrElse(haltBadRequest("needs scope"))
     val stateOpt = params.get("state")
 
-    if (user == null)
-      haltUnauthorized("Not logged in") // FIXME - redirect the user to the droneshare login page?
+    requireLogin() // FIXME - redirect the user to the droneshare login page?
 
     if(responseType != "code")
       haltBadRequest("Invalid response_type")
@@ -68,9 +68,12 @@ class OAuthController extends DroneHubStack with OAuthSupport {
         { scopeNames.map { n => <li> { n } </li> } }
       </ul>
 
-        <input type="submit" name="approved" value="NO">Hell no!</input>
-        <input type="submit" name="notApproved" value="OK">Sure!</input>
+        <input type="submit" name="notApproved" value="NO">Hell no!</input>
+        <input type="submit" name="approved" value="OK">Sure!</input>
       </form></body></html>
+
+    info(s"Returning $resp")
+    resp
   }
 
   /**
@@ -82,11 +85,23 @@ class OAuthController extends DroneHubStack with OAuthSupport {
     val authInfo: AuthInfo[User] = getSession("preAuthInfo").getOrElse(haltUnauthorized("Oauth info not found"))
     val stateOpt: Option[String] = getSession("preAuthState").getOrElse(haltUnauthorized("state info not found"))
 
-    if(params.get("approved").isDefined) {
+    val baseUrl = authInfo.redirectUri.getOrElse(haltBadRequest("No redirect specified"))
+    var responseParams = if(params.get("approved").isDefined) {
       val code = DBToken.createRandomCode()
       DapiDataHandler.authorizationCodes += (code -> authInfo)
+
+      Seq("code" -> code)
+    }
+    else {
+      Seq("error" -> "no approval")
     }
 
-    redirect(authInfo.redirectUri.getOrElse(haltBadRequest("No redirect specified")))
+    stateOpt.foreach { state =>
+      responseParams = ("state" -> state) +: responseParams
+    }
+
+    val url  = HttpClient.addQueryString(baseUrl, responseParams: _*)
+    info(s"Redirecting to $url")
+    redirect(url)
   }
 }
