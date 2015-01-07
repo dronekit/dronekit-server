@@ -91,7 +91,12 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
                  queryParams: Iterable[(String, String)] = Map.empty,
                  headers: Map[String, String] = Map.empty,
                  body: Array[Byte] = null)(f: => A): A = {
-    currentRequest = Some(RequestInfo(method, uri, queryParams, headers, body.map(_.toChar).mkString))
+    val bodyStr = if(body == null)
+      "(null)"
+    else
+      body.map(_.toChar).mkString
+
+    currentRequest = Some(RequestInfo(method, uri, queryParams, headers, bodyStr))
 
     super.submit(method, uri, queryParams, headers, body)(f)
   }
@@ -104,37 +109,48 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     }
   }
 
-  def jsonGet(uri: String) = {
-    get(uri, /* params = loginInfo, */ headers = jsonHeaders) {
+  def bodyGet(uri: String, params: Iterable[(String, String)] = Seq.empty) =
+    get(uri, params, headers = jsonHeaders) {
       checkStatusOk()
-      parse(body)
+      body
     }
-  }
+
+  def jsonGet(uri: String, params: Iterable[(String, String)] = Seq.empty) =
+    parse(bodyGet(uri, params))
 
   /// Post the req as JSON in the body
-  def jsonPost(uri: String, req: AnyRef) = {
+  def jsonPost(uri: String, req: AnyRef) =
     post(uri, toJSON(req), headers = jsonHeaders) {
       checkStatusOk()
       parse(body)
     }
-  }
 
   /// Post the request as form params
-  def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String]) = {
+  def jsonParamPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String]) =
+    parse(paramPost(uri, params, headers))
+
+  def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String] = commonHeaders) =
     post(uri, params, headers) {
       checkStatusOk()
-      parse(body)
+      body
     }
-  }
 
-  def checkStatusOk() {
-    if (status != 200) { // If not okay then show the error msg from server
+  def checkStatus(expected: Int) {
+    if (status != expected) { // If not okay then show the error msg from server
       error(s"While handling request: ${currentRequest.get}")
-      error("Status not Ok: " + response.statusLine.message)
+      error("Unexpted status: " + response.statusLine.message)
       error("Error body: " + response.body)
       Thread.dumpStack()
     }
-    status should equal(200)
+    status should equal(expected)
+  }
+
+  def checkStatusOk() = checkStatus(200)
+  def parseRedirect() = {
+    checkStatus(302)
+    val dest = response.headers("Location")(0)
+    debug("Received redirect resp: " + dest)
+    dest
   }
 
   def toJSON(x: AnyRef) = {

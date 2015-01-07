@@ -11,7 +11,6 @@ import org.apache.http.HttpHost
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import scala.collection.JavaConverters._
 import org.apache.http.impl.client.DefaultHttpClient
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
@@ -59,18 +58,5 @@ class HttpClient(val httpHost: HttpHost) {
   def callXml(transaction: HttpRequestBase) = {
     val msg = call(transaction)
     XML.loadString(msg)
-  }
-}
-
-object HttpClient {
-  /// Add a query string to an URL
-  def addQueryString(url: String, params: (String, String)*) = {
-    val nvps = params.map {
-      case (key, v) =>
-        new BasicNameValuePair(key, v)
-    }.toList.asJava
-
-    val encoded = URLEncodedUtils.format(nvps, "utf-8");
-    url + "?" + encoded
   }
 }

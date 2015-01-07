@@ -4,6 +4,7 @@ import com.geeksville.dapi.model.{DBToken, User}
 import com.geeksville.http.HttpClient
 import com.geeksville.oauth.OAuthSupport
 import com.geeksville.dapi.DroneHubStack
+import com.geeksville.util.URLUtil
 import scala.xml._
 import scalaoauth2.provider.AuthInfo
 
@@ -72,7 +73,8 @@ class OAuthController extends DroneHubStack with OAuthSupport {
         <input type="submit" name="approved" value="OK">Sure!</input>
       </form></body></html>
 
-    info(s"Returning $resp")
+    //debug(s"Returning $resp")
+    debug("Returning user authorization HTML")
     resp
   }
 
@@ -100,7 +102,7 @@ class OAuthController extends DroneHubStack with OAuthSupport {
       responseParams = ("state" -> state) +: responseParams
     }
 
-    val url  = HttpClient.addQueryString(baseUrl, responseParams: _*)
+    val url  = URLUtil.addQueryString(baseUrl, responseParams: _*)
     info(s"Redirecting to $url")
     redirect(url)
   }
