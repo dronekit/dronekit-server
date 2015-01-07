@@ -30,6 +30,11 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import com.geeksville.dapi.oauth.OAuthController
 
+
+
+case class RequestInfo(method: String, uri: String, queryParams: Iterable[(String, String)], headers: Map[String, String], body: String)
+
+
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
 
@@ -60,6 +65,8 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   val loginInfo = Map("login" -> login, "password" -> password)
 
+  private var currentRequest: Option[RequestInfo] = None
+
   // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
   override def beforeAll() {
     println("**************************** STARTING TESTS ************************************")
@@ -76,6 +83,17 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     addServlet(new SharedMissionController, "/api/v1/mission/*")
     addServlet(new SessionsController, "/api/v1/auth/*")
     addServlet(new OAuthController, "/api/v1/oauth/*")
+  }
+
+  override def submit[A](
+                 method: String,
+                 uri: String,
+                 queryParams: Iterable[(String, String)] = Map.empty,
+                 headers: Map[String, String] = Map.empty,
+                 body: Array[Byte] = null)(f: => A): A = {
+    currentRequest = Some(RequestInfo(method, uri, queryParams, headers, body.map(_.toChar).mkString))
+
+    super.submit(method, uri, queryParams, headers, body)(f)
   }
 
   override def afterAll() {
@@ -111,8 +129,10 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   def checkStatusOk() {
     if (status != 200) { // If not okay then show the error msg from server
+      error(s"While handling request: ${currentRequest.get}")
       error("Status not Ok: " + response.statusLine.message)
       error("Error body: " + response.body)
+      Thread.dumpStack()
     }
     status should equal(200)
   }
@@ -125,7 +145,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   /// Do a session logged in as our test user
   def userSession[A](f: => A): A = session {
-    post("/api/v1/session/login", loginInfo, jsonHeaders) {
+    post("/api/v1/session/login", loginInfo, commonHeaders) {
       checkStatusOk()
     }
 
