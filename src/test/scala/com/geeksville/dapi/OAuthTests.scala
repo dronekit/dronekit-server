@@ -31,7 +31,7 @@ import com.geeksville.util.URLUtil
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class OAuthTests extends ServerDependentSuite {
+class OAuthTests(diabled: Boolean) extends ServerDependentSuite {
 
   val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
@@ -59,7 +59,7 @@ class OAuthTests extends ServerDependentSuite {
     println(s"OAuth token creation result: $result")
   }
 
-  test("Oauth create token: access token auth") {
+  ignore("Oauth create token: access token auth") {
     userSession {
       Then("request auth HTML page")
       // val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
@@ -80,7 +80,7 @@ class OAuthTests extends ServerDependentSuite {
       Then("exchange code for token")
       // Step 2: exchange auth code returned from server for an access token
       val req2 = Seq("grant_type" -> "authorization_code", "code" -> code, "redirect_uri" -> redirectUri, "client_id" -> clientId)
-      val result = jsonParamPost(s"/api/v1/oauth/access_token", req2, headers)
+      val result = jsonParamPost(s"/api/v1/oauth/access_token", req2)
       println(s"OAuth token creation result: $result")
     }
   }

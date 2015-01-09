@@ -125,10 +125,11 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
       parse(body)
     }
 
-  /// Post the request as form params
-  def jsonParamPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String]) =
+  /// Post as form post and receive json response
+  def jsonParamPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String] = commonHeaders) =
     parse(paramPost(uri, params, headers))
 
+  /// Post the request as form params
   def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String] = commonHeaders) =
     post(uri, params, headers) {
       checkStatusOk()
