@@ -66,6 +66,7 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
 
   def parameters: Iterable[ROParamValue]
 
+  /// Any errors that occurred during this flight
   /// timestamp usecs -> error record
   val errors: Seq[(Long, ErrorCode)]
 
