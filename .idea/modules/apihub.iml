@@ -314,5 +314,6 @@
     <orderEntry type="library" name="SBT: xerces:xercesImpl:2.8.0:jar" level="project" />
     <orderEntry type="library" name="SBT: xmlunit:xmlunit:1.2:jar" level="project" />
     <orderEntry type="library" name="SBT: xom:xom:1.2.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: joda-time:joda-time:2.7:jar" level="project" />
   </component>
 </module>

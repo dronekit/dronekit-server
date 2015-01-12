@@ -29,6 +29,8 @@
           <root url="jar://$MODULE_DIR$/../../arduleader/common/lib/org.mavlink.library.jar!/" />
           <root url="jar://$MODULE_DIR$/../../arduleader/common/lib/org.mavlink.util.jar!/" />
           <root url="jar://$MODULE_DIR$/../../arduleader/common/lib/org.mavlink.library.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../arduleader/common/lib/org.mavlink.util.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../arduleader/common/lib/org.mavlink.library.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -45,6 +47,5 @@
     <orderEntry type="library" scope="TEST" name="SBT: org.scala-lang:scala-reflect:2.10.4:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.10:2.2.0:jar" level="project" />
     <orderEntry type="library" name="SBT: org.slf4j:slf4j-api:1.7.5:jar" level="project" />
-    <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.10.4" level="project" />
   </component>
 </module>
