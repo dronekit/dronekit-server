@@ -59,8 +59,8 @@ class OAuthController extends DroneHubStack with OAuthSupport {
 
     val appName = "FIXME-Appname-"
 
-    // FIXME - validate scope names
-    val scopeNames = Seq("user read", "mission write")
+    // FIXME - show human readable scope names instead
+    val scopeNames = scope.split(" ")
 
     val resp = <html><body>
       <form method="POST">

@@ -68,7 +68,8 @@ class OAuthTests extends ServerDependentSuite {
       // val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
 
       // Step 1: FIXME - send request token, to receive auth code
-      val req1 = Seq("redirect_uri" -> redirectUri, "client_id" -> clientId, "response_type" -> "code", "scope" -> "fish cat dog",
+      val scopes = Seq("user_read", "user_update")
+      val req1 = Seq("redirect_uri" -> redirectUri, "client_id" -> clientId, "response_type" -> "code", "scope" -> scopes.mkString(" "),
         "state" -> "I like monkies")
       val authHtml = bodyGet("/api/v1/oauth/auth", req1)
       println(s"User visible HTML: $authHtml")
@@ -87,11 +88,12 @@ class OAuthTests extends ServerDependentSuite {
       val result = jsonParamPost(s"/api/v1/oauth/access_token", req2, headers = Map())
       println(s"OAuth token creation result: $result")
 
-      val accessToken = (result \ "access_token").toString
+      val accessToken = (result \ "access_token").values.toString
 
       Then("try doing something with the granted credentials of the user")
       // Do a nop write to the user to check that it would be permitted
-      //jsonPut(s"/api/v1/user/$login", "{}", headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader))
+      val nopUser = UserJson(login)
+      jsonPut(s"/api/v1/user/$login", nopUser, headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader, refererHeader))
     }
   }
 }

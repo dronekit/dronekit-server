@@ -43,7 +43,7 @@ class DapiDataHandler extends DataHandler[User] with Logging {
 
   def createAccessToken(authInfo: AuthInfo[User]): AccessToken = {
     warn(s"Creating access token for $authInfo")
-    authInfo.user.createToken(authInfo.clientId)
+    authInfo.user.createToken(authInfo.clientId, authInfo.scope)
   }
 
   def getStoredAccessToken(authInfo: AuthInfo[User]): Option[AccessToken] = {

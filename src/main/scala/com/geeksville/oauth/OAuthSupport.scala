@@ -1,8 +1,12 @@
 package com.geeksville.oauth
 
+import com.geeksville.dapi.model.DBToken
+import grizzled.slf4j.Logging
+
+import scala.util.matching.Regex
 import scalaoauth2.provider.DataHandler
 import org.scalatra.ScalatraServlet
-import com.geeksville.scalatra.ControllerExtras
+import com.geeksville.scalatra.{ThreescaleSupport, ControllerExtras}
 import scalaoauth2.provider.TokenEndpoint
 import scalaoauth2.provider.AuthorizationRequest
 import scalaoauth2.provider.GrantHandlerResult
@@ -20,19 +24,24 @@ import org.scalatra.BadRequest
 import org.scalatra.Unauthorized
 
 /**
+ * Replaces our simple threescale based API key checking with alternatively checking for
+ * "Authorization: Bearer" style access tokens.
+ *
  * OAuth support for scalatra
  */
-trait OAuthSupport extends ScalatraServlet with ControllerExtras {
+trait OAuthSupport extends ThreescaleSupport {
 
   // Convert to the format expected by the the auth lib
-  private def requestHeaders = request.headers.map { case (k, v) => k -> Seq(v) }.toMap
+  private def requestHeaders = request.headers.map { case (k, v) => k -> Seq(v)}.toMap
+
   private def requestParams = {
-    val r = request.parameters.map { case (k, v) => k -> Seq(v) }.toMap
+    val r = request.parameters.map { case (k, v) => k -> Seq(v)}.toMap
     debug("params = " + r.mkString(","))
     r
   }
 
   def authRequest = AuthorizationRequest(requestHeaders, requestParams)
+
   def protectedResourceRequest = ProtectedResourceRequest(requestHeaders, requestParams)
 
   def responseAccessToken(r: GrantHandlerResult) = {
@@ -91,5 +100,53 @@ trait OAuthSupport extends ScalatraServlet with ControllerExtras {
       case Right(authInfo) => callback(authInfo)
     }
   }
+
+  /// Bearer regexes
+  private def bearerAuthHeaders = authHeaders.flatMap { s =>
+    s match {
+      case OauthSupport.BearerRegex(key) => Some(key)
+      case _ => None
+    }
+  }
+
+  /**
+   * Look for API key in an authorization header, or if not there, then in the query string.
+   */
+  private def accessToken = {
+    val r = bearerAuthHeaders.toSeq.headOption
+    debug(s"AccessToken is $r")
+    r
+  }
+
+  /**
+   * Check for authorization to use serviceId X.  will haltUnauthorized if quota exceeded
+   */
+  override def requireServiceAuth(metrics: Map[String, String]): Unit = {
+    // First check for an oauth Bearer token, if found use that otherwise fall back to threescale
+    accessToken match {
+      case Some(token) =>
+        val dbToken = DBToken.findByAccessToken(token).getOrElse(haltUnauthorized("Invalid access token"))
+        if(dbToken.isExpired)
+          haltUnauthorized("Access token has expired, you must renew it")
+
+        // check scopes
+        val scopes = dbToken.scopes
+        debug(s"needed access for ${metrics.keys.mkString(",")} in scopes ${scopes.mkString(",")}")
+        metrics.keys.foreach { scope =>
+          if(!scopes.contains(scope))
+            haltUnauthorized(s"User has not granted $scope permission to this application")
+        }
+
+        // Make sure that 3scale is also okay with the app still (and log app usage)
+        val apiKey = dbToken.clientId
+        requireThreescaleAuth(apiKey, metrics)
+      case None =>
+        super.requireServiceAuth(metrics) // threescale must approve
+    }
+  }
 }
 
+object OauthSupport {
+  val BearerRegex = "Bearer (.*)".r
+
+  }

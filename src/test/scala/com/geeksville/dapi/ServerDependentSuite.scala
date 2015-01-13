@@ -62,13 +62,14 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   def makeOAuthHeader(accessToken: String) = makeAuthHeader("Bearer", accessToken)
 
+  val acceptJsonHeader = "Accept" -> "application/json"
+  val contentJsonHeader = "Content-Type" -> "application/json"
+  val refererHeader = "Referer" -> "http://www.droneshare.com/"  // Pretend to come from droneshare server - because we are using its api key
+
   // Send this in all cases
   val commonHeaders = Map(
     simpleAuthHeader,
-    "Referer" -> "http://www.droneshare.com/") // Pretend to come from droneshare server
-
-  val acceptJsonHeader = "Accept" -> "application/json"
-  val contentJsonHeader = "Content-Type" -> "application/json"
+    refererHeader)
 
   val jsonHeaders = commonHeaders ++ Map(
     acceptJsonHeader,

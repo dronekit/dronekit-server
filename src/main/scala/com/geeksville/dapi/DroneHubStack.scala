@@ -1,5 +1,6 @@
 package com.geeksville.dapi
 
+import com.geeksville.oauth.OAuthSupport
 import org.json4s.JsonAST.JObject
 import org.scalatra.{ ScalatraServlet, ScalatraBase }
 import org.scalatra.json.NativeJsonSupport
@@ -16,7 +17,7 @@ import com.geeksville.scalatra.ThreescaleSupport
 import org.scalatra.CorsSupport
 import com.geeksville.util.AnalyticsService
 
-abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with AuthenticationSupport with NativeJsonSupport with ThreescaleSupport {
+abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with AuthenticationSupport with NativeJsonSupport with OAuthSupport {
 
   // Sets up automatic case class to JSON output serialization
   protected implicit def jsonFormats: Formats = DefaultFormats ++ GeeksvilleFormats ++ DroneModelFormats

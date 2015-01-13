@@ -28,7 +28,7 @@ import com.geeksville.util.EnvelopeFactory
  *
  */
 case class DBToken(@Required @Unique var accessToken: String, @Unique refreshToken: Option[String],
-  clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord {
+  clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord with Logging {
   /**
    * What vehicle made me?
    */
@@ -42,15 +42,29 @@ case class DBToken(@Required @Unique var accessToken: String, @Unique refreshTok
     accessToken = DBToken.createRandomCode()
     save
   }
+
+  /**
+   * @return a list of the scopes requested by this access token
+   */
+  def scopes: Seq[String] = scope.getOrElse("").split(" ").map(_.trim)
+
+  def isExpired = {
+    val exp = expire.getOrElse(new Timestamp(0L)).getTime
+
+    val r = exp <= System.currentTimeMillis
+    if(r)
+      error(s"$this has expired!")
+    r
+  }
 }
 
 object DBToken extends DapiRecordCompanion[DBToken] {
   // A 1 hr lease for now...
   val leaseTime = 1000L * 60 * 60
 
-  def create(clientId: String) = {
+  def create(clientId: String, scopes: Option[String]) = {
     val expire = new Timestamp(System.currentTimeMillis + leaseTime)
-    val token = DBToken(DBToken.createRandomCode(), Some(DBToken.createRandomCode()), clientId, None, Some(expire))
+    val token = DBToken(DBToken.createRandomCode(), Some(DBToken.createRandomCode()), clientId, scopes, Some(expire))
     token.create
     token
   }
@@ -226,8 +240,8 @@ case class User(@Required @Unique login: String,
     save()
   }
 
-  def createToken(clientId: String) = {
-    val token = DBToken.create(clientId)
+  def createToken(clientId: String, scope: Option[String]) = {
+    val token = DBToken.create(clientId, scope)
 
     token.user := this
     token.save()
