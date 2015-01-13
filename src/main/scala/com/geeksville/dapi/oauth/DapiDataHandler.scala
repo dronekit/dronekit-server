@@ -25,7 +25,7 @@ class DapiDataHandler extends DataHandler[User] with Logging {
   }
 
   def validateClient(clientId: String, clientSecret: String, grantType: String): Boolean = {
-    error(s"FIXME: implement validateClient id=$clientId, secret=$clientSecret, grantType=$grantType")
+    warn(s"FIXME: implement validateClient id=$clientId, secret=$clientSecret, grantType=$grantType")
     true
   }
 

@@ -31,12 +31,15 @@ import com.geeksville.util.URLUtil
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class OAuthTests(diabled: Boolean) extends ServerDependentSuite {
+class OAuthTests extends ServerDependentSuite {
 
   val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
   val redirectUri = "FIXME"
-  val clientId = "FIXMEclient"
+
+  // FIXME - possibly it would be better to just use the part of the API key left of the dot and then
+  // treat the rest as the client secret?
+  val clientId = apiKey
 
   // Create a user we can use to test oauth with
   test("User create") {
@@ -59,7 +62,7 @@ class OAuthTests(diabled: Boolean) extends ServerDependentSuite {
     println(s"OAuth token creation result: $result")
   }
 
-  ignore("Oauth create token: access token auth") {
+  test("Oauth create token: access token auth") {
     userSession {
       Then("request auth HTML page")
       // val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
@@ -76,12 +79,19 @@ class OAuthTests(diabled: Boolean) extends ServerDependentSuite {
       }
 
       val code = authResp("code") //  (authResp \ "code").toString
+      println(s"Got auth code $code")
 
       Then("exchange code for token")
       // Step 2: exchange auth code returned from server for an access token
       val req2 = Seq("grant_type" -> "authorization_code", "code" -> code, "redirect_uri" -> redirectUri, "client_id" -> clientId)
-      val result = jsonParamPost(s"/api/v1/oauth/access_token", req2)
+      val result = jsonParamPost(s"/api/v1/oauth/access_token", req2, headers = Map())
       println(s"OAuth token creation result: $result")
+
+      val accessToken = (result \ "access_token").toString
+
+      Then("try doing something with the granted credentials of the user")
+      // Do a nop write to the user to check that it would be permitted
+      //jsonPut(s"/api/v1/user/$login", "{}", headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader))
     }
   }
 }

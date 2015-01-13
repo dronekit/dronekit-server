@@ -54,14 +54,25 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   val apiKey = "eb34bd67.megadroneshare"
 
+  /// Generate a valid authorzation header
+  def makeAuthHeader(typ: String, param: String) =  ("Authorization" -> s"$typ $param")
+
+  /// An old school pre oauth 2.0 API auth header
+  def simpleAuthHeader = makeAuthHeader("DroneApi", s"""apikey="$apiKey"""")
+
+  def makeOAuthHeader(accessToken: String) = makeAuthHeader("Bearer", accessToken)
+
   // Send this in all cases
   val commonHeaders = Map(
-    "Authorization" -> s"""DroneApi apikey="$apiKey"""",
+    simpleAuthHeader,
     "Referer" -> "http://www.droneshare.com/") // Pretend to come from droneshare server
 
+  val acceptJsonHeader = "Accept" -> "application/json"
+  val contentJsonHeader = "Content-Type" -> "application/json"
+
   val jsonHeaders = commonHeaders ++ Map(
-    "Accept" -> "application/json",
-    "Content-Type" -> "application/json")
+    acceptJsonHeader,
+    contentJsonHeader)
 
   val loginInfo = Map("login" -> login, "password" -> password)
 
@@ -119,8 +130,14 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     parse(bodyGet(uri, params))
 
   /// Post the req as JSON in the body
-  def jsonPost(uri: String, req: AnyRef) =
-    post(uri, toJSON(req), headers = jsonHeaders) {
+  def jsonPost(uri: String, req: AnyRef, headers: Map[String, String] = jsonHeaders) =
+    post(uri, toJSON(req), headers) {
+      checkStatusOk()
+      parse(body)
+    }
+
+  def jsonPut(uri: String, req: AnyRef, headers: Map[String, String] = jsonHeaders) =
+    put(uri, toJSON(req), headers) {
       checkStatusOk()
       parse(body)
     }
@@ -139,9 +156,9 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
   def checkStatus(expected: Int) {
     if (status != expected) { // If not okay then show the error msg from server
       error(s"While handling request: ${currentRequest.get}")
-      error("Unexpted status: " + response.statusLine.message)
+      error("Unexpected status: " + response.statusLine.message)
       error("Error body: " + response.body)
-      Thread.dumpStack()
+      //Thread.dumpStack()
     }
     status should equal(expected)
   }
