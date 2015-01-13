@@ -48,6 +48,8 @@ case class DBToken(@Required @Unique var accessToken: String, @Unique refreshTok
    */
   def scopes: Seq[String] = scope.getOrElse("").split(" ").map(_.trim)
 
+  def myUser: User = user
+
   def isExpired = {
     val exp = expire.getOrElse(new Timestamp(0L)).getTime
 

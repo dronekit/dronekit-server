@@ -1,6 +1,7 @@
 package com.geeksville.oauth
 
 import com.geeksville.dapi.model.DBToken
+import com.geeksville.dapi.oauth.OAuthStrategy
 import grizzled.slf4j.Logging
 
 import scala.util.matching.Regex
@@ -104,7 +105,7 @@ trait OAuthSupport extends ThreescaleSupport {
   /// Bearer regexes
   private def bearerAuthHeaders = authHeaders.flatMap { s =>
     s match {
-      case OauthSupport.BearerRegex(key) => Some(key)
+      case OAuthSupport.BearerRegex(key) => Some(key)
       case _ => None
     }
   }
@@ -140,13 +141,17 @@ trait OAuthSupport extends ThreescaleSupport {
         // Make sure that 3scale is also okay with the app still (and log app usage)
         val apiKey = dbToken.clientId
         requireThreescaleAuth(apiKey, metrics)
+
+        // If we made it this far SUCCESS!  Store the user record someplace scentry can find it
+        OAuthStrategy.setOAuthUser(request, dbToken.myUser)
+
       case None =>
         super.requireServiceAuth(metrics) // threescale must approve
     }
   }
 }
 
-object OauthSupport {
+object OAuthSupport {
   val BearerRegex = "Bearer (.*)".r
 
   }

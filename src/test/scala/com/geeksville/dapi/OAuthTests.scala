@@ -63,7 +63,7 @@ class OAuthTests extends ServerDependentSuite {
   }
 
   test("Oauth create token: access token auth") {
-    userSession {
+    val accessToken = userSession {
       Then("request auth HTML page")
       // val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
 
@@ -88,12 +88,12 @@ class OAuthTests extends ServerDependentSuite {
       val result = jsonParamPost(s"/api/v1/oauth/access_token", req2, headers = Map())
       println(s"OAuth token creation result: $result")
 
-      val accessToken = (result \ "access_token").values.toString
-
-      Then("try doing something with the granted credentials of the user")
-      // Do a nop write to the user to check that it would be permitted
-      val nopUser = UserJson(login)
-      jsonPut(s"/api/v1/user/$login", nopUser, headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader, refererHeader))
+      (result \ "access_token").values.toString
     }
+
+    Then("try doing something with the granted credentials of the user")
+    // Do a nop write to the user to check that it would be permitted
+    val nopUser = UserJson(login)
+    jsonPut(s"/api/v1/user/$login", nopUser, headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader, refererHeader))
   }
 }
