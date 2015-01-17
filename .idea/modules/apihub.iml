@@ -313,5 +313,11 @@
     <orderEntry type="library" name="SBT: xmlunit:xmlunit:1.2:jar" level="project" />
     <orderEntry type="library" name="SBT: xom:xom:1.2.5:jar" level="project" />
     <orderEntry type="library" name="SBT: joda-time:joda-time:2.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.auth0:java-jwt:1.0.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: io.hull:hull-client:0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpclient:4.2.5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpcore:4.2.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.codehaus.jackson:jackson-core-asl:1.9.12:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.codehaus.jackson:jackson-mapper-asl:1.9.12:jar" level="project" />
   </component>
 </module>

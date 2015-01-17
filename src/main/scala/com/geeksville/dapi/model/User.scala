@@ -161,11 +161,11 @@ case class User(@Required @Unique login: String,
   /**
    * Get an ID string usable by hull.io
    *
-   * For accounts that started with hull we prefix the ID with #h:, for other accounts we just use the whole string
+   * For accounts that started with hull we internally prefix the ID with #h:, for other accounts we just use the whole string
    */
   def hullId =
-    if(login.startsWith("#h:"))
-        login.substring(3)
+    if(login.startsWith(User.hullIdPrefix))
+        login.substring(User.hullIdPrefix.size)
     else
         login
 
@@ -389,6 +389,9 @@ object User extends DapiRecordCompanion[User] with Logging {
 
   private val random = new Random(System.currentTimeMillis)
 
+  /// We add this at the beginning of any user IDs which started with hull
+  val hullIdPrefix = "#h:"
+
   def findByEmail(email: String): Option[User] =
     this.where(_.email === email.toLowerCase).headOption
 
@@ -417,6 +420,25 @@ object User extends DapiRecordCompanion[User] with Logging {
       logger.warn(s"Username $login not found, now searching for email $login")
       findByEmail(login)
     }
+
+  /**
+   * Given a validated hull user id, find or create a user record
+   * @param hullUserId
+   * @return
+   */
+  def findOrCreateHullUser(hullUserId: String): User = {
+    val idWithPrefix = hullIdPrefix + hullUserId
+    val r = find(idWithPrefix).getOrElse {
+      val u = User(idWithPrefix)
+      u.groupId = "hulluser"
+      u.create
+      u.save
+      debug(s"Created new hull user $u")
+      u
+    }
+    debug(s"Using hull huser $r")
+    r
+  }
 
   def create(login: String, password: String = null, email: Option[String] = None, fullName: Option[String] = None, group: String = "") = {
     val u = User(login.trim.toLowerCase, email.map(_.trim.toLowerCase), fullName.map(_.trim))
