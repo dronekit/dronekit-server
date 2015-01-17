@@ -44,13 +44,6 @@ class UserPasswordStrategy(protected val app: ScalatraBase)
     UserPasswordStrategy.getValidatedUser(login, password)
   }
 
-  /**
-   * What should happen if the user is currently not authenticated?
-   */
-  override def unauthenticated()(implicit request: HttpServletRequest, response: HttpServletResponse) {
-    //app.redirect("/sessions/new")
-  }
-
 }
 
 object UserPasswordStrategy extends Logging {

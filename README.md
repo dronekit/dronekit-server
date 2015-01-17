@@ -24,3 +24,4 @@ Once build env is running you have various options:
 * 'container:restart' - start a web server running the app on port 8080
 * '~ container:restart' - restart the webserver any time a source file changes
 * 'eclipse' - build eclipse project files
+

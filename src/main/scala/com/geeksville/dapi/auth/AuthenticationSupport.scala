@@ -1,5 +1,6 @@
 package com.geeksville.dapi.auth
 
+import com.geeksville.dapi.oauth.OAuthStrategy
 import org.scalatra.auth.{ ScentryConfig, ScentrySupport }
 import org.scalatra.{ ScalatraBase }
 import org.slf4j.LoggerFactory
@@ -101,6 +102,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
 
     scentry.register("Password", app => new UserPasswordStrategy(app))
     scentry.register("Remember", app => new RememberMeStrategy(app))
+    scentry.register("OAuth", app => new OAuthStrategy(app))
   }
 
   //

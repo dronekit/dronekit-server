@@ -56,31 +56,38 @@ object ThreescaleSupport {
  * A mixin that adds API validation through threescale
  */
 trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
+
   import ThreescaleSupport._
 
-  def requireServiceAuth(metricIn: String) {
+  final def requireServiceAuth(metricIn: String) {
     val metric = metricIn.replace('/', '_') // 3scale converts slashes to underscores
 
+    requireServiceAuth(Map(metric -> "1"))
+  }
+
+  protected def authHeaders = request.getHeaders("Authorization").asScala
+
+  private def referrer = {
     // Find referer for api checking - we prefer 'Origin' as the new preferred but will fall back to Referer
     val originOpt = request.header("Origin")
-    val referer = originOpt.orElse(request.referrer)
+    originOpt.orElse(request.referrer)
+  }
 
-    requireServiceAuth(Map(metric -> "1"), referer)
+  /// Headers that are simple the raw 3scale auth ID (not needed if using oauth)
+  private def simpleAuthHeaders = authHeaders.flatMap { s =>
+    s match {
+      case HeaderRegex(key) => Some(key)
+      case _ => None
+    }
   }
 
   /**
    * Look for API key in an authorization header, or if not there, then in the query string.
    */
   private def apiKey = {
-    //debug(s"*** Looking for API keys in $request")
-    val authHeaders = request.getHeaders("Authorization").asScala.toSeq
+    debug(s"*** Looking for API keys in $request")
 
-    val headerkeys = authHeaders.flatMap { s =>
-      s match {
-        case HeaderRegex(key) => Some(key)
-        case _ => None
-      }
-    }.toSeq
+    val headerkeys = simpleAuthHeaders.toSeq
     //debug(s"*** Auth headers ${authHeaders.mkString(",")} => keys=${headerkeys.mkString(",")}")
 
     if (headerkeys.isEmpty)
@@ -92,15 +99,13 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
   }
 
   /**
-   * Check for authorization to use serviceId X.  will haltUnauthorized if quota exceeded
+   * Check for threescale authorization to use serviceId X.  will haltUnauthorized if quota exceeded.
    */
-  def requireServiceAuth(metrics: Map[String, String], referer: Option[String] = None) {
-    val key = apiKey
-
+  protected final def requireThreescaleAuth(key: String, metrics: Map[String, String]) {
     NewRelic.setProductName(key)
 
     // FIXME include a better URL for developer site
-    val req = AuthRequest(key, service, referer, metrics)
+    val req = AuthRequest(key, service, referrer, metrics)
 
     val future = ask(threeActor, req).mapTo[AuthorizeResponse]
 
@@ -126,4 +131,11 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
         AnalyticsService.reportException("3scale", new Exception(msg))
     }
   }
+
+  /**
+   * Check for authorization to use serviceId X.  will haltUnauthorized if quota exceeded.
+   *
+   * Can be overridden by subclasses to generate alternative checking (i.e. OAuthSupport)
+   */
+  def requireServiceAuth(metrics: Map[String, String]) = requireThreescaleAuth(apiKey, metrics)
 }

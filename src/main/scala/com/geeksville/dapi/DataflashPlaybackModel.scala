@@ -12,7 +12,7 @@ import com.geeksville.flight.Location
 import org.mavlink.messages.MAV_TYPE
 import org.mavlink.messages.MAV_AUTOPILOT
 import java.util.Date
-import com.geeksville.mavlink.TimestampedAbstractMessage
+import com.geeksville.mavlink.{ErrorCode, TimestampedAbstractMessage}
 import java.io.InputStream
 import com.geeksville.util.Using._
 
@@ -27,6 +27,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
     }
 
   val modeChanges: ArrayBuffer[(Long, String)] = ArrayBuffer.empty
+
+  val errors: ArrayBuffer[(Long, ErrorCode)] = ArrayBuffer.empty
 
   val positions: ArrayBuffer[TimestampedLocation] = ArrayBuffer.empty
 
@@ -44,7 +46,7 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   override def autopilotType = hardwareToAutopilotType
 
   /// The messages array can be _very_ large and is rarely used, so we reload it as needed by calling loadMessages
-  override def abstractMessages: Seq[TimestampedAbstractMessage] = loadMessages(dfMessages).toSeq
+  override def abstractMessages = loadMessages(dfMessages)
 
   // FIXME - these should be hidden inside the loadMessages closure
   private var baseUsec = defaultTime * 1000L
@@ -167,6 +169,9 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
         case MODE =>
           dumpMessage()
           modeChanges.append(nowUsec -> m.mode)
+        case ERR =>
+          dumpMessage()
+          errors.append(nowUsec -> ErrorCode(m))
 
         case MSG =>
           //dumpMessage()

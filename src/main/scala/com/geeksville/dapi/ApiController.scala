@@ -2,7 +2,7 @@ package com.geeksville.dapi
 
 import org.scalatra._
 import org.scalatra.swagger.SwaggerSupport
-import org.json4s.{ DefaultFormats, Formats }
+import org.json4s.{MappingException, DefaultFormats, Formats, Extraction}
 import org.scalatra.json._
 import org.scalatra.swagger.Swagger
 import com.geeksville.util.URLUtil
@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest
 import org.json4s.JsonAST.JObject
 import javax.servlet.http.HttpServletResponse
 import java.util.Date
-import org.json4s.Extraction
 import org.json4s.JsonAST.JValue
 import grizzled.slf4j.Logging
 
@@ -146,7 +145,7 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   /// Generate a wo attribute on this rest endpoint of the form /:id/name.
   /// call getter and setter as needed
   /// FIXME - move this great utility somewhere else
-  def woField[R: Manifest](name: String, setter: (T, R) => Unit) {
+  def woField[R: Manifest](name: String, setter: (T, R) => Any) {
     val putInfo =
       (apiOperation[String]("set" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
@@ -156,17 +155,10 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
           bodyParam[R](name).description(s"New value for the $name")))
 
     put("/:id/" + name, operation(putInfo)) {
-      setter(findById, parsedBody.extract[R])
-    }
-  }
+      val o = findById
+      requireWriteAccess(o)
 
-  private def bodyAsJSON = {
-    try {
-      parsedBody.extract[JObject]
-    } catch {
-      case ex: Exception =>
-        error(s"Malformed client json: $parsedBody")
-        haltBadRequest("JSON object expected")
+      setter(o, parsedBodyAs[R])
     }
   }
 
@@ -196,16 +188,19 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   }
 
   /// Generate an append only attribute on this rest endpoint of the form /:id/name.
-  def aoField[R: Manifest](name: String)(appender: (T, R) => Unit) {
-    val putInfo =
+  def aoField[R: Manifest](name: String, appender: (T, R) => Any) {
+    val postInfo =
       (apiOperation[String]("add" + URLUtil.capitalize(name))
         summary s"Set the $name on specified $aName"
         parameters (
           pathParam[String]("id").description(s"Id of $aName to be appended"),
           bodyParam[R](name).description(s"New value for the $name")))
 
-    post("/:id/" + name, operation(putInfo)) {
-      appender(findById, parsedBody.extract[R])
+    post("/:id/" + name, operation(postInfo)) {
+      val o = findById
+      requireWriteAccess(o)
+
+      appender(o, parsedBodyAs[R])
     }
   }
 
@@ -219,7 +214,7 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   /// Read an appendable field
   def raField[R: Manifest](name: String, getter: T => List[R], appender: (T, R) => Unit) {
     roField(name)(getter)
-    aoField(name)(appender)
+    aoField(name, appender)
   }
 
   protected def getOp =

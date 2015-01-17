@@ -104,7 +104,14 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
 
   /// A one line log msg
   def dumpRequestSummary() {
-    debug(s"REQ: $clientIP ${request.getMethod} ${request.getRequestURL} ")
+    val shouldIgnore = request.headers.getOrElse("X-Newrelic-Ignore", "false").toString == "true"
+    if(!shouldIgnore) {
+      val url = request.getRequestURL.toString
+      if(url.endsWith("/api/v1/mission") || url.endsWith(".tlog"))
+        info(s"MSN: $clientIP ${request.getMethod} ${request.getRequestURL} " + request.headers.mkString(","))
+      else
+        debug(s"REQ: $clientIP ${request.getMethod} ${request.getRequestURL} ")
+    }
   }
 
   /// Return the client's IP address (being careful to work if we are behind a load balancer)
@@ -132,7 +139,7 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
       InternalServerError(<html>
                             <body>
                               <p>
-                                Oh my - you've found a problem with this beta-test.  Our geeks have been alerted and will work on a fix shortly...  Thank you for your help.
+                                Oh my - we've broken something.  Our geeks have been alerted and will work on a fix shortly...
                               </p>
                               <p>
                                 { e }
@@ -168,5 +175,15 @@ trait ControllerExtras extends ScalatraBase with FutureSupport with Logging {
   def haltBadRequest(reason: String) = verboseHalt(400, reason = reason)
   def haltNotImplemented(reason: String) = verboseHalt(501, reason = reason)
   def haltInternalServerError(reason: String) = verboseHalt(500, reason = reason)
+
+  /**
+   * Retrieve a server tracked session object with the given key
+   * @param key
+   * @return
+   */
+  def getSession[T](key: String) = Option(servletContext.getAttribute(keyPrefix + key).asInstanceOf[T])
+  def setSession(key: String, v: AnyRef) { servletContext.setAttribute(keyPrefix + key, v) }
+
+  private val keyPrefix = "ctrlExtra_"
 }
 

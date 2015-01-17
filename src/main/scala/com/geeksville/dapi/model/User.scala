@@ -26,37 +26,76 @@ import com.geeksville.util.EnvelopeFactory
  * Owned by a user - currently active access tokens
  *
  * @param clientId the appid for the requesting app
+ *
  */
-case class DBToken(@Required @Unique accessToken: UUID, @Unique refreshToken: Option[UUID],
-  clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord {
+case class DBToken(@Required @Unique var accessToken: String, @Unique refreshToken: Option[String],
+  clientId: String, scope: Option[String], expire: Option[Timestamp]) extends DapiRecord with Logging {
   /**
    * What vehicle made me?
    */
   lazy val user = belongsTo[User]
   val userId: Option[Long] = None
+
+  /**
+   * The user has a valid refresh token and wants to update the access token
+   */
+  def refreshAccessToken(): Unit = {
+    accessToken = DBToken.createRandomCode()
+    save
+  }
+
+  /**
+   * @return a list of the scopes requested by this access token
+   */
+  def scopes: Seq[String] = scope.getOrElse("").split(" ").map(_.trim)
+
+  def myUser: User = user
+
+  def isExpired = {
+    val exp = expire.getOrElse(new Timestamp(0L)).getTime
+
+    val r = exp <= System.currentTimeMillis
+    if(r)
+      error(s"$this has expired!")
+    r
+  }
 }
 
 object DBToken extends DapiRecordCompanion[DBToken] {
   // A 1 hr lease for now...
   val leaseTime = 1000L * 60 * 60
 
-  def create(clientId: String) = {
+  def create(clientId: String, scopes: Option[String]) = {
     val expire = new Timestamp(System.currentTimeMillis + leaseTime)
-    val token = DBToken(UUID.randomUUID(), Some(UUID.randomUUID()), clientId, None, Some(expire))
+    val token = DBToken(DBToken.createRandomCode(), Some(DBToken.createRandomCode()), clientId, scopes, Some(expire))
     token.create
     token
   }
 
-  def findByAccessToken(token: String) = {
+  def findByAccessToken(t: String) = {
     try {
-      val t = UUID.fromString(token)
       DBToken.where(_.accessToken === t).headOption
     } catch {
       case ex: IllegalArgumentException =>
-        error(s"Malformed access token UUID: $token")
+        error(s"Malformed access token UUID: $t")
         None
     }
   }
+
+  def findByRefreshToken(t: String) = {
+    try {
+      DBToken.where(_.refreshToken === t).headOption
+    } catch {
+      case ex: IllegalArgumentException =>
+        error(s"Malformed refresh token UUID: $t")
+        None
+    }
+  }
+
+  /**
+   * Generate a short alphanumeric random code
+   */
+  def createRandomCode() = Random.alphanumeric.take(30).mkString
 }
 
 case class User(@Required @Unique login: String,
@@ -215,8 +254,8 @@ case class User(@Required @Unique login: String,
     save()
   }
 
-  def createToken(clientId: String) = {
-    val token = DBToken.create(clientId)
+  def createToken(clientId: String, scope: Option[String]) = {
+    val token = DBToken.create(clientId, scope)
 
     token.user := this
     token.save()
@@ -224,7 +263,7 @@ case class User(@Required @Unique login: String,
     token
   }
 
-  def getToken(clientId: String) = {
+  def getTokenByClientId(clientId: String) = {
     tokens.where(_.clientId === clientId).headOption
   }
 

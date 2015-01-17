@@ -18,6 +18,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
   val wptDisabledLineStyle = lineStyles(color = Some("#9999D6"), opacity = Some(0.5))
 
   /**
+   * Generates a JSON object with GEOJson
    * @return None if we can't make sen
    */
   def toGeoJSON(): Option[JObject] = {
@@ -62,7 +63,7 @@ class GeoJSONFactory(model: PlaybackModel) extends Logging {
       curTracklog = Nil
     }
 
-    debug(s"Generating GeoJSON for ${positions.size} points")
+    debug(s"Generating GeoJSON")
     positions.foreach { p =>
 
       val crossedModeChange = nextMode.map {

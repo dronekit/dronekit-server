@@ -13,16 +13,16 @@ import com.geeksville.flight.HasSummaryStats
 import java.io.OutputStream
 import com.geeksville.flight.IGCWriter
 import com.geeksville.util.Using
-import com.geeksville.mavlink.TimestampedAbstractMessage
-import com.geeksville.mavlink.AbstractMessage
+import com.geeksville.mavlink.{ErrorCode, TimestampedAbstractMessage, AbstractMessage}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * These are common methods that must be support by all mission model files (tlog, dataflash log etc...)
  */
 trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryStats with ParametersReadOnlyModel with Logging {
 
-  // FIXME -unify with tlog messages
-  def abstractMessages: Seq[TimestampedAbstractMessage] = Seq.empty
+  def abstractMessages: Iterable[TimestampedAbstractMessage]
 
   /// A JSON readable string showing model type: TLOG, Dataflash
   def modelType: String
@@ -65,6 +65,10 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
   def waypoints: Seq[Waypoint]
 
   def parameters: Iterable[ROParamValue]
+
+  /// Any errors that occurred during this flight
+  /// timestamp usecs -> error record
+  val errors: Seq[(Long, ErrorCode)]
 
   /**
    * Generate an IGC file representation of this model

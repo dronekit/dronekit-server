@@ -26,37 +26,74 @@ import java.util.UUID
 import com.geeksville.apiproxy.APIConstants
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
+import com.geeksville.util.URLUtil
 
 /**
  * These tests can be disabled by adding an argument to the constructor.
  */
-class OAuthTests(disabled: Boolean) extends ServerDependentSuite {
+class OAuthTests extends ServerDependentSuite {
 
-  // We want cookies for this test
-  session {
-    val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
+  val u = UserJson(login, Some(password), Some(email), Some("Unit Test User"))
 
-    // Create a user we can use to test oauth with
-    test("User create") {
-      info(s"Attempting create of $u")
-      post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
-        checkStatusOk()
-        response.headers.foreach {
-          case (k, v) =>
-            println(s"Create response: $k => ${v.mkString(",")}")
-        }
+  val redirectUri = "FIXME"
+
+  // FIXME - possibly it would be better to just use the part of the API key left of the dot and then
+  // treat the rest as the client secret?
+  val clientId = apiKey
+
+  // Create a user we can use to test oauth with
+  test("User create") {
+    info(s"Attempting create of $u")
+    post(s"/api/v1/auth/create", toJSON(u), headers = jsonHeaders) {
+      checkStatusOk()
+      response.headers.foreach {
+        case (k, v) =>
+          println(s"Create response: $k => ${v.mkString(",")}")
       }
     }
-
-    test("Oauth create token") {
-      println("creating oauth token")
-      val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
-      val req = Seq(("grant_type" -> "password"), ("username" -> u.login), ("password" -> u.password.get), ("scope" -> "all"))
-
-      val result = paramPost(s"/api/v1/oauth/access_token", req, headers)
-      println(s"OAuth token creation result: $result")
-    }
-
   }
 
+  ignore("Oauth create token: password auth") {
+    println("creating oauth token")
+    val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
+    val req = Seq(("grant_type" -> "password"), ("username" -> u.login), ("password" -> u.password.get), ("scope" -> "all"))
+
+    val result = jsonParamPost(s"/api/v1/oauth/access_token", req, headers)
+    println(s"OAuth token creation result: $result")
+  }
+
+  test("Oauth create token: access token auth") {
+    val accessToken = userSession {
+      Then("request auth HTML page")
+      // val headers = Map("Authorization" -> "Basic Y2xpZW50X2lkX3ZhbHVlOmNsaWVudF9zZWNyZXRfdmFsdWU=")
+
+      // Step 1: FIXME - send request token, to receive auth code
+      val scopes = Seq("user_read", "user_update")
+      val req1 = Seq("redirect_uri" -> redirectUri, "client_id" -> clientId, "response_type" -> "code", "scope" -> scopes.mkString(" "),
+        "state" -> "I like monkies")
+      val authHtml = bodyGet("/api/v1/oauth/auth", req1)
+      println(s"User visible HTML: $authHtml")
+
+      Then("Send user auth click")
+      val authResp = post("/api/v1/oauth/auth", Seq("approved" -> "OK"), commonHeaders) {
+        URLUtil.parseQueryString(parseRedirect())
+      }
+
+      val code = authResp("code") //  (authResp \ "code").toString
+      println(s"Got auth code $code")
+
+      Then("exchange code for token")
+      // Step 2: exchange auth code returned from server for an access token
+      val req2 = Seq("grant_type" -> "authorization_code", "code" -> code, "redirect_uri" -> redirectUri, "client_id" -> clientId)
+      val result = jsonParamPost(s"/api/v1/oauth/access_token", req2, headers = Map())
+      println(s"OAuth token creation result: $result")
+
+      (result \ "access_token").values.toString
+    }
+
+    Then("try doing something with the granted credentials of the user")
+    // Do a nop write to the user to check that it would be permitted
+    val nopUser = UserJson(login)
+    jsonPut(s"/api/v1/user/$login", nopUser, headers = Map(makeOAuthHeader(accessToken), acceptJsonHeader, contentJsonHeader, refererHeader))
+  }
 }

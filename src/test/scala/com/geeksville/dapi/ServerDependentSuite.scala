@@ -30,6 +30,11 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import com.geeksville.dapi.oauth.OAuthController
 
+
+
+case class RequestInfo(method: String, uri: String, queryParams: Iterable[(String, String)], headers: Map[String, String], body: String)
+
+
 class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with ScalatraSuite with Logging with GivenWhenThen {
   implicit val swagger = new ApiSwagger
 
@@ -49,16 +54,30 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   val apiKey = "eb34bd67.megadroneshare"
 
+  /// Generate a valid authorzation header
+  def makeAuthHeader(typ: String, param: String) =  ("Authorization" -> s"$typ $param")
+
+  /// An old school pre oauth 2.0 API auth header
+  def simpleAuthHeader = makeAuthHeader("DroneApi", s"""apikey="$apiKey"""")
+
+  def makeOAuthHeader(accessToken: String) = makeAuthHeader("Bearer", accessToken)
+
+  val acceptJsonHeader = "Accept" -> "application/json"
+  val contentJsonHeader = "Content-Type" -> "application/json"
+  val refererHeader = "Referer" -> "http://www.droneshare.com/"  // Pretend to come from droneshare server - because we are using its api key
+
   // Send this in all cases
   val commonHeaders = Map(
-    "Authorization" -> s"""DroneApi apikey="$apiKey"""",
-    "Referer" -> "http://www.droneshare.com/") // Pretend to come from droneshare server
+    simpleAuthHeader,
+    refererHeader)
 
   val jsonHeaders = commonHeaders ++ Map(
-    "Accept" -> "application/json",
-    "Content-Type" -> "application/json")
+    acceptJsonHeader,
+    contentJsonHeader)
 
   val loginInfo = Map("login" -> login, "password" -> password)
+
+  private var currentRequest: Option[RequestInfo] = None
 
   // Instead of using before we use beforeAll so that we don't tear down the DB for each test (speeds run at risk of side effect - FIXME)
   override def beforeAll() {
@@ -78,6 +97,22 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     addServlet(new OAuthController, "/api/v1/oauth/*")
   }
 
+  override def submit[A](
+                 method: String,
+                 uri: String,
+                 queryParams: Iterable[(String, String)] = Map.empty,
+                 headers: Map[String, String] = Map.empty,
+                 body: Array[Byte] = null)(f: => A): A = {
+    val bodyStr = if(body == null)
+      "(null)"
+    else
+      body.map(_.toChar).mkString
+
+    currentRequest = Some(RequestInfo(method, uri, queryParams, headers, bodyStr))
+
+    super.submit(method, uri, queryParams, headers, body)(f)
+  }
+
   override def afterAll() {
     super.afterAll()
 
@@ -86,35 +121,55 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
     }
   }
 
-  def jsonGet(uri: String) = {
-    get(uri, /* params = loginInfo, */ headers = jsonHeaders) {
+  def bodyGet(uri: String, params: Iterable[(String, String)] = Seq.empty) =
+    get(uri, params, headers = jsonHeaders) {
       checkStatusOk()
-      parse(body)
+      body
     }
-  }
+
+  def jsonGet(uri: String, params: Iterable[(String, String)] = Seq.empty) =
+    parse(bodyGet(uri, params))
 
   /// Post the req as JSON in the body
-  def jsonPost(uri: String, req: AnyRef) = {
-    post(uri, toJSON(req), headers = jsonHeaders) {
+  def jsonPost(uri: String, req: AnyRef, headers: Map[String, String] = jsonHeaders) =
+    post(uri, toJSON(req), headers) {
       checkStatusOk()
       parse(body)
     }
-  }
+
+  def jsonPut(uri: String, req: AnyRef, headers: Map[String, String] = jsonHeaders) =
+    put(uri, toJSON(req), headers) {
+      checkStatusOk()
+      parse(body)
+    }
+
+  /// Post as form post and receive json response
+  def jsonParamPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String] = commonHeaders) =
+    parse(paramPost(uri, params, headers))
 
   /// Post the request as form params
-  def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String]) = {
+  def paramPost(uri: String, params: Iterable[(String, String)], headers: Map[String, String] = commonHeaders) =
     post(uri, params, headers) {
       checkStatusOk()
-      parse(body)
+      body
     }
+
+  def checkStatus(expected: Int) {
+    if (status != expected) { // If not okay then show the error msg from server
+      error(s"While handling request: ${currentRequest.get}")
+      error("Unexpected status: " + response.statusLine.message)
+      error("Error body: " + response.body)
+      //Thread.dumpStack()
+    }
+    status should equal(expected)
   }
 
-  def checkStatusOk() {
-    if (status != 200) { // If not okay then show the error msg from server
-      error("Status not Ok: " + response.statusLine.message)
-      error("Error body: " + response.body)
-    }
-    status should equal(200)
+  def checkStatusOk() = checkStatus(200)
+  def parseRedirect() = {
+    checkStatus(302)
+    val dest = response.headers("Location")(0)
+    debug("Received redirect resp: " + dest)
+    dest
   }
 
   def toJSON(x: AnyRef) = {
@@ -125,7 +180,7 @@ class ServerDependentSuite /* (disabled: Boolean) */ extends FunSuite with Scala
 
   /// Do a session logged in as our test user
   def userSession[A](f: => A): A = session {
-    post("/api/v1/session/login", loginInfo, jsonHeaders) {
+    post("/api/v1/session/login", loginInfo, commonHeaders) {
       checkStatusOk()
     }
 

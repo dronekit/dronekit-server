@@ -38,7 +38,8 @@ sbt publishLocal
 cd ..
 
 # akka needs sphinx to make docs
-sudo pip install sphinx
+# DO NOT USE SUDO it breaks the CI server
+pip install sphinx
 git clone https://github.com/geeksville/akka.git
 cd akka
 sbt -Dakka.scaladoc.diagrams=false publishLocal
