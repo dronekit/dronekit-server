@@ -38,6 +38,8 @@ object NestorBuild extends Build {
       case PathList("org", "fusesource", xs @ _*) => MergeStrategy.first
       case PathList("META-INF", "native", xs @ _*) => MergeStrategy.first
       case PathList("org", "slf4j", xs @ _*) => MergeStrategy.first
+      case PathList(ps @ _*) if ps.mkString endsWith "pom.properties" => MergeStrategy.first
+      case PathList(ps @ _*) if ps.mkString endsWith "pom.xml" => MergeStrategy.first
       //case "application.conf" => MergeStrategy.concat
       case ".project" => MergeStrategy.discard
       case ".classpath" => MergeStrategy.discard
@@ -86,7 +88,9 @@ object NestorBuild extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion withSources (),
         //"org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
 
-        "com.auth0" % "java-jwt" % "1.0.0",
+        // Disambiguate various library dependencies
+
+        "com.auth0" % "java-jwt" % "2.0.1",
 
         // Needed for our google datasource publishing
         "com.google.visualization" % "visualization-datasource" % "1.1.1" withSources (),
