@@ -98,7 +98,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
 
     if (curver < dbWipeVersion) {
       if (!allowAutoWipe) {
-        error(s"DB schema ver($curver) < wipever($dbWipeVersion), but autowipe is false - please fix DB or say -Ddapi.autowipe=true")
+        error(s"DB schema ver($curver) < wipever($dbWipeVersion), but autowipe is false - please fix DB, run manually with -Ddapi.autowipe=true or run 'sbt dbInitRun'")
         throw new Exception("DB invalid")
       } else {
         error("WIPING TABLES DUE TO MIGRATION!")

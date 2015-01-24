@@ -59,6 +59,8 @@ object NestorBuild extends Build {
   lazy val threeAkka = Project(id = "three-akka",
     base = file("3scale-akka"))
 
+  lazy val dbInitRun = taskKey[Unit]("A task that runs the server, but wipes the DB.")
+
   lazy val nestorProject = Project(
     "apihub",
     file("."),
@@ -70,11 +72,15 @@ object NestorBuild extends Build {
       assemblyCustomize,
       resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
-        resolvers += Resolver.mavenLocal,
+      resolvers += Resolver.mavenLocal,
 
       // To include source for Takipi
       unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
       unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
+
+      fullRunTask(dbInitRun, Compile, "com.geeksville.scalatra.JettyLauncher"),
+      fork in dbInitRun := true,
+      javaOptions in dbInitRun += "-Ddapi.autowipe=true",
 
       // Make "test" command work again per https://groups.google.com/forum/#!topic/scalatra-user/Mkx2lHAqQI0
 
