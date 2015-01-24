@@ -74,9 +74,9 @@ object NestorBuild extends Build {
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
       resolvers += Resolver.mavenLocal,
 
-      // To include source for Takipi
-      unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
-      unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
+      // To include source for Takipi (disabled - we no longer use takipi)
+      //unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
+      //unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
 
       fullRunTask(dbInitRun, Compile, "com.geeksville.scalatra.JettyLauncher"),
       fork in dbInitRun := true,
