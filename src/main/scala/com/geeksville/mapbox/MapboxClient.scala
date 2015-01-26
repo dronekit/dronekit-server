@@ -21,7 +21,9 @@ import grizzled.slf4j.Logging
 import java.text.DecimalFormat
 
 object MapboxClient {
-  val monitor = false
+  private val monitor = false
+
+  val baseUrl = if (monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com"
 
   /// Generate an URL for a static map png
   def staticMapURL(latIn: Double, lonIn: Double, zoom: Integer, width: Integer, height: Integer, icon: String) = {
@@ -30,7 +32,7 @@ object MapboxClient {
     val lat = fmt.format(latIn)
     val lon = fmt.format(lonIn)
 
-    val mapBoxURL = s"http://mapbox-02278ec08110.my.apitools.com/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
+    val mapBoxURL = s"http://$baseUrl/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
 
     mapBoxURL
   }
@@ -40,7 +42,7 @@ object MapboxClient {
 // lon, lat
 
 class MapboxClient(myDomain: String = "***REMOVED***")
-  extends HttpClient(new HttpHost(if (MapboxClient.monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com"))
+  extends HttpClient(new HttpHost(MapboxClient.baseUrl))
   with Logging {
 
   /**
