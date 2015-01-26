@@ -31,11 +31,11 @@ case class Vehicle(
   // A user specified name for this vehicle (i.e. my bixler)
   var name: String = "",
 
-  // Vehicle manufacturer if known, preferably from the master vehicle-mfg.txt definitions file.  
+  // Vehicle manufacturer if known, preferably from the master vehicle-mfg.txt definitions file.
   // To add new definitions to the file, please submit a github pull-request.
   var manufacturer: Option[String] = None,
 
-  // Vehicle type if known, preferably from the master vehicle-types.txt definitions file.  
+  // Vehicle type if known, preferably from the master vehicle-types.txt definitions file.
   // To add new definitions to the file, please submit a github pull-request.
   var vehicleType: Option[String] = None,
 
@@ -132,7 +132,8 @@ case class VehicleJson(
   missions: Option[Seq[JValue]] = None,
   createdOn: Option[Date] = None,
   updatedOn: Option[Date] = None,
-  summaryText: Option[String] = None)
+  summaryText: Option[String] = None,
+  userName: Option[String] = None)
 
 /// We provide an initionally restricted view of users
 class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle](implicit format => (
@@ -162,7 +163,9 @@ class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle]
         Some(missions),
         Some(u.createdAt),
         Some(u.updatedAt),
-        Some(u.text))
+        Some(u.text),
+        Some(u.user.login)
+      )
       Extraction.decompose(m)
   }))
 
