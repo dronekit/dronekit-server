@@ -161,7 +161,7 @@ case class User(@Required @Unique login: String,
   /**
    * Get an ID string usable by hull.io
    *
-   * For accounts that started with hull we internally prefix the ID with #h:, for other accounts we just use the whole string
+   * For accounts that started with hull we internally prefix the ID with $h:, for other accounts we just use the whole string
    */
   def hullId =
     if(login.startsWith(User.hullIdPrefix))
@@ -390,7 +390,7 @@ object User extends DapiRecordCompanion[User] with Logging {
   private val random = new Random(System.currentTimeMillis)
 
   /// We add this at the beginning of any user IDs which started with hull
-  val hullIdPrefix = "#h:"
+  val hullIdPrefix = "$h:"
 
   def findByEmail(email: String): Option[User] =
     this.where(_.email === email.toLowerCase).headOption
