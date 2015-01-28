@@ -1,5 +1,7 @@
 package com.geeksville.dapi.model
 
+import java.util.Date
+
 import com.geeksville.aws.S3Bucket
 import com.geeksville.aws.ConfigCredentials
 import com.amazonaws.ClientConfiguration
@@ -18,10 +20,17 @@ object S3Client {
   config.setSocketTimeout(30 * 1000)
   val client = new AmazonS3Client(credentials, config)
 
-  val tlogBucket = new S3Bucket(ConfigFactory.load().getString("dapi.s3.bucketName"), false, client)
+  val bucketName = ConfigFactory.load().getString("dapi.s3.bucketName")
+  val tlogBucket = new S3Bucket(bucketName, false, client)
+  private val backupBucket = new S3Bucket(bucketName + "-backup", false, client)
 
   // Prerendered map tiles
   // val mapsBucket = new S3Bucket("maps-droneapi", true, client)
 
   val tlogPrefix = "tlogs/"
+
+  def doBackup(newerThan: Option[Date] = None) =
+    tlogBucket.backupTo(backupBucket, newerThan)
+
 }
+
