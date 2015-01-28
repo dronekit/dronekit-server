@@ -13,11 +13,14 @@
  */
 package com.geeksville.aws
 
+import java.net.SocketTimeoutException
+
 import com.amazonaws.services.s3._
 import com.amazonaws.services.s3.model._
 import com.amazonaws._
 import java.io.InputStream
 import com.amazonaws.auth.PropertiesCredentials
+import com.geeksville.util.ThreadTools
 import sun.misc.BASE64Encoder
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -214,12 +217,21 @@ class S3Bucket(val bucketName: String, val isReadable: Boolean, val client: Amaz
           true
       }
     }
-    val numToBackup = toBackup.size
-    info(s"Found ${files.size} files, but we only need to backup $numToBackup")
+    // Avoid size because it forces us to read all filenames first
+    //val numToBackup = toBackup.size
+    // info(s"Found ${files.size} files, but we only need to backup $numToBackup")
 
-    toBackup.zipWithIndex.foreach { case (f, i) =>
+    var count = 0
+    val countLock = new Object()
+
+    toBackup.par.foreach { f =>
       val key = f.getKey
-      info(s"Backing up $i/$numToBackup: $key")
+      // info(s"Backing up $i/$numToBackup: $key")
+      val i = countLock.synchronized {
+        count += 1
+        count
+      }
+      info(s"Backing up $i: $key")
 
       val copyAsFile = false
       if (copyAsFile) {
@@ -232,7 +244,10 @@ class S3Bucket(val bucketName: String, val isReadable: Boolean, val client: Amaz
         destBucket.uploadStream(key, srcFile, metadata.getContentType, metadata.getContentLength)
       }
       else {
-        copyTo(destBucket, key, key)
+        // We retry a few times because amazon is buggy
+        ThreadTools.retryOnException[SocketTimeoutException, Unit](5) {
+          copyTo(destBucket, key, key)
+        }
       }
     }
 
