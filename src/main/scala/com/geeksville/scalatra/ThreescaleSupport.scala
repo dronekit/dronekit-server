@@ -43,6 +43,7 @@ object ThreescaleSupport {
       // Don't let anyone but us (or dev on local machine use the mds key)
       WhitelistStrict("eb34bd67.megadroneshare",
         "http://localhost",
+        "http://omega.droneshare.com",
         "http://alpha.droneshare.com",
         "http://beta.droneshare.com",
         "http://www.droneshare.com"),
