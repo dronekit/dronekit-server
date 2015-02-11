@@ -18,7 +18,7 @@ import java.net.SocketTimeoutException
 import com.amazonaws.services.s3._
 import com.amazonaws.services.s3.model._
 import com.amazonaws._
-import java.io.InputStream
+import java.io.{IOException, InputStream}
 import com.amazonaws.auth.PropertiesCredentials
 import com.geeksville.util.ThreadTools
 import sun.misc.BASE64Encoder
@@ -245,7 +245,7 @@ class S3Bucket(val bucketName: String, val isReadable: Boolean, val client: Amaz
       }
       else {
         // We retry a few times because amazon is buggy
-        ThreadTools.retryOnException[SocketTimeoutException, Unit](5) {
+        ThreadTools.retryOnException[IOException, Unit](5) {
           copyTo(destBucket, key, key)
         }
       }
