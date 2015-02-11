@@ -61,6 +61,8 @@ object NestorBuild extends Build {
 
   lazy val dbInitRun = taskKey[Unit]("A task that runs the server, but wipes the DB.")
 
+  val mainClassName = "com.geeksville.scalatra.JettyLauncher"
+
   lazy val nestorProject = Project(
     "apihub",
     file("."),
@@ -74,11 +76,13 @@ object NestorBuild extends Build {
       resolvers += "Maven snapshots" at "http://download.java.net/maven/2",
       resolvers += Resolver.mavenLocal,
 
+      mainClass in assembly := Some(mainClassName),
+
       // To include source for Takipi (disabled - we no longer use takipi)
       //unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "scala"),
       //unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src" / "main" / "java"),
 
-      fullRunTask(dbInitRun, Compile, "com.geeksville.scalatra.JettyLauncher"),
+      fullRunTask(dbInitRun, Compile, mainClassName),
       fork in dbInitRun := true,
       javaOptions in dbInitRun += "-Ddapi.autowipe=true",
 
