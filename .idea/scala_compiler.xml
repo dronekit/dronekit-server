@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <option name="deprecationWarnings" value="true" />
-    <option name="uncheckedWarnings" value="true" />
-    <option name="optimiseBytecode" value="true" />
+    <profile name="SBT 1" modules="apihub,three-akka,gcommon">
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="optimiseBytecode" value="true" />
+    </profile>
   </component>
 </project>
