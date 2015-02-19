@@ -9,11 +9,9 @@ import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.json.ActiveRecordSerializer
 import org.scalatra.swagger.SwaggerSupport
 import org.scalatra.swagger.Swagger
-import com.geeksville.dapi.model.User
+import com.geeksville.dapi.model.{DeepJSON, User, UserJson, UserSerializer}
 import org.scalatra.swagger.StringResponseMessage
 import org.scalatra.CorsSupport
-import com.geeksville.dapi.model.UserJson
-import com.geeksville.dapi.model.UserSerializer
 import com.geeksville.util.Using._
 import com.geeksville.mailgun.MailgunClient
 import com.geeksville.scalatra.ScalatraTools
@@ -27,7 +25,7 @@ class SessionsController(implicit val swagger: Swagger) extends DroneHubStack wi
   override protected val applicationName = Some("api/v1/auth")
   protected lazy val applicationDescription = s"Session operations (login, logout, etc...)"
 
-  protected def userJsonFormat = super.jsonFormats + new UserSerializer(Option(user), true)
+  protected def userJsonFormat = super.jsonFormats + new UserSerializer(Option(user), DeepJSON.Flavor.Deep)
 
   // Before every action runs, set the content type to be in JSON format.
   before() {

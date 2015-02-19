@@ -113,7 +113,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       log.debug(s"GCS connected (GCS=$sender) wantsControl=$wantsControl")
 
       if (!wantsControl) {
-        // It is possible for a GCS to drop a connection and then callback into a 'live' 
+        // It is possible for a GCS to drop a connection and then callback into a 'live'
         // vehicle instance.  In that case, we just mark that gcs as our new owner
 
         gcsActor.foreach { old =>
@@ -306,7 +306,7 @@ class LiveVehicleActor(val vehicle: Vehicle, canAcceptCommands: Boolean)
       s.longitude = ns.longitude
       s.softwareVersion = ns.softwareVersion
       s.softwareGit = ns.softwareGit
-      // Don't copy text - it will be genned as needed 
+      // Don't copy text - it will be genned as needed
       // s.text = ns.text
 
       s.text = s.createText()

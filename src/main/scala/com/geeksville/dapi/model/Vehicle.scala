@@ -24,27 +24,27 @@ import com.geeksville.apiproxy.APIConstants
  * @param uuid is selected by the client on first connection
  */
 case class Vehicle(
-  // A UUID provided by the client to represent this vehicle. NOTE: We do not ensure that
-  // for a particular UUID it only appears once in the DB.  Clients can be buggy and pick
-  // any id they want.  The unique ID for a vehicle is 'id'.
-  @Required uuid: UUID = UUID.randomUUID(),
-  // A user specified name for this vehicle (i.e. my bixler)
-  var name: String = "",
+                    // A UUID provided by the client to represent this vehicle. NOTE: We do not ensure that
+                    // for a particular UUID it only appears once in the DB.  Clients can be buggy and pick
+                    // any id they want.  The unique ID for a vehicle is 'id'.
+                    @Required uuid: UUID = UUID.randomUUID(),
+                    // A user specified name for this vehicle (i.e. my bixler)
+                    var name: String = "",
 
-  // Vehicle manufacturer if known, preferably from the master vehicle-mfg.txt definitions file.
-  // To add new definitions to the file, please submit a github pull-request.
-  var manufacturer: Option[String] = None,
+                    // Vehicle manufacturer if known, preferably from the master vehicle-mfg.txt definitions file.
+                    // To add new definitions to the file, please submit a github pull-request.
+                    var manufacturer: Option[String] = None,
 
-  // Vehicle type if known, preferably from the master vehicle-types.txt definitions file.
-  // To add new definitions to the file, please submit a github pull-request.
-  var vehicleType: Option[String] = None,
+                    // Vehicle type if known, preferably from the master vehicle-types.txt definitions file.
+                    // To add new definitions to the file, please submit a github pull-request.
+                    var vehicleType: Option[String] = None,
 
-  // Autopilot type if known, preferably from the master autopilot-types.txt definitions file.
-  // To add new definitions to the file, please submit a github pull-request.
-  var autopilotType: Option[String] = None,
+                    // Autopilot type if known, preferably from the master autopilot-types.txt definitions file.
+                    // To add new definitions to the file, please submit a github pull-request.
+                    var autopilotType: Option[String] = None,
 
-  var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
-  var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
+                    var viewPrivacy: Int = AccessCode.DEFAULT_VALUE,
+                    var controlPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
    * Who owns me?
    */
@@ -66,9 +66,9 @@ case class Vehicle(
 
   /// Create a new mission as a child of this vehicle (given tlog bytes)
   def createMission(bytes: Array[Byte],
-    notes: Option[String] = None,
-    tlogIdIn: String = UUID.randomUUID().toString,
-    mimeType: String = APIConstants.tlogMimeType) = {
+                    notes: Option[String] = None,
+                    tlogIdIn: String = UUID.randomUUID().toString,
+                    mimeType: String = APIConstants.tlogMimeType) = {
 
     // We add a suffix to our log UUID showing type of log
     val tlogId = tlogIdIn + APIConstants.mimeTypeToExtension(mimeType)
@@ -120,54 +120,50 @@ case class Vehicle(
 }
 
 case class VehicleJson(
-  uuid: Option[UUID],
-  name: Option[String] = None,
-  id: Option[Long] = None,
-  userId: Option[Long] = None,
-  manufacturer: Option[String] = None,
-  vehicleType: Option[String] = None,
-  autopilotType: Option[String] = None,
-  viewPrivacy: Option[AccessCode.EnumVal] = None,
-  controlPrivacy: Option[AccessCode.EnumVal] = None,
-  missions: Option[Seq[JValue]] = None,
-  createdOn: Option[Date] = None,
-  updatedOn: Option[Date] = None,
-  summaryText: Option[String] = None,
-  userName: Option[String] = None)
+                        uuid: Option[UUID],
+                        name: Option[String] = None,
+                        id: Option[Long] = None,
+                        userId: Option[Long] = None,
+                        manufacturer: Option[String] = None,
+                        vehicleType: Option[String] = None,
+                        autopilotType: Option[String] = None,
+                        viewPrivacy: Option[AccessCode.EnumVal] = None,
+                        controlPrivacy: Option[AccessCode.EnumVal] = None,
+                        missions: Option[Seq[JValue]] = None,
+                        createdOn: Option[Date] = None,
+                        updatedOn: Option[Date] = None,
+                        summaryText: Option[String] = None,
+                        userName: Option[String] = None)
+
+
 
 /// We provide an initionally restricted view of users
-class VehicleSerializer(fullMissions: Boolean) extends CustomSerializer[Vehicle](implicit format => (
-  {
-    // more elegant to just make a throw away case class object and use it for the decoding
-    //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
-    case x: JValue =>
-      throw new Exception("not yet implemented")
-  },
-  {
-    case u: Vehicle =>
-      // u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)
-      val missions = u.missions.orderBy(_.createdAt desc).map { v =>
-        if (fullMissions)
-          Extraction.decompose(v)
-        else
-          ("id" -> v.id): JObject
-      }.toSeq
+class VehicleSerializer(flavor: DeepJSON.Flavor.Type) extends CustomSerializer[Vehicle](implicit format => ( {
+  // more elegant to just make a throw away case class object and use it for the decoding
+  //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+  case x: JValue =>
+    throw new Exception("not yet implemented")
+}, {
+  case u: Vehicle =>
+    // u.missions.map(_.id).toSeq.sorted(Ordering[Long].reverse)
+    val recs = u.missions.orderBy(_.createdAt desc).toSeq
+    val missions = DeepJSON.asJSONArray(recs, flavor)
 
-      val m = VehicleJson(Some(u.uuid), Some(u.name), Some(u.id), u.userId,
-        u.manufacturer,
-        u.vehicleType,
-        u.autopilotType,
-        Some(AccessCode.valueOf(u.viewPrivacy)),
-        Some(AccessCode.valueOf(u.controlPrivacy)),
-        // We deliver newer missions first
-        Some(missions),
-        Some(u.createdAt),
-        Some(u.updatedAt),
-        Some(u.text),
-        Some(u.user.login)
-      )
-      Extraction.decompose(m)
-  }))
+    val m = VehicleJson(Some(u.uuid), Some(u.name), Some(u.id), u.userId,
+      u.manufacturer,
+      u.vehicleType,
+      u.autopilotType,
+      Some(AccessCode.valueOf(u.viewPrivacy)),
+      Some(AccessCode.valueOf(u.controlPrivacy)),
+      // We deliver newer missions first
+      Some(missions),
+      Some(u.createdAt),
+      Some(u.updatedAt),
+      Some(u.text),
+      Some(u.user.login)
+    )
+    Extraction.decompose(m)
+}))
 
 object Vehicle extends DapiRecordCompanion[Vehicle] {
   /**

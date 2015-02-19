@@ -5,14 +5,10 @@ import org.scalatra.swagger.SwaggerSupport
 import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json._
 import org.scalatra.swagger.Swagger
-import com.geeksville.dapi.model.User
+import com.geeksville.dapi.model._
 import org.json4s.JsonAST.JObject
 import org.json4s._
-import com.geeksville.dapi.model.UserJson
-import com.geeksville.dapi.model.UserSerializer
 import com.geeksville.json.GeeksvilleFormats
-import com.geeksville.dapi.model.Vehicle
-import com.geeksville.dapi.model.VehicleSerializer
 import java.util.UUID
 import com.geeksville.json.EnumSerializer
 
@@ -25,7 +21,8 @@ class UserController(implicit swagger: Swagger) extends ActiveRecordController[U
   }
 
   override protected def toJSON(o: Any): JValue = {
-    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + EnumSerializer.create(AccessCode) + new UserSerializer(Option(user), true))
+    Extraction.decompose(o)(DefaultFormats ++ GeeksvilleFormats + EnumSerializer.create(AccessCode) +
+      new UserSerializer(Option(user), DeepJSON.Flavor.Deep))
   }
 
   /// Subclasses can provide suitable behavior if they want to allow PUTs to /:id to result in updating objects.

@@ -340,7 +340,9 @@ case class UserJson(login: String,
 /// We provide an initionally restricted view of users
 /// If we know a viewer we will customize for them
 /// @param fullVehicles if true include the full vehicle JSON (but still excluding missions)
-class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends CustomSerializer[User](implicit format => (
+class UserSerializer(viewer: Option[User],
+                     vehicleFlavor: DeepJSON.Flavor.Type,
+                     missionFlavor: DeepJSON.Flavor.Type = DeepJSON.Flavor.ShallowObj) extends CustomSerializer[User](implicit format => (
   {
     // more elegant to just make a throw away case class object and use it for the decoding
     //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
@@ -352,17 +354,12 @@ class UserSerializer(viewer: Option[User], fullVehicles: Boolean) extends Custom
       u
   },
   {
-    implicit val vehicleSerializer = new VehicleSerializer(false)
+    implicit val vehicleSerializer = new VehicleSerializer(missionFlavor)
 
     val serializer: PartialFunction[Any, JValue] = {
       case u: User =>
         val formatWithVehicles = format + vehicleSerializer
-        val vehicles = u.vehicles.map { v =>
-          if (fullVehicles)
-            Extraction.decompose(v)(formatWithVehicles)
-          else
-            ("id" -> v.id): JObject
-        }.toSeq
+        val vehicles = DeepJSON.asJSONArray(u.vehicles.toSeq, vehicleFlavor)(formatWithVehicles)
 
         var r = ("login" -> u.login) ~
           ("id" -> u.id) ~ // Frontend currently uses this for isMine() test - not sure if that is a good idea

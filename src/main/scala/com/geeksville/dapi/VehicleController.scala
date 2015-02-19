@@ -21,7 +21,7 @@ import com.geeksville.apiproxy.APIConstants
 @MultipartConfig(maxFileSize = 1024 * 1024)
 class VehicleController(implicit swagger: Swagger) extends ActiveRecordController[Vehicle, VehicleJson]("vehicle", swagger, Vehicle) with MissionUploadSupport {
 
-  override implicit val jsonFormats: Formats = super.jsonFormats + new VehicleSerializer(true)
+  override implicit val jsonFormats: Formats = super.jsonFormats + new VehicleSerializer(DeepJSON.Flavor.Deep)
 
   /**
    * We allow reading vehicles if the vehicle is not protected or the user has suitable permissions
