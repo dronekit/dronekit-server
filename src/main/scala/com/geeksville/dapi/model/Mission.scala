@@ -313,7 +313,7 @@ case class Mission(
   }
 
   /**
-   *  FIXME - figure out when to call this
+   *  Create summary data for the mission
    */
   def regenSummary() {
     if (!summary.headOption.isDefined || summary.summaryVersion < MissionSummary.currentVersion || !summary.text.isDefined) {
