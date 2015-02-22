@@ -86,7 +86,7 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
    * Look for API key in an authorization header, or if not there, then in the query string.
    */
   private def apiKey = {
-    debug(s"*** Looking for API keys in $request")
+    //debug(s"*** Looking for API keys in $request")
 
     val headerkeys = simpleAuthHeaders.toSeq
     //debug(s"*** Auth headers ${authHeaders.mkString(",")} => keys=${headerkeys.mkString(",")}")

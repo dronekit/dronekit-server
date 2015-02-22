@@ -115,7 +115,7 @@ trait OAuthSupport extends ThreescaleSupport {
    */
   private def accessToken = {
     val r = bearerAuthHeaders.toSeq.headOption
-    debug(s"AccessToken is $r")
+    //debug(s"AccessToken is $r")
     r
   }
 
