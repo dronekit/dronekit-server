@@ -126,17 +126,19 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
       vehicleTypes(vtype) = vehicleTypes.getOrElse(vtype, 0) + 1
 
       val aptype = v.autopilotType.getOrElse("unknown")
-      apTypes(vtype) = apTypes.getOrElse(vtype, 0) + 1
+      apTypes(aptype) = apTypes.getOrElse(aptype, 0) + 1
     }
 
     var longestMission = 0.0
     var maxGS = 0.0
     var maxAlt = 0.0
-    Mission.foreach { m =>
-      longestMission = math.max(m.summary.flightDuration.getOrElse(0.0), longestMission)
-      maxGS = math.max(m.summary.maxGroundSpeed, maxGS)
-      maxAlt = math.max(m.summary.maxAlt, maxAlt)
-    }
+    val wantMissionSummary = false
+    if(wantMissionSummary)
+      Mission.foreach { m =>
+        longestMission = math.max(m.summary.flightDuration.getOrElse(0.0), longestMission)
+        maxGS = math.max(m.summary.maxGroundSpeed, maxGS)
+        maxAlt = math.max(m.summary.maxAlt, maxAlt)
+      }
 
     val r = StatJson(User.size,
       Mission.size,
