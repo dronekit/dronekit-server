@@ -3,8 +3,9 @@ package com.geeksville.dapi
 import com.geeksville.akka.MockAkka
 import akka.actor.Props
 import com.geeksville.dapi.test.SimGCSClient
-import com.geeksville.dapi.model.Tables
+import com.geeksville.dapi.model.{Vehicle, User, Tables, Mission}
 import com.geeksville.akka.AkkaReflector
+import scala.collection.mutable
 import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
@@ -16,13 +17,20 @@ import org.scalatra.swagger.Swagger
 import com.geeksville.dapi.test.PlaybackGCSClient
 import org.scalatra.CorsSupport
 import org.scalatra.AsyncResult
-import _root_.akka.actor.{ ActorRef, Actor, Props, ActorSystem }
+import _root_.akka.actor.{ActorRef, Actor, Props, ActorSystem}
 import _root_.akka.util.Timeout
 import _root_.akka.pattern.ask
 import org.scalatra.FutureSupport
 import org.scalatra.CorsSupport
-import com.geeksville.dapi.model.Mission
 import com.github.aselab.activerecord.dsl._
+
+
+case class StatJson(numUsers: Long, numMissions: Long, numVehicles: Long,
+                    longestMission: Double,
+                    maxGS: Double,
+                    maxAlt: Double,
+                    vehicleTypes: scala.collection.Map[String, Int], apTypes: scala.collection.Map[String, Int])
+
 
 /**
  * Special admin operations
@@ -95,7 +103,7 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     Tables.create
     "DB created"
   }
-  * 
+  *
   */
 
   post("/db/fix") {
@@ -109,12 +117,46 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     throw new Exception("Test exception")
   }
 
+  get("/statistics") {
+
+    val vehicleTypes = new mutable.HashMap[String, Int]()
+    val apTypes = new mutable.HashMap[String, Int]()
+    Vehicle.foreach { v =>
+      val vtype = v.vehicleType.getOrElse("unknown")
+      vehicleTypes(vtype) = vehicleTypes.getOrElse(vtype, 0) + 1
+
+      val aptype = v.autopilotType.getOrElse("unknown")
+      apTypes(vtype) = apTypes.getOrElse(vtype, 0) + 1
+    }
+
+    var longestMission = 0.0
+    var maxGS = 0.0
+    var maxAlt = 0.0
+    Mission.foreach { m =>
+      longestMission = math.max(m.summary.flightDuration.getOrElse(0.0), longestMission)
+      maxGS = math.max(m.summary.maxGroundSpeed, maxGS)
+      maxAlt = math.max(m.summary.maxAlt, maxAlt)
+    }
+
+    val r = StatJson(User.size,
+      Mission.size,
+      Vehicle.size,
+      longestMission,
+      maxGS,
+      maxAlt,
+      vehicleTypes,
+      apTypes
+    )
+
+    toJSON(r)
+  }
+
   get("/debugInfo", operation(apiOperation[String]("akka") summary "akka debugging information")) {
     val timeout = Timeout(5 seconds)
 
     akkaReflect ! AkkaReflector.PollMsg
     Thread.sleep(5000) // Super hackish way to give 5 secs for actors to reply with their ids
 
-    akkaReflect ? (AkkaReflector.GetHtmlMsg, timeout)
+    akkaReflect ?(AkkaReflector.GetHtmlMsg, timeout)
   }
 }

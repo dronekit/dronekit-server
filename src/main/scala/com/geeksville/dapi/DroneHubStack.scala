@@ -1,7 +1,7 @@
 package com.geeksville.dapi
 
 import com.geeksville.oauth.OAuthSupport
-import org.json4s.JsonAST.JObject
+import org.json4s.JsonAST.{JValue, JObject}
 import org.scalatra.{ ScalatraServlet, ScalatraBase }
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.InternalServerError
@@ -10,7 +10,7 @@ import java.net.URL
 import com.geeksville.dapi.auth.AuthenticationSupport
 import com.geeksville.scalatra.ControllerExtras
 import org.scalatra.GZipSupport
-import org.json4s.{MappingException, Formats, DefaultFormats}
+import org.json4s.{Extraction, MappingException, Formats, DefaultFormats}
 import com.geeksville.json.GeeksvilleFormats
 import com.geeksville.dapi.model.DroneModelFormats
 import com.geeksville.scalatra.ThreescaleSupport
@@ -63,4 +63,10 @@ abstract class DroneHubStack extends ScalatraServlet with ControllerExtras with 
   }
 
   protected def bodyAsJSON = parsedBodyAs[JObject]
+
+  /**
+   * Used to convert the specified object to JSON (subclasses can override if they would like to use
+   * context specific json formatters
+   */
+  protected def toJSON(o: Any): JValue = Extraction.decompose(o)
 }

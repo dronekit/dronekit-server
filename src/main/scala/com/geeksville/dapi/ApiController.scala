@@ -331,12 +331,6 @@ class ApiController[T <: Product: Manifest, JsonT <: Product: Manifest](val aNam
   }
 
   /**
-   * Used to conver the specified object to JSON (subclasses can override if they would like to use
-   * context specific json formatters
-   */
-  protected def toJSON(o: Any): JValue = Extraction.decompose(o)
-
-  /**
    * This is _only_ used in the case of a direct get of a record.  Subclasses might override to provide extra information in that case (as opposed to the
    * getAll function that might be briefer)
    */
