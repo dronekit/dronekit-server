@@ -148,7 +148,9 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
       apTypes
     )
 
-    toJSON(r)
+    val json = toJSON(r)
+    info("Returning: " + pretty(render(json)))
+    json
   }
 
   get("/debugInfo", operation(apiOperation[String]("akka") summary "akka debugging information")) {
