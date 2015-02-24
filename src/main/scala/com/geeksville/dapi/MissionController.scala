@@ -1,5 +1,6 @@
 package com.geeksville.dapi
 
+import com.geeksville.util.MathTools
 import com.geeksville.zendesk.ZendeskClient
 import org.scalatra._
 import org.scalatra.swagger.SwaggerSupport
@@ -483,8 +484,8 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     val wpts = model.waypoints.filter { wpt => wpt.isValidLatLng && wpt.isCommandValid }
     val locs = wpts.map(_.location)
     val alts = wpts.map(_.altitude.toDouble)
-    val minAltitude = meterToFeet(alts.reduceOption(math.min(_, _)).getOrElse(0.0)).toLong
-    val maxAltitude = meterToFeet(alts.reduceOption(math.max(_, _)).getOrElse(0.0)).toLong
+    val minAltitude = meterToFeet(alts.reduceOption(MathTools.saneMin(_, _)).getOrElse(0.0)).toLong
+    val maxAltitude = meterToFeet(alts.reduceOption(MathTools.saneMax(_, _)).getOrElse(0.0)).toLong
 
     mission.approval = Some("SUBMITTED")
     mission.save

@@ -1,6 +1,7 @@
 package com.geeksville.dapi
 
 import com.geeksville.mavlink._
+import com.geeksville.util.MathTools
 import org.mavlink.messages.ardupilotmega.msg_global_position_int
 import scala.collection.mutable.ArrayBuffer
 import java.io.File
@@ -92,7 +93,7 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
   private def addPosition(raw: TimestampedMessage, l: Location) {
     if (l.isValid) {
       positions.append(TimestampedLocation(raw.time, l))
-      l.alt.foreach { a => maxAltitude = math.max(maxAltitude, a) }
+      l.alt.foreach { a => maxAltitude = MathTools.saneMax(maxAltitude, a) }
     }
   }
 

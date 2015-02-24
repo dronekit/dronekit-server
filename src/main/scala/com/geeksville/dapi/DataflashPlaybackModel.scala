@@ -3,6 +3,7 @@ package com.geeksville.dapi
 import com.geeksville.flight.Waypoint
 import java.io.ByteArrayInputStream
 import com.geeksville.dataflash.DFReader
+import com.geeksville.util.MathTools
 import scala.io.Source
 import com.geeksville.dataflash.DFMessage
 import org.mavlink.messages.ardupilotmega._
@@ -104,10 +105,10 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
             val loc = Location(lat, lon, m.altOpt)
             if (loc.isValid) {
               m.altOpt.foreach { a =>
-                maxAltitude = math.max(maxAltitude, a)
+                maxAltitude = MathTools.saneMax(maxAltitude, a)
               }
               m.spdOpt.foreach { a =>
-                maxGroundSpeed = math.max(maxGroundSpeed, a)
+                maxGroundSpeed = MathTools.saneMax(maxGroundSpeed, a)
               }
 
               val tm = TimestampedLocation(nowUsec, loc)

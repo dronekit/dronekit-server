@@ -132,9 +132,10 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     var longestMission = 0.0
     var maxGS = 0.0
     var maxAlt = 0.0
-    val wantMissionSummary = false
+    val wantMissionSummary = true
     if(wantMissionSummary)
       Mission.foreach { m =>
+        m.regenSummary()
         longestMission = math.max(m.summary.flightDuration.getOrElse(0.0), longestMission)
         maxGS = math.max(m.summary.maxGroundSpeed, maxGS)
         maxAlt = math.max(m.summary.maxAlt, maxAlt)

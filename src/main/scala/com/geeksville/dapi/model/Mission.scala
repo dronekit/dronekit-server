@@ -54,25 +54,25 @@ import com.geeksville.dapi.ApiController
  * We keep our summaries in a separate table because we will nuke and reformat this table frequently as we decide to precalc more data
  */
 case class MissionSummary(
-  var startTime: Option[Timestamp] = None,
-  var endTime: Option[Timestamp] = None,
-  var maxAlt: Double = 0.0,
-  var maxGroundSpeed: Double = 0.0,
-  var maxAirSpeed: Double = 0.0,
-  var maxG: Double = 0.0,
-  var flightDuration: Option[Double] = None,
-  var latitude: Option[Double] = None,
-  var longitude: Option[Double] = None,
+                           var startTime: Option[Timestamp] = None,
+                           var endTime: Option[Timestamp] = None,
+                           var maxAlt: Double = 0.0,
+                           var maxGroundSpeed: Double = 0.0,
+                           var maxAirSpeed: Double = 0.0,
+                           var maxG: Double = 0.0,
+                           var flightDuration: Option[Double] = None,
+                           var latitude: Option[Double] = None,
+                           var longitude: Option[Double] = None,
 
-  /**
-   * How many parameter records did we find?
-   */
-  var numParameters: Int = 0,
+                           /**
+                            * How many parameter records did we find?
+                            */
+                           var numParameters: Int = 0,
 
-  // Autopilot software version #
-  var softwareVersion: Option[String] = None,
-  // Autopilot software version #
-  var softwareGit: Option[String] = None) extends DapiRecord with Logging {
+                           // Autopilot software version #
+                           var softwareVersion: Option[String] = None,
+                           // Autopilot software version #
+                           var softwareGit: Option[String] = None) extends DapiRecord with Logging {
 
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
@@ -129,8 +129,8 @@ case class MissionSummary(
             if (geo.isEmpty)
               "international waters"
             else
-              // Street addresses are too identifying, skip them
-              geo = geo.filter { case (typ, v) => typ != "street" }
+            // Street addresses are too identifying, skip them
+              geo = geo.filter { case (typ, v) => typ != "street"}
             geo.map(_._2).mkString(", ")
           }).getOrElse(unknown)
         } catch {
@@ -156,18 +156,18 @@ case class MissionSummary(
 object MissionSummary extends DapiRecordCompanion[MissionSummary] {
   val mapboxClient = new MapboxClient()
 
-  val currentVersion = 13
+  val currentVersion = 14
 }
 
 /**
  * A mission recorded from a vehicle
  */
 case class Mission(
-  // As specified by the user
-  var notes: Option[String] = None,
-  // Is the client currently uploading data to this mission
-  var isLive: Boolean = false,
-  var viewPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
+                    // As specified by the user
+                    var notes: Option[String] = None,
+                    // Is the client currently uploading data to this mission
+                    var isLive: Boolean = false,
+                    var viewPrivacy: Int = AccessCode.DEFAULT_VALUE) extends DapiRecord with Logging {
   /**
    * What vehicle made me?
    */
@@ -198,6 +198,7 @@ case class Mission(
   var doaramaId: Option[Long] = None
 
   def isDataflashText = tlogId.isDefined && tlogId.get.endsWith(APIConstants.flogExtension)
+
   def isDataflashBinary = tlogId.isDefined && tlogId.get.endsWith(APIConstants.blogExtension)
 
   /// Return the logfile with a suitable extension
@@ -313,51 +314,53 @@ case class Mission(
   }
 
   /**
-   *  Create summary data for the mission
+   * Create summary data for the mission
    */
   def regenSummary() {
-    if (!summary.headOption.isDefined || summary.summaryVersion < MissionSummary.currentVersion || !summary.text.isDefined) {
-      warn("Recreating mission summary")
+    try {
+      if (!summary.headOption.isDefined || summary.summaryVersion < MissionSummary.currentVersion || !summary.text.isDefined) {
+        warn("Recreating mission summary")
 
-      // Get the new summary
-      val s = model match {
-        case None =>
-          error(s"Model generation failed, creating invalid summary.")
-          MissionSummary()
+        // Get the new summary
+        val s = model match {
+          case None =>
+            error(s"Model generation failed, creating invalid summary.")
+            MissionSummary()
 
-        case Some(m) =>
+          case Some(m) =>
 
-          warn(s"Updating vehicle from new summary: ${m.summary}")
-          vehicle.updateFromMission(m)
+            warn(s"Updating vehicle from new summary: ${m.summary}")
+            vehicle.updateFromMission(m)
 
-          // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
-          m.startTime.foreach { date => createdAt = new Timestamp(date / 1000L) }
+            // Set our record creation time based on the mavlink data - note: start time is in uSecs!!!
+            m.startTime.foreach { date => createdAt = new Timestamp(date / 1000L)}
 
-          m.summary
-      }
-
-      // Install the new summary instead of the old one
-      if (summary.headOption.isDefined)
-        try {
-          // If the old summary had text - just use that (user might have edited it)
-          s.text = summary.text.orElse(s.createText())
-          summary.delete() // Get rid of the old summary record
-        } catch {
-          case ex: RecordNotFoundException =>
-            warn("No previous summary - skipping delete")
+            m.summary
         }
-      s.create
 
-      s.mission := this
-      summary := s
-      try {
+        // Install the new summary instead of the old one
+        if (summary.headOption.isDefined)
+          try {
+            // If the old summary had text - just use that (user might have edited it)
+            s.text = summary.text.orElse(s.createText())
+            summary.delete() // Get rid of the old summary record
+          } catch {
+            case ex: RecordNotFoundException =>
+              warn("No previous summary - skipping delete")
+          }
+        s.create
+
+        s.mission := this
+        summary := s
         save
-      } catch {
-        case ex: SquerylSQLException =>
-          warn(s"Ignoring save error for $this - it has probably been deleted")
-      }
 
-      warn(s"Summary regened: $this")
+        warn(s"Summary regened: $this")
+      }
+    } catch {
+      case ex: RecordNotFoundException =>
+        warn(s"Ignoring record not found for $this - it has probably been deleted")
+      case ex: SquerylSQLException =>
+        warn(s"Ignoring save error for $this - it has probably been deleted")
     }
   }
 
@@ -369,7 +372,7 @@ case class Mission(
     summary.headOption match {
       case Some(s) =>
         val interesting = s.latitude != None && s.longitude != None && s.startTime != None && s.endTime != None
-        if(!interesting)
+        if (!interesting)
           warn(s"Flight is not interesting summary is: $s")
         interesting
 
@@ -455,7 +458,7 @@ case class Mission(
    */
   def tlogBytes = try {
     if (!isLive)
-      tlogId.flatMap { s => Mission.getBytes(s) }
+      tlogId.flatMap { s => Mission.getBytes(s)}
     else {
       info(s"Asking live actor for tlog $this")
       // FIXME - kinda yucky way to ask the live vehicle for a tracklog
@@ -502,78 +505,76 @@ case class Mission(
 
 /// Don't show the clients that we are keeping some stuff in 'summary'
 case class MissionJson(
-  id: Long,
-  notes: Option[String],
-  isLive: Boolean,
-  viewPrivacy: Option[AccessCode.EnumVal],
-  vehicleId: Option[Long],
+                        id: Long,
+                        notes: Option[String],
+                        isLive: Boolean,
+                        viewPrivacy: Option[AccessCode.EnumVal],
+                        vehicleId: Option[Long],
 
-  // From summary
-  maxAlt: Option[Double],
-  maxGroundspeed: Option[Double],
-  maxAirspeed: Option[Double],
-  maxG: Option[Double],
-  flightDuration: Option[Double],
-  latitude: Option[Double],
-  longitude: Option[Double],
-  softwareVersion: Option[String],
-  softwareGit: Option[String],
-  createdOn: Option[Date],
-  updatedOn: Option[Date],
-  summaryText: Option[String],
-  mapThumbnailURL: Option[String],
-  viewURL: Option[String], // A user visible URL that can be used to view this mission
+                        // From summary
+                        maxAlt: Option[Double],
+                        maxGroundspeed: Option[Double],
+                        maxAirspeed: Option[Double],
+                        maxG: Option[Double],
+                        flightDuration: Option[Double],
+                        latitude: Option[Double],
+                        longitude: Option[Double],
+                        softwareVersion: Option[String],
+                        softwareGit: Option[String],
+                        createdOn: Option[Date],
+                        updatedOn: Option[Date],
+                        summaryText: Option[String],
+                        mapThumbnailURL: Option[String],
+                        viewURL: Option[String], // A user visible URL that can be used to view this mission
 
-  // The following information comes from vehicle/user - might be expensive,
-  vehicleText: Option[String],
-  userName: Option[String],
-  userAvatarImage: Option[String])
+                        // The following information comes from vehicle/user - might be expensive,
+                        vehicleText: Option[String],
+                        userName: Option[String],
+                        userAvatarImage: Option[String])
 
 /// We provide an initionally restricted view of users
-class MissionSerializer(useDoarama: Boolean) extends CustomSerializer[Mission](implicit format => (
-  {
-    // more elegant to just make a throw away case class object and use it for the decoding
-    //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
-    case x: JValue =>
-      throw new Exception("not yet implemented")
-  },
-  {
-    case u: Mission =>
-      u.regenSummary() // Make sure the summary has the latest representation
+class MissionSerializer(useDoarama: Boolean) extends CustomSerializer[Mission](implicit format => ( {
+  // more elegant to just make a throw away case class object and use it for the decoding
+  //case JObject(JField("login", JString(s)) :: JField("fullName", JString(e)) :: Nil) =>
+  case x: JValue =>
+    throw new Exception("not yet implemented")
+}, {
+  case u: Mission =>
+    u.regenSummary() // Make sure the summary has the latest representation
 
-      val s = u.summary.headOption
+    val s = u.summary.headOption
 
-      // Instead of DB creation time we prefer to use the time from the summary (from tlog data)
-      val flightDate = s.flatMap(_.startTime).getOrElse(u.createdAt)
-      val m = MissionJson(u.id, u.notes, u.isLive, Some(AccessCode.valueOf(u.viewPrivacy)), u.vehicleId,
-        s.map(_.maxAlt),
-        s.map(_.maxGroundSpeed),
-        s.map(_.maxAirSpeed),
-        s.map(_.maxG),
-        s.flatMap(_.flightDuration),
-        s.flatMap(_.latitude),
-        s.flatMap(_.longitude),
-        s.flatMap(_.softwareVersion),
-        s.flatMap(_.softwareGit),
-        Some(flightDate),
-        Some(u.updatedAt),
-        s.flatMap(_.text),
-        u.mapThumbnailURL,
-        Some(u.viewURL),
-        Some(u.vehicle.text),
-        Some(u.vehicle.user.login),
-        u.vehicle.user.avatarImageURL)
-      var r = Extraction.decompose(m).asInstanceOf[JObject]
+    // Instead of DB creation time we prefer to use the time from the summary (from tlog data)
+    val flightDate = s.flatMap(_.startTime).getOrElse(u.createdAt)
+    val m = MissionJson(u.id, u.notes, u.isLive, Some(AccessCode.valueOf(u.viewPrivacy)), u.vehicleId,
+      s.map(_.maxAlt),
+      s.map(_.maxGroundSpeed),
+      s.map(_.maxAirSpeed),
+      s.map(_.maxG),
+      s.flatMap(_.flightDuration),
+      s.flatMap(_.latitude),
+      s.flatMap(_.longitude),
+      s.flatMap(_.softwareVersion),
+      s.flatMap(_.softwareGit),
+      Some(flightDate),
+      Some(u.updatedAt),
+      s.flatMap(_.text),
+      u.mapThumbnailURL,
+      Some(u.viewURL),
+      Some(u.vehicle.text),
+      Some(u.vehicle.user.login),
+      u.vehicle.user.avatarImageURL)
+    var r = Extraction.decompose(m).asInstanceOf[JObject]
 
-      if (useDoarama)
-        r = r ~ ("doaramaURL" -> u.doaramaURL)
+    if (useDoarama)
+      r = r ~ ("doaramaURL" -> u.doaramaURL)
 
-      r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType) ~ ("approval" -> u.approval)
-  }))
+    r ~ ("numParameters" -> u.numParameters) ~ ("vehicleType" -> u.vehicle.vehicleType) ~ ("approval" -> u.approval)
+}))
 
 object Mission extends DapiRecordCompanion[Mission] with Logging {
   // We use a cache to avoid (slow) rereading of s3 data if we can help it
-  private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: String) => readBytesByPath(S3Client.tlogPrefix + key) }
+  private val bytesCache = CacheBuilder.newBuilder.maximumSize(5).build { (key: String) => readBytesByPath(S3Client.tlogPrefix + key)}
 
   private def readBytesByPath(id: String): Array[Byte] = {
     logger.debug("Asking S3 for " + id)
