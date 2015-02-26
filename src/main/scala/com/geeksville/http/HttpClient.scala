@@ -39,8 +39,11 @@ class HttpClient(val httpHost: HttpHost) {
       val msg = EntityUtils.toString(entity)
       EntityUtils.consume(entity)
 
-      if (response.getStatusLine.getStatusCode != 200)
-        throw new Exception("httpclient failure: " + response.getStatusLine())
+      if (response.getStatusLine.getStatusCode != 200) {
+        println(s"HttpClient failure request: $transaction, body: $msg")
+        throw new Exception("HttpClient failure: " + response.getStatusLine())
+      }
+
 
       msg
     } finally {
