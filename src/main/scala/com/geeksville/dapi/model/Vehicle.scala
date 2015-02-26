@@ -117,6 +117,30 @@ case class Vehicle(
     } else
       trace(s"$this was already up-to-date")
   }
+
+  /**
+   * Look in the database for other missions that have the same start time and vehicle, but are smaller.  If
+   * such missions are found then it means the GCS made a mistake and sent up multiple tlog files.
+   *
+   * @param others the set of missions to consider (they all better have the same start time)
+   * @return number of deleted missions
+   */
+  def deleteWorstMissions() = {
+    debug(s"Checking $this for duplicate missions")
+    val startedMissions = missions.map { m =>
+      m.regenSummary() // Make sure the summary is up-to-date (this check is kinda ugly)
+      m
+    }.filter(_.summary.startTime.isDefined)
+
+    val groupedByTime = startedMissions.groupBy(_.summary.startTime.get)
+
+    var numdeleted = 0
+    groupedByTime.values.foreach { missions =>
+      numdeleted += Mission.deleteWorstMissions(missions)
+    }
+
+    numdeleted
+  }
 }
 
 case class VehicleJson(

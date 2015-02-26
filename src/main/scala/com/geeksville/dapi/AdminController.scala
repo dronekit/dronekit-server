@@ -5,6 +5,7 @@ import akka.actor.Props
 import com.geeksville.dapi.test.SimGCSClient
 import com.geeksville.dapi.model.{Vehicle, User, Tables, Mission}
 import com.geeksville.akka.AkkaReflector
+import org.json4s.JsonAST.JInt
 import scala.collection.mutable
 import scala.concurrent.Await
 import akka.pattern.ask
@@ -110,6 +111,14 @@ class AdminController(implicit val swagger: Swagger) extends DroneHubStack with 
     Mission.collection.foreach { m =>
       m.deleteIfUninteresting()
     }
+  }
+
+  get("/db/delete-duplicates") {
+    val numdeleted = Vehicle.foldLeft(0) { (count, v) =>
+      count + v.deleteWorstMissions()
+    }
+    warn(s"Total # missions to delete: $numdeleted")
+    JInt(numdeleted)
   }
 
   /// To make testing newrelic integration easier

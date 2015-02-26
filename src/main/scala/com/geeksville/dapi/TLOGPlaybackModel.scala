@@ -74,6 +74,8 @@ class TLOGPlaybackModel extends PlaybackModel with LiveOrPlaybackModel with Logg
 
   override def autopilotType = hardwareToAutopilotType.orElse(heartbeatAutopilotType)
 
+  override def numRecords: Long = messages.size
+
   /// Just the messages that happened while the vehicle was actively flying
   def inFlightMessages: Traversable[TimestampedMessage] = (for {
     s <- startOfFlightTime

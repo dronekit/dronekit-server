@@ -54,7 +54,9 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
       maxAltitude, maxGroundSpeed, maxAirSpeed, maxG, duration,
       endPosition.map(_.lat), endPosition.map(_.lon),
       parameters.size,
-      softwareVersion = buildVersion, softwareGit = buildGit)
+      softwareVersion = buildVersion, softwareGit = buildGit,
+      numRecords = numRecords
+    )
   }
 
   /// timestamp usecs -> mode name
@@ -65,6 +67,8 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
   def waypoints: Seq[Waypoint]
 
   def parameters: Iterable[ROParamValue]
+
+  def numRecords: Long
 
   /// Any errors that occurred during this flight
   /// timestamp usecs -> error record

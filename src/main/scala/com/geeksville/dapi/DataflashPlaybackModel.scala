@@ -38,10 +38,13 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   private val params = HashMap[String, ROParamValue]()
 
   private var dfMessages: Iterable[DFMessage] = Iterable.empty
+  private var numMessages = 0L
 
   def parameters = params.values
 
   override def modelType = "Dataflash"
+
+  override def numRecords: Long = numMessages
 
   // This is our only way of finding the autopilot type without heartbeat msgs
   override def autopilotType = hardwareToAutopilotType
@@ -65,9 +68,11 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
   private def loadMessages(messages: Iterable[DFMessage]) = {
     import DFMessage._
 
+
     debug(s"Decoding dataflash messages")
-    // val msgIn = messages.toList // For some reason we can't just convert the map result below into a seq
-    // FIXME
+
+    dfMessages = messages // keep this around in case someone calls abstractMessages
+    numMessages = 0L
 
     // It is important to use a view here so we don't build up a HUGE list of asbtract message results
     val abstractMsgs = messages.view.map { m =>
@@ -79,6 +84,8 @@ class DataflashPlaybackModel(val defaultTime: Long) extends PlaybackModel {
         currentTime = Some(nowUsec)
         endOfFlightTime = Some(nowUsec) // FIXME - not quite correct - should check for flying (like we do with tlogs)
       }
+
+      numMessages += 1
 
       // dumpMessage()
       m.messageType match {
