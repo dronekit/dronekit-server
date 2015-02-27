@@ -133,8 +133,8 @@ case class MissionSummary(
               if (geo.isEmpty)
                 "international waters"
               else
-              // Street addresses are too identifying, skip them
-                geo = geo.filter { case (typ, v) => typ != "street"}
+              // Street addresses are too identifying, skip them - postcodes are boring to users
+                geo = geo.filter { case (typ, v) => typ != "street" && typ != "postcode" }
               geo.map(_._2).mkString(", ")
 
             } catch {
