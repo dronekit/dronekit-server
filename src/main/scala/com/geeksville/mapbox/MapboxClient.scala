@@ -23,7 +23,12 @@ import java.text.DecimalFormat
 object MapboxClient {
   private val monitor = false
 
+  val myDomain: String = "***REMOVED***"
+  val myAccessToken: String = "***REMOVED***"
+
   val baseUrl = if (monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com"
+
+  def withAccessToken(s: String) = s"$s?access_token=$myAccessToken"
 
   /// Generate an URL for a static map png
   def staticMapURL(latIn: Double, lonIn: Double, zoom: Integer, width: Integer, height: Integer, icon: String) = {
@@ -32,7 +37,9 @@ object MapboxClient {
     val lat = fmt.format(latIn)
     val lon = fmt.format(lonIn)
 
-    val mapBoxURL = s"http://$baseUrl/v3/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png"
+    // http://api.tiles.mapbox.com/v4/{mapid}/{lon},{lat},{z}/{width}x{height}.{format}?access_token=<your access token>
+    // http://api.tiles.mapbox.com/v4/{mapid}/{overlay}/auto/{width}x{height}.{format}?access_token=<your access token>
+    val mapBoxURL = withAccessToken(s"http://$baseUrl/v4/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png")
 
     mapBoxURL
   }
@@ -41,9 +48,12 @@ object MapboxClient {
 // http://api.tiles.mapbox.com/v3/examples.map-zr0njcqy/geocode/-73.989,40.733.json
 // lon, lat
 
-class MapboxClient(myDomain: String = "***REMOVED***")
+class MapboxClient()
   extends HttpClient(new HttpHost(MapboxClient.baseUrl))
   with Logging {
+
+  // Pull appart ids of the form state.23233
+  private val IDRegex = "(.*)\\.(.*)".r
 
   /**
    * Returns a sequenct of pairs of the following form:
@@ -59,23 +69,33 @@ class MapboxClient(myDomain: String = "***REMOVED***")
     val lat = fmt.format(latIn)
     val lon = fmt.format(lonIn)
 
-    val transaction = new HttpGet(s"/v3/$myDomain/geocode/$lon,$lat.json")
+    val transaction = new HttpGet(MapboxClient.withAccessToken(s"/v4/geocode/mapbox.places/$lon,$lat.json"))
 
     val json = callJson(transaction)
-    val results = (json \ "results")(0).asInstanceOf[JArray]
+    val features = (json \ "features").asInstanceOf[JArray]
 
-    val r = results.arr.map { jobj =>
-      val obj = jobj.asInstanceOf[JObject]
-      val typ = (obj \ "type").asInstanceOf[JString].s
-      val name = (obj \ "name").asInstanceOf[JString].s
-
-      typ -> name
+    if (features.arr.size == 0) {
+      error(s"Geocoding failed to find features for lat $lat, lon $lon: $json")
+      Seq.empty
     }
+    else {
+      val results = features.arr(0) // best match is first
+      val contexts = (results \ "context").asInstanceOf[JArray]
 
-    if (r.length == 0)
-      error(s"Geocoding failed to find location for lat $lat, lon $lon: $json")
+      val r = contexts.arr.map { jobj =>
+        val obj = jobj.asInstanceOf[JObject]
+        val idfull = (obj \ "id").asInstanceOf[JString].s
+        val name = (obj \ "text").asInstanceOf[JString].s
 
-    r
+        val IDRegex(typ, id) = idfull
+        typ -> name
+      }
+
+      if (r.length == 0)
+        error(s"Geocoding failed to find location for lat $lat, lon $lon: $json")
+
+      r
+    }
   }
 
 }

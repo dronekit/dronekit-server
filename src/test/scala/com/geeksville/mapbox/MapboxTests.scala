@@ -18,11 +18,15 @@ import com.geeksville.util.Using._
 
 class MapboxTests extends FunSuite with Logging with GivenWhenThen {
 
-  test("mapbox") {
+  test("geocode") {
     using(new MapboxClient()) { client =>
       val r = client.geocode(21.2917566, -157.84892689999998)
-      r.foreach { m => info("Mapbox says: " + m) }
+      r.foreach { m => info("Mapbox says: " + m)}
     }
   }
 
+  test("static map") {
+    val r = MapboxClient.staticMapURL(21.2917566, -157.84892689999998, 5, 300, 200, "star")
+    info("Mapbox says: " + r)
+  }
 }
