@@ -41,7 +41,7 @@ object Migration extends ActiveRecordCompanion[Migration] with Logging {
     Migrator(14,
       "ALTER TABLE missions ADD approval VARCHAR(80)"),
     Migrator(15,
-      "ALTER TABLE mission_summaries ADD num_records LONG NOT NULL DEFAULT -1")
+      "ALTER TABLE mission_summaries ADD num_records LONG")
   )
 
   val initialSetup = Seq(

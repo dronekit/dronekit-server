@@ -75,7 +75,7 @@ case class MissionSummary(
                            var softwareGit: Option[String] = None,
 
                            // How many records in this flight? (either tlog or dataflash)
-                           var numRecords: Long = 0) extends DapiRecord with Logging {
+                           var numRecords: Option[Long] = Some(0L)) extends DapiRecord with Logging {
 
   val missionId: Option[Long] = None
   lazy val mission = belongsTo[Mission]
@@ -331,7 +331,7 @@ case class Mission(
     assert(other.summary.startTime.isDefined)
     assert(summary.startTime.equals(other.summary.startTime))
 
-    summary.numRecords >= other.summary.numRecords
+    summary.numRecords.getOrElse(0L) >= other.summary.numRecords.getOrElse(0L)
   }
 
   /**

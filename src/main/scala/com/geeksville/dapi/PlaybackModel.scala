@@ -55,7 +55,7 @@ trait PlaybackModel extends WaypointsForMap with HasVehicleType with HasSummaryS
       endPosition.map(_.lat), endPosition.map(_.lon),
       parameters.size,
       softwareVersion = buildVersion, softwareGit = buildGit,
-      numRecords = numRecords
+      numRecords = Some(numRecords)
     )
   }
 
