@@ -7,7 +7,11 @@ git submodule update --recursive --init
 # echo "Installing LogAnalyzer dependencies"
 # pip install numpy
 
-cp nestor.conf.template ~/nestor.conf
+if [ ! -f ~/nestor.conf ]; then
+    echo "Seeding ~/nestor.conf YOU MUST EDIT IT LATER!"
+    cp nestor.conf.template ~/nestor.conf
+fi
+
 
 # We build in /tmp because it might be a ramfs and much faster
 echo rebuilding dependencies
@@ -57,4 +61,3 @@ cd ..
 
 echo Fixing up bad ivy files on codeship
 find ~/.ivy2/cache -name \*.original | xargs rm
-
