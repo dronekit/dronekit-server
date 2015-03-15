@@ -1,66 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-      version="3.0">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
 
-  <!-- Detect loss of client connections -->
-  <context-param>
-      <param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
-      <param-value>1200000</param-value>
-  </context-param>
+    <!-- Detect loss of client connections -->
+    <context-param>
+        <param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
+        <param-value>1200000</param-value>
+    </context-param>
 
-  <!-- Timeout on broadcaster writes -->
-  <context-param>
-      <param-name>org.atmosphere.cpr.Broadcaster.writeTimeout</param-name>
-      <param-value>30000</param-value>
-  </context-param>
-        
-  <!-- We don't need to let atmosphere see session objects? -->
-  <context-param>
-         <param-name>org.atmosphere.cpr.sessionSupport</param-name>
-         <param-value>true</param-value>
-  </context-param>
+    <!-- Timeout on broadcaster writes -->
+    <context-param>
+        <param-name>org.atmosphere.cpr.Broadcaster.writeTimeout</param-name>
+        <param-value>30000</param-value>
+    </context-param>
 
-  <!-- Per the atmosphere tuning guide - limit number of threads -->
-  <context-param>
-      <param-name>org.atmosphere.cpr.broadcaster.maxProcessingThreads</param-name>
-      <param-value>10</param-value>
-  </context-param>
-  <context-param>
-      <param-name>org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads</param-name>
-      <param-value>10</param-value>
-  </context-param>
-  
-  <!-- If messages arrive out of order our clients will cope -->
-  <context-param>
-    <param-name>org.atmosphere.cpr.Broadcaster.supportOutOfOrderBroadcast</param-name>
-    <param-value>true</param-value>
-  </context-param>
-  
-  <!-- We don't need broadcast caching - we always send new messages when client connects -->
-  <!--  <context-param>
-      <param-name>org.atmosphere.cpr.broadcasterCacheClass</param-name>
-      <param-value></param-value>
-  </context-param>  -->
-          
-  <!--
-    This listener loads a class in the default package called Scalatra.
-    That class should implement org.scalatra.LifeCycle.  Your app can be
-    configured in Scala code there.
-  -->
-  <listener>
-    <listener-class>org.scalatra.servlet.ScalatraListener</listener-class>
-  </listener>
-  
-  <servlet>
-    <servlet-name>GDatasourceServlet</servlet-name>
-    <description>Datasource provider</description>
-    <servlet-class>com.geeksville.gdatasource.GDatasourceServlet</servlet-class>
-  </servlet>
+    <!-- We don't need to let atmosphere see session objects? -->
+    <context-param>
+        <param-name>org.atmosphere.cpr.sessionSupport</param-name>
+        <param-value>true</param-value>
+    </context-param>
 
-  <servlet-mapping>
-    <servlet-name>GDatasourceServlet</servlet-name>
-    <url-pattern>/api/v1/datasource</url-pattern>
-  </servlet-mapping>
+    <!-- Per the atmosphere tuning guide - limit number of threads -->
+    <context-param>
+        <param-name>org.atmosphere.cpr.broadcaster.maxProcessingThreads</param-name>
+        <param-value>10</param-value>
+    </context-param>
+    <context-param>
+        <param-name>org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads</param-name>
+        <param-value>10</param-value>
+    </context-param>
+
+    <!-- If messages arrive out of order our clients will cope -->
+    <context-param>
+        <param-name>org.atmosphere.cpr.Broadcaster.supportOutOfOrderBroadcast</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>auth0.client_id</param-name>
+        <param-value>HQzW4Bql6cbu9vUXmLcdouXlcvotROZ4</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>auth0.client_secret</param-name>
+        <param-value>wSjgawaso0Dkjvwdm0j9RrfdIgBLwedKJyuu1cANKrtUILQtaU7F7o</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>auth0.domain</param-name>
+        <param-value>3dr.auth0.com</param-value>
+    </context-param>
+
+    <!-- We don't need broadcast caching - we always send new messages when client connects -->
+    <!--  <context-param>
+        <param-name>org.atmosphere.cpr.broadcasterCacheClass</param-name>
+        <param-value></param-value>
+    </context-param>  -->
+
+    <!--
+      This listener loads a class in the default package called Scalatra.
+      That class should implement org.scalatra.LifeCycle.  Your app can be
+      configured in Scala code there.
+    -->
+    <listener>
+        <listener-class>org.scalatra.servlet.ScalatraListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>GDatasourceServlet</servlet-name>
+        <description>Datasource provider</description>
+        <servlet-class>com.geeksville.gdatasource.GDatasourceServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>GDatasourceServlet</servlet-name>
+        <url-pattern>/api/v1/datasource</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>RedirectCallback</servlet-name>
+        <servlet-class>com.auth0.Auth0ServletCallback</servlet-class>
+        <init-param>
+            <param-name>auth0.redirect_on_success</param-name>
+            <param-value>/</param-value>
+        </init-param>
+        <init-param>
+            <param-name>auth0.redirect_on_error</param-name>
+            <param-value>/login</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RedirectCallback</servlet-name>
+        <url-pattern>/auth0callback</url-pattern>
+    </servlet-mapping>
 </web-app>
