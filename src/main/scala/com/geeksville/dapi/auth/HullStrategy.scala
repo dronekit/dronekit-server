@@ -35,7 +35,7 @@ class HullStrategy(protected val app: ScalatraBase)
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {
     getHullCookie.flatMap { cookie =>
       Option(HullUtils.authenticateUser(cookie, Hull.appSecret)).map { hullId =>
-        User.findOrCreateHullUser(hullId)
+        User.findOrCreateExternalUser(hullId, User.hullProviderCode)
       }
     }
   }

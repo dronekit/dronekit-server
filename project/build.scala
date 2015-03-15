@@ -137,7 +137,7 @@ object NestorBuild extends Build {
 
         // auth providers
         "io.hull" % "hull-client" % "0.1",
-        "com.auth0" % "auth0-servlet" % "2.0",
+        "com.auth0" % "auth0-servlet" % "2.0" withSources (),
 
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",

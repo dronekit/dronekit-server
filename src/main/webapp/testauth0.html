@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Auth0 test page</title>
+</head>
+<body>
+
+<!-- Attn 3DR Frontend geeks - the following sample code was from https://auth0.com/docs/quickstart/webapp/java
+On the auth0 webside they have numerous other example ways of raising a sign in dialog.
+
+See here: https://auth0.com/docs/lock and the general auth0 docs.
+
+If you would like to use redirect mode (as I did for the BE test - but it might not be the best flow for your app):
+Once you know what URL you would like the backend to redirect to on success or failure, please tell me what
+that is and I'll plug it in... (i.e. auth0 would bounce through the BE so the BE could squirel away the user info then
+the BE could bounce to a URL of your choice)
+
+Once you've run this little test page hosted _within_ the backend then future backend requests from the same session
+should be auto authenticated based on that auth0 user.
+
+Please try this and let me know what changes you need ASAP and I'll put them in.
+
+-Kevin
+
+-->
+
+<div id="root" style="width: 280px; margin: 40px auto; padding: 10px; border-style: dashed; border-width: 1px;">
+    embeded area
+</div>
+<script src="https://cdn.auth0.com/js/lock-7.1.min.js"></script>
+<script>
+  var lock = new Auth0Lock('HQzW4Bql6cbu9vUXmLcdouXlcvotROZ4', '3dr.auth0.com');
+
+  lock.show({
+      container: 'root'
+    , callbackURL: 'http://66.91.200.15:8080/auth0callback'
+    , responseType: 'code'
+    , authParams: {
+      scope: 'openid profile'
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -162,12 +162,12 @@ case class User(@Required @Unique login: String,
    * Get an ID string usable by hull.io
    *
    * For accounts that started with hull we internally prefix the ID with $h:, for other accounts we just use the whole string
-   */
   def hullId =
     if(login.startsWith(User.hullIdPrefix))
         login.substring(User.hullIdPrefix.size)
     else
         login
+   */
 
   /**
    * All the vehicles this user owns
@@ -371,7 +371,10 @@ class UserSerializer(viewer: Option[User],
           ("needNewPassword" -> u.needNewPassword) ~
           ("defaultViewPrivacy" -> AccessCode.valueOf(u.defaultViewPrivacy).toString) ~
           ("defaultControlPrivacy" -> AccessCode.valueOf(u.defaultControlPrivacy).toString) ~
-          ("vehicles" -> vehicles) ~ ("hullId" -> Hull.generateAccessToken(u.hullId))
+          ("vehicles" -> vehicles)
+          // hull support is deprecated - if we want to add it back then add back the following field so
+          // the FE can use it
+          // ~ ("hullId" -> Hull.generateAccessToken(u.hullId)
 
         val showSecrets = viewer.map { v => v.isAdmin || v.login == u.login }.getOrElse(false)
         if (showSecrets) {
@@ -387,7 +390,10 @@ object User extends DapiRecordCompanion[User] with Logging {
   private val random = new Random(System.currentTimeMillis)
 
   /// We add this at the beginning of any user IDs which started with hull
-  val hullIdPrefix = "$h:"
+  val hullProviderCode = "h"
+  val auth0ProviderCode = "a"
+
+  private def providerToPrefix(providerCode: String) = "$" + providerCode + ":"
 
   def findByEmail(email: String): Option[User] =
     this.where(_.email === email.toLowerCase).headOption
@@ -419,15 +425,16 @@ object User extends DapiRecordCompanion[User] with Logging {
     }
 
   /**
-   * Given a validated hull user id, find or create a user record
-   * @param hullUserId
+   * Given a validated external user id, find or create a local user record
+   * @param extUserId
    * @return
    */
-  def findOrCreateHullUser(hullUserId: String): User = {
-    val idWithPrefix = hullIdPrefix + hullUserId
+  def findOrCreateExternalUser(extUserId: String, provider: String, email: Option[String] = None): User = {
+    val idWithPrefix = providerToPrefix(provider) + extUserId
     val r = find(idWithPrefix).getOrElse {
       val u = User(idWithPrefix)
       u.groupId = "hulluser"
+      u.email = email
       u.create
       u.save
       debug(s"Created new hull user $u")

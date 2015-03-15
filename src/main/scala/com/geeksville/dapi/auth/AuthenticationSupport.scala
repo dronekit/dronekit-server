@@ -103,6 +103,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] with 
     scentry.register("Password", app => new UserPasswordStrategy(app))
     scentry.register("Remember", app => new RememberMeStrategy(app))
     scentry.register("OAuth", app => new OAuthStrategy(app))
+    scentry.register("Auth0", app => new Auth0Strategy(app))
     // scentry.register("Hull", app => new HullStrategy(app))
   }
 
