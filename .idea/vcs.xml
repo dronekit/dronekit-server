@@ -8,10 +8,5 @@
     <mapping directory="$PROJECT_DIR$/arduleader/droneapi-protobuf" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/arduleader/scandroid" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ardupilot" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/dependencies/akka" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/dependencies/json4s" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/dependencies/sbt-scalabuff" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/dependencies/scala-activerecord" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/dependencies/scalatra" vcs="Git" />
   </component>
 </project>

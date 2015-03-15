@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: com.auth0:auth0-servlet:2.0:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.auth0/auth0-servlet/jars/auth0-servlet-2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.auth0/auth0-servlet/docs/auth0-servlet-2.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.auth0/auth0-servlet/srcs/auth0-servlet-2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -15,8 +15,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../3scale-akka/target/scala-2.10/resource_managed/main" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../3scale-akka/src/test/resources" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../3scale-akka/target/scala-2.10/resource_managed/test" type="java-test-resource" />
-      <excludeFolder url="file://$MODULE_DIR$/../../3scale-akka/target/resolution-cache" />
-      <excludeFolder url="file://$MODULE_DIR$/../../3scale-akka/target/streams" />
+      <excludeFolder url="file://$MODULE_DIR$/../../3scale-akka/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
