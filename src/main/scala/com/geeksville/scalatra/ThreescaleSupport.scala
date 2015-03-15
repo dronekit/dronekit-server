@@ -92,9 +92,14 @@ trait ThreescaleSupport extends ScalatraBase with ControllerExtras {
     //debug(s"*** Auth headers ${authHeaders.mkString(",")} => keys=${headerkeys.mkString(",")}")
 
     if (headerkeys.isEmpty)
-      params.getOrElse("api_key", haltUnauthorized("api_key is required. See http://api.3dr.com/develop"))
-    else if (headerkeys.size > 1)
+      params.getOrElse("api_key", {
+        error(s"No api_key provided for $request")
+        haltUnauthorized("api_key is required. See http://api.3dr.com/develop")
+      })
+    else if (headerkeys.size > 1) {
+      error(s"Too many api_key provided for $request")
       haltBadRequest("Too many API keys")
+    }
     else
       headerkeys.head
   }
