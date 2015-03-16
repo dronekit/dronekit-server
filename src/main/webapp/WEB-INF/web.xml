@@ -70,7 +70,6 @@
 
     <servlet>
         <servlet-name>GDatasourceServlet</servlet-name>
-        <description>Datasource provider</description>
         <servlet-class>com.geeksville.gdatasource.GDatasourceServlet</servlet-class>
     </servlet>
 
@@ -81,14 +80,15 @@
 
     <servlet>
         <servlet-name>RedirectCallback</servlet-name>
-        <servlet-class>com.auth0.Auth0ServletCallback</servlet-class>
+        <servlet-class>com.geeksville.dapi.auth.Auth0CustomCallback</servlet-class>
+        <!-- FIXME - redirect to new GUI -->
         <init-param>
             <param-name>auth0.redirect_on_success</param-name>
-            <param-value>/</param-value>
+            <param-value>/api/auth/user?api_key=8dd7514c.auth0migrate</param-value>
         </init-param>
         <init-param>
             <param-name>auth0.redirect_on_error</param-name>
-            <param-value>/login</param-value>
+            <param-value>/authfail.html</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>
