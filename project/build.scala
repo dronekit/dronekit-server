@@ -60,6 +60,7 @@ object NestorBuild extends Build {
     base = file("3scale-akka"))
 
   lazy val dbInitRun = taskKey[Unit]("A task that runs the server, but wipes the DB.")
+  lazy val netDebugRun = taskKey[Unit]("Run the server but with net debug code turned on.")
 
   val mainClassName = "com.geeksville.scalatra.JettyLauncher"
 
@@ -85,6 +86,10 @@ object NestorBuild extends Build {
       fullRunTask(dbInitRun, Compile, mainClassName),
       fork in dbInitRun := true,
       javaOptions in dbInitRun += "-Ddapi.autowipe=true",
+
+      fullRunTask(netDebugRun, Compile, mainClassName),
+      fork in netDebugRun := true,
+      javaOptions in netDebugRun += "-Djavax.net.debug=all",
 
       // Make "test" command work again per https://groups.google.com/forum/#!topic/scalatra-user/Mkx2lHAqQI0
 
