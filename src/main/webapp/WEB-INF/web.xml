@@ -45,7 +45,7 @@
 
     <context-param>
         <param-name>auth0.client_secret</param-name>
-        <param-value>wSjgawaso0Dkjvwdm0j9RrfdIgBLwedKJyuu1cANKrtUILQtaU7F7o</param-value>
+        <param-value>wSjgawaso0Dkjvwdm0j9RrfdIgBLwedKJyuu1cANKrtUILQtaU7F7o-HU2wtwuVo</param-value>
     </context-param>
 
     <context-param>
@@ -84,7 +84,7 @@
         <!-- FIXME - redirect to new GUI -->
         <init-param>
             <param-name>auth0.redirect_on_success</param-name>
-            <param-value>/api/auth/user?api_key=8dd7514c.auth0migrate</param-value>
+            <param-value>/api/v1/auth/user?api_key=8dd7514c.auth0migrate</param-value>
         </init-param>
         <init-param>
             <param-name>auth0.redirect_on_error</param-name>

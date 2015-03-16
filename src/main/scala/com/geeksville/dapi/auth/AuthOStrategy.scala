@@ -14,7 +14,7 @@ import grizzled.slf4j.Logging
  *
  */
 class Auth0Strategy(protected val app: ScalatraBase)
-  extends ScentryStrategy[User] {
+  extends ScentryStrategy[User] with Logging {
 
   /// For archival purposes this is the custom user migration JS code we have installed at
   /// https://manage.auth0.com/#/connections/database/legacy-backend-user-db/plug
@@ -66,7 +66,7 @@ class Auth0Strategy(protected val app: ScalatraBase)
    */
   override def isValid(implicit request: HttpServletRequest) = {
     val r = Auth0User.get(request) != null
-    println(s"*** Auth0 says $r")
+    debug(s"Auth0 says $r")
     r
   }
 
@@ -75,7 +75,7 @@ class Auth0Strategy(protected val app: ScalatraBase)
    */
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {
 
-    println("*** Authenticating with auth0")
+    debug("Authenticating with auth0")
     Option(Auth0User.get(request)).map { auser =>
       User.findOrCreateExternalUser(auser.getUserId, User.auth0ProviderCode, email = Option(auser.getEmail))
     }

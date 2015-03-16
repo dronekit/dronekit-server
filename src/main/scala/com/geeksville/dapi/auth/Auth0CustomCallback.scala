@@ -11,7 +11,7 @@ import grizzled.slf4j.Logging
 class Auth0CustomCallback extends Auth0ServletCallback with Logging {
 
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-    debug("Auth0 callback invoked!")
+    // debug("Auth0 callback invoked!")
 
     val store = getNonceStorage(req)
     if (store.getState == null) {

@@ -433,14 +433,14 @@ object User extends DapiRecordCompanion[User] with Logging {
     val idWithPrefix = providerToPrefix(provider) + extUserId
     val r = find(idWithPrefix).getOrElse {
       val u = User(idWithPrefix)
-      u.groupId = "hulluser"
+      u.groupId = "extuser-" + provider
       u.email = email
       u.create
       u.save
-      debug(s"Created new hull user $u")
+      debug(s"Created new external user $u")
       u
     }
-    debug(s"Using hull huser $r")
+    debug(s"Using external huser $r")
     r
   }
 
