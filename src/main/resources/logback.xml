@@ -8,7 +8,7 @@
       <pattern>%d{mm:ss.SSS} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
     </encoder>
 
-    <!--  
+    <!--
     I think that sticking in loggers (see below) does the same thing better.
 		<filter class="com.geeksville.logback.NameLevelFilter">
 			<Prefix>com.geeksville</Prefix>
@@ -18,18 +18,18 @@
 		<filter class="com.geeksville.logback.MuteAllFilter" />
   </appender>
 
-  <!-- Alas this didn't work - instead just use a Syslog appender and https://www.loggly.com/docs/rsyslog-manual-configuration/ 
+  <!-- Alas this didn't work - instead just use a Syslog appender and https://www.loggly.com/docs/rsyslog-manual-configuration/
   <appender name="loggly" class="ch.qos.logback.ext.loggly.LogglyAppender">
         <inputKey>0094c0ce-d24d-484c-9a11-97b798b06956</inputKey>
   </appender>
   -->
-  
+
   <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
     <syslogHost>localhost</syslogHost>
     <facility>USER</facility>
     <suffixPattern>%logger{36} - %msg</suffixPattern>
   </appender>
-    
+
   <!-- A logger that appears to admins over atmosphere/javascript -->
   <appender name="atmosphere" class="com.geeksville.scalatra.AtmosphereLogAppender">
     <encoder>
@@ -37,22 +37,22 @@
       <pattern>%d{mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
-    
+
   <!-- See all our log msgs -->
   <logger name="com.geeksville" level="DEBUG"/>
-  <logger name="com.geeksville.dapi.auth" level="INFO"/>
-  
+  <logger name="com.geeksville.dapi.auth" level="DEBUG"/>
+
   <logger name="org.scalatra" level="DEBUG"/>
   <logger name="org.scalatra.auth" level="DEBUG"/>
   <logger name="org.scalatra.auth.Scentry" level="INFO"/>
-  
+
   <logger name="activerecord" level="INFO"/>
   <logger name="org.eclipse" level="INFO"/>
-  
+
   <!-- But ignore debug msgs from others -->
   <root level="debug">
     <appender-ref ref="STDOUT" />
-    <appender-ref ref="SYSLOG" /> 
-    <appender-ref ref="atmosphere" /> 
+    <appender-ref ref="SYSLOG" />
+    <appender-ref ref="atmosphere" />
   </root>
 </configuration>
