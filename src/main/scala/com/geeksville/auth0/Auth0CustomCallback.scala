@@ -1,6 +1,6 @@
-package com.geeksville.dapi.auth
+package com.geeksville.auth0
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import com.auth0.Auth0ServletCallback
 import grizzled.slf4j.Logging

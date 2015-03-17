@@ -440,7 +440,7 @@ object User extends DapiRecordCompanion[User] with Logging {
       debug(s"Created new external user $u")
       u
     }
-    debug(s"Using external huser $r")
+    debug(s"Using external user $r")
     r
   }
 

@@ -1,12 +1,14 @@
 package com.geeksville.dapi.auth
 
 import com.auth0.Auth0User
+import com.geeksville.auth0.Auth0Client
 import com.geeksville.dapi.model.User
 import org.scalatra.ScalatraBase
 import org.scalatra.auth.ScentryStrategy
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.geeksville.dapi.model.{DBToken, User}
 import grizzled.slf4j.Logging
+import scala.collection.JavaConverters._
 
 /**
  * If the frontend has a Auth0 user ID that we recognize, then use it
@@ -61,13 +63,45 @@ class Auth0Strategy(protected val app: ScalatraBase)
       |
       |}
     """.stripMargin
+
+  val auth0client = new Auth0Client()
+
+  /**
+   * Look for an auth0 access_token in either the X-Auth-3DR header (recommended) or the
+   * auth_3dr query string (for easy testing).  If found, we will then attempt to make a auth0 user
+   * object from that access token.
+   *
+   * @param request
+   * @return
+   */
+  private def getUserFromHeaders(implicit request: HttpServletRequest): Option[Auth0User] = {
+    val inHeader = request.getHeaders("X-Auth-3DR").asScala.toTraversable.headOption
+    def inQueryParams = app.params.get("auth-3dr")
+
+    val token = inHeader.orElse(inQueryParams)
+
+    debug(s"Received auth token in header: $token")
+    token.map(auth0client.fetchUser)
+  }
+
   /**
    * Determine whether the strategy should be run for the current request.
    */
   override def isValid(implicit request: HttpServletRequest) = {
-    val r = Auth0User.get(request) != null
-    debug(s"Auth0 says $r")
-    r
+    val hasUser = if(request.getSession.getAttribute(Auth0Client.userSessionKey) != null)
+      true
+    else {
+      val u = getUserFromHeaders(request)
+      if(u.isDefined) {
+        request.getSession.setAttribute(Auth0Client.userSessionKey, u.get)
+        true
+      }
+      else
+        false
+    }
+
+    debug(s"Auth0 says $hasUser")
+    hasUser
   }
 
   /**

@@ -80,7 +80,7 @@
 
     <servlet>
         <servlet-name>RedirectCallback</servlet-name>
-        <servlet-class>com.geeksville.dapi.auth.Auth0CustomCallback</servlet-class>
+        <servlet-class>com.geeksville.auth0.Auth0CustomCallback</servlet-class>
         <!-- FIXME - redirect to new GUI -->
         <init-param>
             <param-name>auth0.redirect_on_success</param-name>
