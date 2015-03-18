@@ -80,8 +80,10 @@ class Auth0Strategy(protected val app: ScalatraBase)
 
     val token = inHeader.orElse(inQueryParams)
 
-    debug(s"Received auth token in header: $token")
-    token.map(auth0client.fetchUser)
+    token.map { t =>
+      debug(s"Received auth token in header: $t")
+      auth0client.fetchUser(t)
+    }
   }
 
   /**
@@ -100,7 +102,9 @@ class Auth0Strategy(protected val app: ScalatraBase)
         false
     }
 
-    debug(s"Auth0 says $hasUser")
+    if(hasUser)
+      debug(s"Auth0 says $hasUser")
+
     hasUser
   }
 
@@ -116,4 +120,3 @@ class Auth0Strategy(protected val app: ScalatraBase)
   }
 
 }
-
