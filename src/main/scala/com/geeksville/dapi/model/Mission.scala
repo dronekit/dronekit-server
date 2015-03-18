@@ -457,7 +457,8 @@ case class Mission(
       this.delete()
       true
     } else {
-      if (keepIfBestVersion()) {
+      //       if (keepIfBestVersion()) {
+      if (true) {
         debug(s"Keeping interesting mission $this")
         false
       }
