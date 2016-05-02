@@ -38,7 +38,6 @@ import scala.concurrent.Future
 import com.github.aselab.activerecord.ActiveRecordException
 import org.squeryl.dsl.TDouble
 import org.squeryl.dsl.TString
-import com.geeksville.nasa.NASAClient
 import java.util.Date
 
 case class ParameterJson(id: String, value: String, doc: String, rangeOk: Boolean, range: Option[Seq[Float]])
@@ -457,56 +456,6 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     r
   }
 
-  val client = new NASAClient()
-
-  private def meterToFeet(m: Double) = m * 3.28084
-
-  private def doApprove() = {
-    if (user == null)
-      haltUnauthorized("Not logged in")
-
-    if (!user.isPreauth && !user.isAdmin)
-      haltUnauthorized("Private API testing only")
-
-    val mission = findById
-
-    val primaryContact = mission.vehicle.user.login + "@droneshare"
-    val aircraftType = mission.vehicle.vehicleType.getOrElse(haltNotFound("Invalid vehicle type"))
-    val flightNotes = mission.summary.text.getOrElse(haltNotFound("Invalid summary text"))
-    val primaryPhone = None
-    val flightStartTime = mission.summary.startTime.getOrElse(haltNotFound("Invalid flight start"))
-    val flightEndTime = mission.summary.endTime.getOrElse(haltNotFound("Invalid flight end"))
-    //val minAltitude = 0L // FIXME - how is this encoded?
-    //val maxAltitude = mission.summary.maxAlt.toLong
-
-    // FIXME - for now we just use the waypoints - is there a better way to specify the amount of airspace we want
-    val model = mission.model.getOrElse(haltNotFound("Can't generate model"))
-    val wpts = model.waypoints.filter { wpt => wpt.isValidLatLng && wpt.isCommandValid }
-    val locs = wpts.map(_.location)
-    val alts = wpts.map(_.altitude.toDouble)
-    val minAltitude = meterToFeet(alts.reduceOption(MathTools.saneMin(_, _)).getOrElse(0.0)).toLong
-    val maxAltitude = meterToFeet(alts.reduceOption(MathTools.saneMax(_, _)).getOrElse(0.0)).toLong
-
-    mission.approval = Some("SUBMITTED")
-    mission.save
-
-    val r = client.requestAuth(primaryContact, aircraftType, flightNotes, primaryPhone, flightStartTime, flightEndTime, minAltitude, maxAltitude, locs, mission.id)
-
-    println("NASA says: " + r)
-
-    // Super skanky - FIXME - we assume that NASA would have responded within 5 secs - this allows the frontend to not have to poll
-    // for changes to the mission
-    // mission
-    Thread.sleep(3000)
-    findById // Return the updated mission object (hopefully NASA has responded by now)s
-  }
-
-  // Testing NASA flight submission
-  post("/:id/submitApproval") {
-    doApprove()
-  }
-
-
   aoField[OpenTicketJSON]("openTicket", { (m, ticket) =>
     // For now just return - we currently ignore the payload
     warn(s"Received cust service ticket for $m, contents: $ticket")
@@ -746,4 +695,3 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
   *
   */
 }
-

@@ -43,7 +43,6 @@ import grizzled.slf4j.Logging
 import com.geeksville.dapi.NewRelicAnalyticsAdapter
 import akka.actor.ActorRef
 import com.geeksville.dapi.oauth.OAuthController
-import com.geeksville.nasa.NASAResultsController
 
 class ScalatraBootstrap extends ActiveRecordLifeCycle {
   implicit val swagger = new ApiSwagger
@@ -87,8 +86,6 @@ class ScalatraBootstrap extends ActiveRecordLifeCycle {
 
     // Admin operations
     context.mount(new AdminController, "/api/v1/admin/*")
-
-    context.mount(new NASAResultsController, "/api/v1/nasa/*")
 
     // Swagger autodocs
     context.mount(new ResourcesApp, "/api-docs/*")
