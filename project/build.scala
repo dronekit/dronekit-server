@@ -146,7 +146,7 @@ object NestorBuild extends Build {
 
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
         "com.novus" %% "salat" % "1.9.5",
-        "de.micromata.jak" % "JavaAPIforKml" % "2.2.0-SNAPSHOT",
+        "de.micromata.jak" % "JavaAPIforKml" % "2.2.0",
 
         "org.apache.httpcomponents" % "httpclient" % "4.2",
         "org.apache.httpcomponents" % "httpmime" % "4.2",
@@ -192,7 +192,3 @@ object NestorBuild extends Build {
 
   // not yet working .settings(atmosSettings: _*).configs(Atmos)
 }
-
-
-
-
