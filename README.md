@@ -24,3 +24,8 @@ To start build environment: "sbt" Once build env is running you have various opt
 - 'container:restart' - start a web server running the app on port 8080
 - '~ container:restart' - restart the webserver any time a source file changes
 - 'eclipse' - build eclipse project files
+
+# How to install on a production server
+
+Please see [INSTALL.md](INSTALL.md).
+
