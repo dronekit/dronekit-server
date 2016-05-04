@@ -9,7 +9,7 @@ dapi {
   }
 
   aws {
-    # 3dr keys
+    # You must set this to amazon keys which allow access to S3 bucket read/write/update
     accessKey = ${AWS_ACCESS_KEY}
     secretKey = ${AWS_SECRET_KEY}
   }
