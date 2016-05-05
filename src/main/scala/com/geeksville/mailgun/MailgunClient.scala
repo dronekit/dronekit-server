@@ -18,6 +18,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.JsonAST.JObject
 import com.geeksville.http.HttpClient
 import scala.xml.Node
+import com.geeksville.akka.MockAkka
 
 object MailgunClient {
   val monitor = false
@@ -28,7 +29,7 @@ class MailgunClient(myDomain: String = "droneshare.com")
 
   httpclient.getCredentialsProvider.setCredentials(
     new AuthScope(httpHost.getHostName(), httpHost.getPort()),
-    new UsernamePasswordCredentials("api", "***REMOVED***"));
+    new UsernamePasswordCredentials("api", MockAkka.config.getString("mailgun.key")));
 
   def send(pairs: (String, String)*): JObject = {
     val transaction = new HttpPost(s"/v2/$myDomain/messages")
