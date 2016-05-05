@@ -33,16 +33,17 @@ import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.AbstractContentBody
 import org.apache.http.entity.mime.content.ByteArrayBody
+import com.geeksville.akka.MockAkka
 
 object DoaramaClient {
   val monitor = false
 }
 
 class DoaramaClient(val userId: String)
-  extends HttpClient(new HttpHost(if (DoaramaClient.monitor) "doarama-02278ec08110.my.apitools.com" else "www.doarama.com", 443, "https")) with Logging {
+  extends HttpClient(new HttpHost(if (DoaramaClient.monitor) "FIXME.my.apitools.com" else "www.doarama.com", 443, "https")) with Logging {
 
-  private val apiName = "droneshare"
-  private val apiKey = "***REMOVED***"
+  private val apiName = MockAkka.config.getString("doarama.name")
+  private val apiKey = MockAkka.config.getString("doarama.key")
 
   private val baseUrl = s"/api/0.2/"
   val igcMimeType = "text/plain"
