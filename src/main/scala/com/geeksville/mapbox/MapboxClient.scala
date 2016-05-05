@@ -19,14 +19,13 @@ import com.geeksville.http.HttpClient
 import org.json4s._
 import grizzled.slf4j.Logging
 import java.text.DecimalFormat
+import com.geeksville.akka.MockAkka
 
 object MapboxClient {
-  private val monitor = false
+  val myDomain: String = MockAkka.config.getString("mapbox.domain")
+  val myAccessToken: String = MockAkka.config.getString("mapbox.accessToken")
 
-  val myDomain: String = "***REMOVED***"
-  val myAccessToken: String = "***REMOVED***"
-
-  val baseUrl = if (monitor) "mapbox-02278ec08110.my.apitools.com" else "api.tiles.mapbox.com"
+  val baseUrl = "api.tiles.mapbox.com"
 
   def withAccessToken(s: String) = s"$s?access_token=$myAccessToken"
 
@@ -39,7 +38,7 @@ object MapboxClient {
 
     // http://api.tiles.mapbox.com/v4/{mapid}/{lon},{lat},{z}/{width}x{height}.{format}?access_token=<your access token>
     // http://api.tiles.mapbox.com/v4/{mapid}/{overlay}/auto/{width}x{height}.{format}?access_token=<your access token>
-    val mapBoxURL = withAccessToken(s"http://$baseUrl/v4/***REMOVED***/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png")
+    val mapBoxURL = withAccessToken(s"http://$baseUrl/v4/$myDomain/pin-s-$icon+f44($lon,$lat,$zoom)/$lon,$lat,$zoom/${width}x$height.png")
 
     mapBoxURL
   }
