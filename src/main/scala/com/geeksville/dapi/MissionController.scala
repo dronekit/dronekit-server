@@ -1,7 +1,6 @@
 package com.geeksville.dapi
 
 import com.geeksville.util.MathTools
-import com.geeksville.zendesk.ZendeskClient
 import org.scalatra._
 import org.scalatra.swagger.SwaggerSupport
 import org.json4s.{ DefaultFormats, Formats }
@@ -191,7 +190,7 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
           //val fieldTerm = summaryType.declaration(ru.newTermName(w.colName)).asTerm
           //val reflectedField = summaryType.
 
-          if (doubleFields.contains(w.colName)) {
+          if (doubleFields.contains(w.colName)) {  
             val field = w.colName match {
               case "maxAlt" => summary.maxAlt
               case "maxGroundspeed" => summary.maxGroundSpeed
@@ -455,27 +454,6 @@ class SharedMissionController(implicit swagger: Swagger) extends ActiveRecordCon
     }
     r
   }
-
-  aoField[OpenTicketJSON]("openTicket", { (m, ticket) =>
-    // For now just return - we currently ignore the payload
-    warn(s"Received cust service ticket for $m, contents: $ticket")
-
-    val email = user.email.getOrElse(haltNotFound("You must attach an email address to your account before you can use support"))
-    val fullname = user.fullName.getOrElse(user.login)
-
-    val comment =
-      s"""
-        |This is a semi-automated ticket opened by "$fullname" a [user](http://www.droneshare.com/user/${user.login}) of Droneshare.
-        |
-        |They described their issue as "${ticket.extraInfo}" while running this [mission](http://www.droneshare.com/mission/${m.id}).
-        |
-        |The email address from this requester is based on their droneshare account and that user has received an automated Zendesk email telling them that 3DR support will be responding.
-      """.stripMargin
-
-    val t = ZendeskClient.createTicket(fullname, email,  "User ticket created via Droneshare", comment)
-
-    s"Ticket ${t.getId} created"
-  })
 
   roField("parameters.json") { (o) =>
     applyMissionCache()
