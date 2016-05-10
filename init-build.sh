@@ -26,10 +26,11 @@ cd /tmp/dependencies
 #ln -s ../dependencies/$SCALA/bin/* .
 #popd
 
-git clone https://github.com/geeksville/hull-java.git
-cd hull-java/
-mvn install
-cd ..
+# We are not using hull currently, so deprecate for now
+# git clone https://github.com/geeksville/hull-java.git
+# cd hull-java/
+# mvn install
+# cd ..
 
 git clone https://github.com/geeksville/sbt-scalabuff.git
 cd sbt-scalabuff/

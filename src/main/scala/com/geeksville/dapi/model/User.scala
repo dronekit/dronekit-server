@@ -1,6 +1,5 @@
 package com.geeksville.dapi.model
 
-import com.geeksville.hull.Hull
 import com.github.aselab.activerecord.Datestamps
 import com.github.aselab.activerecord.annotations._
 import org.squeryl.annotations.Transient
@@ -460,4 +459,3 @@ object User extends DapiRecordCompanion[User] with Logging {
    */
   private val verificationFactory = new EnvelopeFactory("ab641x")
 }
-
