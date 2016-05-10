@@ -1,26 +1,59 @@
 include "application"
 
-# This is the new 3dr specific keys for dronehub
-dapi {
-  # if threescale keys are not set threescale will not be used for API control
-  threescale {
-    # apiKey = "FIXME"
-    # serviceId = "FIXME"
-  }
+#
+This is the new 3 dr specific keys
+for dronehub
+dapi {#
+    if threescale keys are not set threescale will not be used
+    for API control
+    threescale {#
+        apiKey = "FIXME"#
+        serviceId = "FIXME"
+    }
 
-  aws {
-    # You must set this to amazon keys which allow access to S3 bucket read/write/update
-    accessKey = ${AWS_ACCESS_KEY}
-    secretKey = ${AWS_SECRET_KEY}
-  }
+    aws {#
+        You must set this to amazon keys which allow access to S3 bucket read / write / update
+        accessKey = $ {
+            AWS_ACCESS_KEY
+        }
+        secretKey = $ {
+            AWS_SECRET_KEY
+        }
+    }
 
-  s3 {
-    # default value
-    bucketName = "s3-droneapi"
-    # optional environment override
-    bucketName = ${?S3_BUCKET_NAME}
-  }
+    s3 {#
+        default value
+        bucketName = "s3-droneapi"#
+        optional environment override
+        bucketName = $ { ? S3_BUCKET_NAME
+        }
+    }
 
-  # if you don't want server to pick a random root password set this here
-  # defaultRootPsw="FIXME"
+
+    #
+    if you don 't want server to pick a random root password set this here#
+    defaultRootPsw = "FIXME"
+}
+
+
+#
+If you would like to use mapbox on the server, add your auth info here
+mapbox {
+    domain = "mapbox.dark"
+    accessToken = "FIXME"
+}
+
+#
+Use this to setup your mailgun account
+for sending user password emails
+mailgun {
+    key = "FIXME"
+}
+
+#
+Use this
+if you 'd like to generate doarama movies via their service
+doarama {
+    name = "FIXME"
+    key = "FIXME"
 }
