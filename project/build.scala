@@ -141,7 +141,7 @@ object NestorBuild extends Build {
         // "org.slf4j" % "slf4j-log4j12" % "1.7.5",
 
         // auth providers
-        "io.hull" % "hull-client" % "0.1",
+        // "io.hull" % "hull-client" % "0.1",
         "com.auth0" % "auth0-servlet" % "2.0" withSources (),
 
         //"ch.qos.logback" % "logback-classic" % "1.0.9" % "runtime",
