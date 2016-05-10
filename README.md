@@ -1,4 +1,7 @@
 # DroneKit-Server
+
+[![Build Status](https://semaphoreci.com/api/v1/geeksville/dronekit-server/branches/master/badge.svg)](https://semaphoreci.com/geeksville/dronekit-server)
+
 # License
 Copyright 2014 3D Robotics, Inc.
 
@@ -28,4 +31,3 @@ To start build environment: "sbt" Once build env is running you have various opt
 # How to install on a production server
 
 Please see [INSTALL.md](INSTALL.md).
-
