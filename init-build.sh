@@ -32,16 +32,26 @@ cd /tmp/dependencies
 # mvn install
 # cd ..
 
+# We want to wait for all of our spawned children before exiting
+pids = ""
+
+bash << EOF &
 git clone https://github.com/geeksville/sbt-scalabuff.git
 cd sbt-scalabuff/
 sbt publishLocal
 cd ..
+EOF
+pids="$pids $!"
 
+bash << EOF &
 git clone -b fixes_for_dronehub https://github.com/geeksville/json4s.git
 cd json4s
 sbt publishLocal
 cd ..
+EOF
+pids="$pids $!"
 
+bash << EOF &
 # akka needs sphinx to make docs
 # DO NOT USE SUDO it breaks the CI server
 pip install sphinx
@@ -54,11 +64,18 @@ git clone -b 2.3.x_2.10 https://github.com/geeksville/scalatra.git
 cd scalatra
 sbt publishLocal
 cd ..
+EOF
+pids="$pids $!"
 
+bash << EOF &&
 git clone https://github.com/geeksville/scala-activerecord.git
 cd scala-activerecord
 sbt "project core" publishLocal "project generator" publishLocal "project scalatra" publishLocal "project scalatraSbt" publishLocal
 cd ..
+EOF
+pids="$pids $!"
 
 echo Fixing up bad ivy files on codeship
 find ~/.ivy2/cache -name \*.original | xargs rm
+
+wait $pids # wait for our various parallel child jobs to finish
