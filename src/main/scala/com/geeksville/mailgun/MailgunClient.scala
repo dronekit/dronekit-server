@@ -20,12 +20,9 @@ import com.geeksville.http.HttpClient
 import scala.xml.Node
 import com.geeksville.akka.MockAkka
 
-object MailgunClient {
-  val monitor = false
-}
 
 class MailgunClient(myDomain: String = "droneshare.com")
-  extends HttpClient(new HttpHost(if (MailgunClient.monitor) "***REMOVED***.my.apitools.com" else "api.mailgun.net", 443, "https")) {
+  extends HttpClient(new HttpHost("api.mailgun.net", 443, "https")) {
 
   httpclient.getCredentialsProvider.setCredentials(
     new AuthScope(httpHost.getHostName(), httpHost.getPort()),

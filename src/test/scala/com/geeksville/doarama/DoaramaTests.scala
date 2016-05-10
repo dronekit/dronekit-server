@@ -17,6 +17,8 @@ import java.io.FileOutputStream
 class DoaramaTests extends FunSuite with Logging with GivenWhenThen {
 
   ignore("upload and get view URL") {
+    com.geeksville.dapi.Global.setConfig() // We need custom build settins
+
     val userId = "test-bob"
     val client = new DoaramaClient(userId)
 
